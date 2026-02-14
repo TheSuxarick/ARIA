@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARIA — Smart Home Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+</head>
+<body>
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">
+                <span class="material-icons-round">hub</span>
+            </div>
+            <span class="logo-text">ARIA</span>
+        </div>
+
+        <ul class="nav-links">
+            <li>
+                <a href="#" class="nav-link active" data-page="dashboard">
+                    <span class="material-icons-round">dashboard</span>
+                    <span class="nav-label" data-i18n="nav_dashboard">Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="#" class="nav-link" data-page="camera">
+                    <span class="material-icons-round">videocam</span>
+                    <span class="nav-label" data-i18n="nav_camera">Camera</span>
+                </a>
+            </li>
+            <li>
+                <a href="#" class="nav-link" data-page="functions">
+                    <span class="material-icons-round">apps</span>
+                    <span class="nav-label" data-i18n="nav_functions">Functions</span>
+                </a>
+            </li>
+            <li>
+                <a href="#" class="nav-link" data-page="settings">
+                    <span class="material-icons-round">settings</span>
+                    <span class="nav-label" data-i18n="nav_settings">Settings</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <div class="server-status" id="serverStatus">
+                <span class="status-dot online"></span>
+                <span class="status-text" data-i18n="status_online">Online</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <header class="top-header">
+            <div class="header-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <span class="material-icons-round">menu</span>
+                </button>
+                <h1 class="page-title" id="pageTitle" data-i18n="nav_dashboard">Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+                    <span class="material-icons-round" id="themeIcon">light_mode</span>
+                </button>
+                <div class="server-badge" id="serverBadge">
+                    <span class="status-dot online"></span>
+                    <span data-i18n="server_online">Server: Online</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- PAGE: DASHBOARD -->
+        <section class="page active" id="page-dashboard">
+            <div class="dashboard-grid">
+                <!-- Quick Actions -->
+                <div class="card quick-actions-card">
+                    <div class="card-header">
+                        <span class="material-icons-round card-icon">bolt</span>
+                        <h2 data-i18n="quick_actions">Quick Actions</h2>
+                    </div>
+                    <div class="actions-grid">
+                        <button class="action-btn" data-action="light" id="btnLight">
+                            <div class="action-icon-wrap">
+                                <span class="material-icons-round">lightbulb</span>
+                            </div>
+                            <span class="action-label" data-i18n="light_onoff">Light On/Off</span>
+                            <span class="action-status" data-i18n="status_ready">Ready</span>
+                        </button>
+                        <button class="action-btn" data-action="robot" id="btnRobot">
+                            <div class="action-icon-wrap">
+                                <span class="material-icons-round">smart_toy</span>
+                            </div>
+                            <span class="action-label" data-i18n="call_robot">Call Robot</span>
+                            <span class="action-status" data-i18n="status_ready">Ready</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- AI Chat -->
+                <div class="card chat-card">
+                    <div class="card-header">
+                        <span class="material-icons-round card-icon">forum</span>
+                        <h2 data-i18n="ai_chat">AI Interaction Chat</h2>
+                    </div>
+                    <div class="chat-messages" id="chatMessages"></div>
+                    <div class="chat-input-wrap">
+                        <input type="text" id="chatInput" data-i18n-placeholder="chat_placeholder" placeholder="Type a message..." autocomplete="off">
+                        <button class="chat-send-btn" id="chatSend">
+                            <span class="material-icons-round">send</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAGE: CAMERA -->
+        <section class="page" id="page-camera">
+            <div class="card camera-main-card">
+                <div class="card-header">
+                    <span class="material-icons-round card-icon">videocam</span>
+                    <h2 data-i18n="live_stream">Live Stream</h2>
+                    <span class="live-badge">● LIVE</span>
+                </div>
+                <div class="camera-feed">
+                    <div class="camera-placeholder">
+                        <span class="material-icons-round">videocam_off</span>
+                        <p data-i18n="camera_unavailable">Camera feed not available</p>
+                    </div>
+                </div>
+                <div class="camera-controls">
+                    <div class="dpad">
+                        <button class="dpad-btn dpad-up"><span class="material-icons-round">arrow_upward</span></button>
+                        <button class="dpad-btn dpad-left"><span class="material-icons-round">arrow_back</span></button>
+                        <button class="dpad-btn dpad-center"><span class="material-icons-round">radio_button_checked</span></button>
+                        <button class="dpad-btn dpad-right"><span class="material-icons-round">arrow_forward</span></button>
+                        <button class="dpad-btn dpad-down"><span class="material-icons-round">arrow_downward</span></button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAGE: FUNCTIONS -->
+        <section class="page" id="page-functions">
+            <div class="functions-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="material-icons-round card-icon">music_note</span>
+                        <h2 data-i18n="youtube_music">YouTube Music</h2>
+                    </div>
+                    <div class="placeholder-content">
+                        <span class="material-icons-round">music_note</span>
+                        <p data-i18n="music_integration">Music integration</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="material-icons-round card-icon">cloud</span>
+                        <h2 data-i18n="weather">Weather</h2>
+                    </div>
+                    <div class="placeholder-content">
+                        <span class="material-icons-round">cloud</span>
+                        <p data-i18n="weather_widget">Weather widget</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="material-icons-round card-icon">email</span>
+                        <h2 data-i18n="email">Email</h2>
+                    </div>
+                    <div class="placeholder-content">
+                        <span class="material-icons-round">email</span>
+                        <p data-i18n="email_integration">Email integration</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAGE: SETTINGS -->
+        <section class="page" id="page-settings">
+            <div class="settings-grid">
+                <!-- Context Memory -->
+                <div class="card memory-card">
+                    <div class="card-header">
+                        <span class="material-icons-round card-icon">psychology</span>
+                        <h2 data-i18n="context_memory">Context Memory</h2>
+                    </div>
+                    <div class="memory-list" id="memoryList"></div>
+                    <div class="memory-add">
+                        <input type="text" id="memoryInput" data-i18n-placeholder="memory_placeholder" placeholder="Add a memory entry...">
+                        <button class="memory-add-btn" id="memoryAddBtn">
+                            <span class="material-icons-round">add</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Model Settings -->
+                <div class="card model-card">
+                    <div class="card-header">
+                        <span class="material-icons-round card-icon">tune</span>
+                        <h2 data-i18n="model_settings">Model Settings</h2>
+                    </div>
+                    <div class="settings-form">
+                        <div class="form-group">
+                            <label for="modelSelect" data-i18n="model_label">Model</label>
+                            <select id="modelSelect">
+                                <option value="gpt-4">GPT-4</option>
+                                <option value="gpt-4o">GPT-4o</option>
+                                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="apiKeyInput" data-i18n="api_key_label">API Key</label>
+                            <div class="api-key-wrap">
+                                <input type="password" id="apiKeyInput" placeholder="sk-...">
+                                <button class="toggle-visibility" id="toggleApiKey">
+                                    <span class="material-icons-round">visibility</span>
+                                </button>
+                            </div>
+                        </div>
+                        <button class="save-settings-btn" id="saveSettingsBtn">
+                            <span class="material-icons-round">save</span>
+                            <span data-i18n="save_settings">Save Settings</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Language -->
+                <div class="card language-card">
+                    <div class="card-header">
+                        <span class="material-icons-round card-icon">translate</span>
+                        <h2 data-i18n="language">Language</h2>
+                    </div>
+                    <div class="language-options">
+                        <button class="lang-btn" data-lang="RU">RU</button>
+                        <button class="lang-btn" data-lang="KZ">KZ</button>
+                        <button class="lang-btn active" data-lang="EN">EN</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="toast-container" id="toastContainer"></div>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
