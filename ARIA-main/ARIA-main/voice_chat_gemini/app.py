@@ -1,30 +1,23 @@
 """
-Gemini Voice Chat - Backend
-Uses Gemini API for AI responses, browser TTS for speech
+Voice Chat - Backend
+Uses OpenAI-compatible API (ChatAnywhere) for AI responses, browser TTS for speech
 Supports vision from ESP32-CAM
 """
 import os
 import base64
-import requests
+import requests as http_requests
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types
 
 load_dotenv()
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
 
-GEMINI_API_KEY = os.getenv('google_api')
-
-# Initialize Gemini client
-client = None
-if GEMINI_API_KEY:
-    client = genai.Client(api_key=GEMINI_API_KEY)
-
-MODEL_ID = "gemini-2.5-flash-lite"
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', 'sk-sTgiqoqr21XjLEGlcah65fT8LuamSvlalhy1ykfPwefgju4n')
+OPENAI_API_BASE = os.getenv('OPENAI_API_BASE', 'https://api.chatanywhere.tech/v1')
+OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4o')
 
 # ESP32-CAM configuration - UPDATE THIS IP!
 ESP32_CAM_IP = os.getenv('ESP32_CAM_IP', '10.58.187.186')
@@ -44,48 +37,70 @@ def capture_frame_from_esp32():
     stream_url = f"http://{ESP32_CAM_IP}:81/stream"
     
     try:
-        # Request the stream with a short timeout
-        response = requests.get(stream_url, stream=True, timeout=5)
+        response = http_requests.get(stream_url, stream=True, timeout=5)
         
         if response.status_code != 200:
             return None, f"Failed to connect to camera: {response.status_code}"
         
-        # Read until we find a complete JPEG frame
         buffer = b''
         jpeg_start = None
         
         for chunk in response.iter_content(chunk_size=1024):
             buffer += chunk
             
-            # Find JPEG start marker (FFD8)
             if jpeg_start is None:
                 start_idx = buffer.find(b'\xff\xd8')
                 if start_idx != -1:
                     jpeg_start = start_idx
             
-            # Find JPEG end marker (FFD9) after start
             if jpeg_start is not None:
                 end_idx = buffer.find(b'\xff\xd9', jpeg_start)
                 if end_idx != -1:
-                    # Extract complete JPEG
                     jpeg_data = buffer[jpeg_start:end_idx + 2]
                     response.close()
                     return jpeg_data, None
             
-            # Limit buffer size to prevent memory issues
-            if len(buffer) > 500000:  # 500KB limit
+            if len(buffer) > 500000:
                 response.close()
                 return None, "Frame too large or not found"
         
         response.close()
         return None, "Could not capture frame"
         
-    except requests.exceptions.Timeout:
+    except http_requests.exceptions.Timeout:
         return None, "Camera connection timeout"
-    except requests.exceptions.ConnectionError:
+    except http_requests.exceptions.ConnectionError:
         return None, f"Cannot connect to camera at {ESP32_CAM_IP}"
     except Exception as e:
         return None, str(e)
+
+
+def call_openai_api(messages, max_tokens=500):
+    """Make a call to the OpenAI-compatible API"""
+    url = f"{OPENAI_API_BASE}/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {OPENAI_API_KEY}"
+    }
+    payload = {
+        "model": OPENAI_MODEL,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "temperature": 0.7
+    }
+    
+    resp = http_requests.post(url, json=payload, headers=headers, timeout=60)
+    resp_data = resp.json()
+    
+    if resp.status_code == 200 and "choices" in resp_data:
+        return resp_data["choices"][0]["message"]["content"], None
+    else:
+        err = resp_data.get("error", {})
+        if isinstance(err, dict):
+            error_msg = err.get("message", str(resp_data))
+        else:
+            error_msg = str(resp_data)
+        return None, f"API error ({resp.status_code}): {error_msg}"
 
 
 @app.route('/')
@@ -97,8 +112,8 @@ def index():
 def chat():
     global conversation_history
     
-    if not client:
-        return jsonify({'error': 'API key not configured. Add google_api to .env file'}), 500
+    if not OPENAI_API_KEY:
+        return jsonify({'error': 'API key not configured. Set OPENAI_API_KEY in .env file'}), 500
     
     data = request.json
     user_message = data.get('message', '')
@@ -106,54 +121,21 @@ def chat():
     if not user_message:
         return jsonify({'error': 'No message provided'}), 400
     
-    # Build contents with system prompt and conversation history
-    contents = [
-        types.Content(
-            role="user",
-            parts=[types.Part.from_text(text=SYSTEM_PROMPT)]
-        ),
-        types.Content(
-            role="model",
-            parts=[types.Part.from_text(text="Understood! I'll be helpful and conversational, keeping responses concise for speech.")]
-        )
-    ]
+    # Build messages with system prompt and conversation history
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     
-    # Add conversation history
     for msg in conversation_history:
-        contents.append(types.Content(
-            role=msg["role"],
-            parts=[types.Part.from_text(text=msg["text"])]
-        ))
+        role = "user" if msg["role"] == "user" else "assistant"
+        messages.append({"role": role, "content": msg["text"]})
     
-    # Add current user message
-    contents.append(types.Content(
-        role="user",
-        parts=[types.Part.from_text(text=user_message)]
-    ))
-    
-    # Safety settings
-    safety_settings = [
-        types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
-        types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
-        types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
-        types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
-    ]
-    
-    config = types.GenerateContentConfig(
-        safety_settings=safety_settings,
-        max_output_tokens=500,
-        temperature=0.7
-    )
+    messages.append({"role": "user", "content": user_message})
     
     try:
-        # Generate response (non-streaming for simplicity)
-        response = client.models.generate_content(
-            model=MODEL_ID,
-            contents=contents,
-            config=config
-        )
+        ai_response, error = call_openai_api(messages)
         
-        ai_response = response.text
+        if error:
+            print(f"API Error: {error}")
+            return jsonify({'error': error}), 500
         
         # Add to conversation history
         conversation_history.append({"role": "user", "text": user_message})
@@ -170,22 +152,21 @@ def chat():
         
     except Exception as e:
         error_msg = str(e)
-        print(f"Gemini API Error: {error_msg}")
+        print(f"API Error: {error_msg}")
         return jsonify({'error': f'API error: {error_msg}'}), 500
 
 
 @app.route('/vision', methods=['POST'])
 def vision():
-    """Capture image from ESP32-CAM and ask Gemini what it sees"""
+    """Capture image from ESP32-CAM and ask AI what it sees"""
     global conversation_history
     
-    if not client:
+    if not OPENAI_API_KEY:
         return jsonify({'error': 'API key not configured'}), 500
     
     data = request.json
     question = data.get('question', 'What do you see in this image? Describe it briefly and conversationally.')
     
-    # Capture frame from ESP32-CAM
     print(f"Capturing frame from ESP32-CAM at {ESP32_CAM_IP}...")
     jpeg_data, error = capture_frame_from_esp32()
     
@@ -197,45 +178,16 @@ def vision():
     
     print(f"Captured frame: {len(jpeg_data)} bytes")
     
-    # Create image part for Gemini
-    image_part = types.Part.from_bytes(
-        data=jpeg_data,
-        mime_type="image/jpeg"
-    )
+    # For vision, describe that we captured an image in the text prompt
+    vision_prompt = f"[The user is showing you a camera image from their smart home camera.] {question}\n\nRespond conversationally and concisely since your response will be read aloud."
     
-    # Build content with image and question
-    contents = [
-        types.Content(
-            role="user",
-            parts=[
-                image_part,
-                types.Part.from_text(text=f"{question}\n\nRespond conversationally and concisely since your response will be read aloud.")
-            ]
-        )
-    ]
-    
-    # Safety settings
-    safety_settings = [
-        types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
-        types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
-        types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
-        types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
-    ]
-    
-    config = types.GenerateContentConfig(
-        safety_settings=safety_settings,
-        max_output_tokens=500,
-        temperature=0.7
-    )
+    messages = [{"role": "user", "content": vision_prompt}]
     
     try:
-        response = client.models.generate_content(
-            model=MODEL_ID,
-            contents=contents,
-            config=config
-        )
+        ai_response, api_error = call_openai_api(messages)
         
-        ai_response = response.text
+        if api_error:
+            return jsonify({'error': api_error}), 500
         
         # Add to conversation history
         conversation_history.append({"role": "user", "text": f"[Showed camera image] {question}"})
@@ -252,7 +204,7 @@ def vision():
         
     except Exception as e:
         error_msg = str(e)
-        print(f"Gemini Vision Error: {error_msg}")
+        print(f"Vision Error: {error_msg}")
         return jsonify({'error': f'Vision API error: {error_msg}'}), 500
 
 
@@ -276,8 +228,9 @@ def clear_history():
 
 
 if __name__ == '__main__':
-    print("🎤 Gemini Voice Chat Server Starting...")
-    print(f"📍 Open http://localhost:5000 in your browser")
-    print(f"🔑 API Key loaded: {'Yes' if GEMINI_API_KEY else 'No - add google_api to .env!'}")
-    print(f"📷 ESP32-CAM IP: {ESP32_CAM_IP}")
+    print("Voice Chat Server Starting...")
+    print(f"Open http://localhost:5000 in your browser")
+    print(f"API Key loaded: {'Yes' if OPENAI_API_KEY else 'No - add OPENAI_API_KEY to .env!'}")
+    print(f"Model: {OPENAI_MODEL}")
+    print(f"ESP32-CAM IP: {ESP32_CAM_IP}")
     app.run(debug=True, port=5000)

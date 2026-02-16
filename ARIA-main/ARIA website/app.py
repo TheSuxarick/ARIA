@@ -6,8 +6,14 @@ app = Flask(__name__)
 
 # In-memory storage
 context_memory = []
-settings = {"model": "gpt-4", "api_key": "", "language": "EN"}
+settings = {
+    "model": "gpt-4o",
+    "api_key": "sk-sTgiqoqr21XjLEGlcah65fT8LuamSvlalhy1ykfPwefgju4n",
+    "language": "EN"
+}
 chat_history = []
+
+OPENAI_API_BASE = "https://api.chatanywhere.tech/v1"
 
 
 @app.route("/")
@@ -24,20 +30,48 @@ def chat():
 
     chat_history.append({"role": "user", "text": user_message})
 
-    # Use OpenAI API if key is set
     if settings.get("api_key"):
         try:
-            headers = {"Authorization": f"Bearer {settings['api_key']}", "Content-Type": "application/json"}
+            model = settings.get("model", "gpt-4o")
+            api_key = settings["api_key"]
+            url = f"{OPENAI_API_BASE}/chat/completions"
+
+            # System instruction with context memory
+            system_text = "You are ARIA, a smart home AI assistant. You are helpful, friendly, and knowledgeable."
+            if context_memory:
+                memory_text = "\n".join(f"- {m['text']}" for m in context_memory)
+                system_text += f"\n\nContext memory:\n{memory_text}"
+
+            # Build conversation messages in OpenAI format
+            messages = [{"role": "system", "content": system_text}]
+            for msg in chat_history[-20:]:
+                role = "user" if msg["role"] == "user" else "assistant"
+                messages.append({"role": role, "content": msg["text"]})
+
             payload = {
-                "model": settings.get("model", "gpt-4"),
-                "messages": [
-                    {"role": "system", "content": "You are ARIA, a smart home AI assistant."},
-                    {"role": "user", "content": user_message}
-                ],
-                "max_tokens": 300
+                "model": model,
+                "messages": messages,
+                "max_tokens": 1024,
+                "temperature": 0.7
             }
-            resp = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload, timeout=15)
-            ai_text = resp.json()["choices"][0]["message"]["content"] if resp.status_code == 200 else f"API error ({resp.status_code})."
+
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}"
+            }
+
+            resp = requests.post(url, json=payload, headers=headers, timeout=60)
+            resp_data = resp.json()
+
+            if resp.status_code == 200 and "choices" in resp_data:
+                ai_text = resp_data["choices"][0]["message"]["content"]
+            else:
+                err = resp_data.get("error", {})
+                if isinstance(err, dict):
+                    error_msg = err.get("message", str(resp_data))
+                else:
+                    error_msg = str(resp_data)
+                ai_text = f"API error ({resp.status_code}): {error_msg}"
         except Exception as e:
             ai_text = f"Connection error: {str(e)}"
     else:

@@ -2,9 +2,14 @@
 ARIA RAG (Retrieval Augmented Generation)
 Uses Qdrant vector database for memory retrieval
 """
+import time
+import requests
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
-from config import QDRANT_HOST, QDRANT_PORT, QDRANT_COLLECTION, RAG_TOP_K
+from config import (
+    QDRANT_HOST, QDRANT_PORT, QDRANT_COLLECTION, RAG_TOP_K,
+    OPENAI_API_KEY, OPENAI_API_BASE
+)
 
 
 class RAGMemory:
@@ -16,10 +21,6 @@ class RAGMemory:
         self.collection = QDRANT_COLLECTION
         self.top_k = RAG_TOP_K
         self.client = None
-        self.embedding_model = None
-        
-        # API key rotation for embeddings
-        self._current_key_index = 0
         
     def connect(self):
         """Connect to Qdrant"""
@@ -39,65 +40,51 @@ class RAGMemory:
     
     def _get_embedding(self, text):
         """
-        Get embedding for text using Gemini embeddings
-        With API key rotation on rate limits.
-        
-        Note: This uses the google-genai embeddings API.
-        Make sure your collection was created with the same embedding model.
+        Get embedding for text using OpenAI-compatible embeddings API.
         """
-        import time
-        from google import genai
-        from config import GEMINI_API_KEYS
+        if not OPENAI_API_KEY:
+            raise ValueError("No API key for embeddings")
         
-        if not GEMINI_API_KEYS:
-            raise ValueError("No Gemini API key for embeddings")
+        url = f"{OPENAI_API_BASE}/embeddings"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {OPENAI_API_KEY}"
+        }
+        payload = {
+            "model": "text-embedding-ada-002",
+            "input": text
+        }
         
-        num_keys = len(GEMINI_API_KEYS)
+        max_retries = 3
         last_error = None
         
-        # Try each key at least once, plus some retries
-        max_attempts = num_keys * 2
-        keys_tried = set()
-        
-        for attempt in range(max_attempts):
+        for attempt in range(max_retries):
             try:
-                # Use current key
-                key = GEMINI_API_KEYS[self._current_key_index]
-                print(f"[*] Embedding: trying key #{self._current_key_index+1}")
+                resp = requests.post(url, json=payload, headers=headers, timeout=30)
+                resp_data = resp.json()
                 
-                client = genai.Client(api_key=key)
-                
-                response = client.models.embed_content(
-                    model="text-embedding-004",
-                    contents=text
-                )
-                
-                return response.embeddings[0].values
-                
+                if resp.status_code == 200 and "data" in resp_data:
+                    return resp_data["data"][0]["embedding"]
+                else:
+                    err = resp_data.get("error", {})
+                    if isinstance(err, dict):
+                        error_msg = err.get("message", str(resp_data))
+                    else:
+                        error_msg = str(resp_data)
+                    raise Exception(f"Embedding API error ({resp.status_code}): {error_msg}")
+                    
             except Exception as e:
                 last_error = e
                 error_str = str(e).lower()
                 
-                # Check for rate limit
-                if "429" in error_str or "rate" in error_str or "quota" in error_str:
-                    keys_tried.add(self._current_key_index)
-                    old_index = self._current_key_index
-                    
-                    # Rotate to next key
-                    self._current_key_index = (self._current_key_index + 1) % num_keys
-                    
-                    print(f"[!] Key #{old_index+1} rate limited, switching to #{self._current_key_index+1}")
-                    
-                    # If we've tried all keys, wait before retrying
-                    if len(keys_tried) >= num_keys:
-                        wait_time = 2
-                        print(f"[*] All keys tried, waiting {wait_time}s...")
-                        time.sleep(wait_time)
-                        keys_tried.clear()
+                if "429" in error_str or "rate" in error_str:
+                    wait_time = 2 ** attempt
+                    print(f"[!] Rate limited, waiting {wait_time}s...")
+                    time.sleep(wait_time)
                 else:
-                    # Other error
                     print(f"[!] Embedding error: {str(e)[:60]}")
-                    time.sleep(0.5)
+                    if attempt < max_retries - 1:
+                        time.sleep(0.5)
         
         raise last_error
     
@@ -139,7 +126,6 @@ class RAGMemory:
             # Extract text from results
             memories = []
             for hit in results:
-                # Try different possible payload field names
                 payload = hit.payload
                 if payload:
                     text = payload.get('text') or payload.get('content') or payload.get('message') or str(payload)

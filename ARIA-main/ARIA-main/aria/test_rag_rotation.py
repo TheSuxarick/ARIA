@@ -1,24 +1,23 @@
 """
-Test RAG API key rotation
+Test RAG with OpenAI-compatible API
 """
 import sys
 sys.path.insert(0, '.')
 
-from config import GEMINI_API_KEYS
+from config import OPENAI_API_KEY, OPENAI_API_BASE
 from rag import RAGMemory
 
 print("="*50)
-print("RAG KEY ROTATION TEST")
+print("RAG TEST")
 print("="*50)
 
-# Check how many keys we have
-print(f"\n[1] API Keys configured: {len(GEMINI_API_KEYS)}")
-for i, key in enumerate(GEMINI_API_KEYS):
-    masked = key[:8] + "..." + key[-4:] if len(key) > 12 else key
-    print(f"    Key #{i+1}: {masked}")
+# Check API key
+masked = OPENAI_API_KEY[:8] + "..." + OPENAI_API_KEY[-4:] if len(OPENAI_API_KEY) > 12 else OPENAI_API_KEY
+print(f"\n[1] API Key: {masked}")
+print(f"    API Base: {OPENAI_API_BASE}")
 
-# Test RAG search with rotation
-print(f"\n[2] Testing RAG search (should rotate if key #1 is exhausted)...")
+# Test RAG search
+print(f"\n[2] Testing RAG search...")
 
 rag = RAGMemory()
 rag.connect()

@@ -7,29 +7,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # =============================================================================
-# GEMINI API (with key rotation)
+# OPENAI-COMPATIBLE API (ChatAnywhere)
 # =============================================================================
-def get_api_keys():
-    """Get all available Gemini API keys for rotation"""
-    keys = []
-    # Check for numbered keys first
-    i = 1
-    while True:
-        key = os.getenv(f'google_api_{i}')
-        if key:
-            keys.append(key)
-            i += 1
-        else:
-            break
-    # Fallback to single key
-    if not keys:
-        single_key = os.getenv('google_api')
-        if single_key:
-            keys.append(single_key)
-    return keys
-
-GEMINI_API_KEYS = get_api_keys()
-GEMINI_MODEL = "gemini-2.5-flash-lite"
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', 'sk-sTgiqoqr21XjLEGlcah65fT8LuamSvlalhy1ykfPwefgju4n')
+OPENAI_API_BASE = os.getenv('OPENAI_API_BASE', 'https://api.chatanywhere.tech/v1')
+OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4o')
 
 # =============================================================================
 # ESP32-CAM

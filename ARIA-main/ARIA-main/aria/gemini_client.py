@@ -1,62 +1,34 @@
 """
-ARIA Gemini Client
-Handles Gemini API calls with automatic key rotation on rate limits
+ARIA AI Client
+Handles OpenAI-compatible API calls (ChatAnywhere) with conversation history
 """
 import time
-from google import genai
-from google.genai import types
-from config import GEMINI_API_KEYS, GEMINI_MODEL, SYSTEM_PROMPT
+import base64
+import requests
+from config import OPENAI_API_KEY, OPENAI_API_BASE, OPENAI_MODEL, SYSTEM_PROMPT
 
 
-class GeminiClient:
-    """Gemini API client with key rotation"""
+class AIClient:
+    """OpenAI-compatible API client for ChatAnywhere"""
     
     def __init__(self):
-        self.api_keys = GEMINI_API_KEYS.copy()
-        self.current_key_index = 0
-        self.client = None
-        self.model = GEMINI_MODEL
+        self.api_key = OPENAI_API_KEY
+        self.api_base = OPENAI_API_BASE
+        self.model = OPENAI_MODEL
         
         # Conversation history
         self.history = []
         self.history_summary = ""
         
-        # Track key failures
-        self.key_failures = {}
+        if not self.api_key:
+            raise ValueError("No API key configured! Set OPENAI_API_KEY in .env")
         
-        # Safety settings (allow all)
-        self.safety_settings = [
-            types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
-            types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
-            types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
-            types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
-        ]
-        
-        self._init_client()
+        print(f"[*] AI Client initialized with model: {self.model}")
+        print(f"[*] API base: {self.api_base}")
     
-    def _init_client(self):
-        """Initialize client with current API key"""
-        if not self.api_keys:
-            raise ValueError("No Gemini API keys configured!")
-        
-        key = self.api_keys[self.current_key_index]
-        self.client = genai.Client(api_key=key)
-        print(f"[*] Using Gemini API key #{self.current_key_index + 1}")
-    
-    def _rotate_key(self):
-        """Rotate to next API key"""
-        if len(self.api_keys) <= 1:
-            print("[!] Only one API key available, cannot rotate")
-            return False
-        
-        self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
-        self._init_client()
-        print(f"[*] Rotated to API key #{self.current_key_index + 1}")
-        return True
-    
-    def _build_contents(self, user_message, memories=None, image_data=None):
-        """Build conversation contents for API"""
-        contents = []
+    def _build_messages(self, user_message, memories=None):
+        """Build conversation messages in OpenAI format"""
+        messages = []
         
         # System prompt with memories
         system_text = SYSTEM_PROMPT
@@ -70,94 +42,88 @@ class GeminiClient:
         if self.history_summary:
             system_text += f"\n--- Краткое содержание предыдущего разговора ---\n{self.history_summary}\n"
         
-        # Add system prompt as first user message
-        contents.append(types.Content(
-            role="user",
-            parts=[types.Part.from_text(text=system_text)]
-        ))
-        contents.append(types.Content(
-            role="model",
-            parts=[types.Part.from_text(text="Понятно! Я ARIA - твой умный домашний помощник. Готова помочь!")]
-        ))
+        messages.append({"role": "system", "content": system_text})
         
         # Add conversation history
         for msg in self.history:
-            contents.append(types.Content(
-                role=msg["role"],
-                parts=[types.Part.from_text(text=msg["text"])]
-            ))
+            role = "user" if msg["role"] == "user" else "assistant"
+            messages.append({"role": role, "content": msg["text"]})
         
-        # Add current message (with image if provided)
-        parts = []
-        if image_data:
-            parts.append(types.Part.from_bytes(data=image_data, mime_type="image/jpeg"))
-        parts.append(types.Part.from_text(text=user_message))
+        # Add current message
+        messages.append({"role": "user", "content": user_message})
         
-        contents.append(types.Content(role="user", parts=parts))
-        
-        return contents
+        return messages
     
     def chat(self, message, memories=None, image_data=None, max_retries=3):
         """
-        Send message to Gemini and get response
+        Send message to AI and get response
         
         Args:
             message: User message text
             memories: List of relevant memories from RAG
-            image_data: Optional image bytes for vision
-            max_retries: Number of retries with key rotation
+            image_data: Optional image bytes for vision (not supported in free tier)
+            max_retries: Number of retries
             
         Returns:
             AI response text
         """
-        contents = self._build_contents(message, memories, image_data)
+        if image_data:
+            message = f"[Пользователь показал изображение с камеры] {message}"
         
-        config = types.GenerateContentConfig(
-            safety_settings=self.safety_settings,
-            max_output_tokens=500,
-            temperature=0.7
-        )
+        messages = self._build_messages(message, memories)
+        
+        url = f"{self.api_base}/chat/completions"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}"
+        }
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "max_tokens": 500,
+            "temperature": 0.7
+        }
         
         last_error = None
         
         for attempt in range(max_retries):
             try:
-                response = self.client.models.generate_content(
-                    model=self.model,
-                    contents=contents,
-                    config=config
-                )
+                resp = requests.post(url, json=payload, headers=headers, timeout=60)
+                resp_data = resp.json()
                 
-                ai_response = response.text
-                
-                # Add to history
-                if image_data:
-                    self.history.append({"role": "user", "text": f"[Изображение с камеры] {message}"})
+                if resp.status_code == 200 and "choices" in resp_data:
+                    ai_response = resp_data["choices"][0]["message"]["content"]
+                    
+                    # Add to history
+                    if image_data:
+                        self.history.append({"role": "user", "text": f"[Изображение с камеры] {message}"})
+                    else:
+                        self.history.append({"role": "user", "text": message})
+                    self.history.append({"role": "model", "text": ai_response})
+                    
+                    # Check if we need to summarize
+                    self._maybe_summarize()
+                    
+                    return ai_response
                 else:
-                    self.history.append({"role": "user", "text": message})
-                self.history.append({"role": "model", "text": ai_response})
-                
-                # Check if we need to summarize
-                self._maybe_summarize()
-                
-                return ai_response
-                
+                    err = resp_data.get("error", {})
+                    if isinstance(err, dict):
+                        error_msg = err.get("message", str(resp_data))
+                    else:
+                        error_msg = str(resp_data)
+                    raise Exception(f"API error ({resp.status_code}): {error_msg}")
+                    
             except Exception as e:
                 last_error = e
                 error_str = str(e).lower()
                 
-                # Check if it's a rate limit error
                 if "429" in error_str or "rate" in error_str or "quota" in error_str:
-                    print(f"[!] Rate limit hit on key #{self.current_key_index + 1}")
-                    self.key_failures[self.current_key_index] = time.time()
-                    
-                    if not self._rotate_key():
-                        # Exponential backoff if can't rotate
-                        wait_time = 2 ** attempt
-                        print(f"[*] Waiting {wait_time}s before retry...")
-                        time.sleep(wait_time)
+                    print(f"[!] Rate limit hit")
+                    wait_time = 2 ** attempt
+                    print(f"[*] Waiting {wait_time}s before retry...")
+                    time.sleep(wait_time)
                 else:
-                    print(f"[ERROR] Gemini error: {e}")
+                    print(f"[ERROR] API error: {e}")
                     if attempt < max_retries - 1:
                         time.sleep(1)
         
@@ -167,37 +133,41 @@ class GeminiClient:
         """Summarize conversation if history is too long"""
         from config import MAX_HISTORY_TURNS, SUMMARIZE_AFTER
         
-        if len(self.history) >= SUMMARIZE_AFTER * 2:  # *2 because user+model pairs
+        if len(self.history) >= SUMMARIZE_AFTER * 2:
             print("[*] Summarizing conversation history...")
             
-            # Keep last N turns
             keep_count = MAX_HISTORY_TURNS * 2
             old_history = self.history[:-keep_count]
             self.history = self.history[-keep_count:]
             
-            # Summarize old history
             summary_prompt = "Кратко резюмируй этот разговор (2-3 предложения):\n\n"
             for msg in old_history:
                 role = "Пользователь" if msg["role"] == "user" else "ARIA"
                 summary_prompt += f"{role}: {msg['text']}\n"
             
             try:
-                contents = [types.Content(
-                    role="user",
-                    parts=[types.Part.from_text(text=summary_prompt)]
-                )]
+                url = f"{self.api_base}/chat/completions"
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}"
+                }
+                payload = {
+                    "model": self.model,
+                    "messages": [{"role": "user", "content": summary_prompt}],
+                    "max_tokens": 200,
+                    "temperature": 0.5
+                }
                 
-                response = self.client.models.generate_content(
-                    model=self.model,
-                    contents=contents,
-                    config=types.GenerateContentConfig(max_output_tokens=200)
-                )
+                resp = requests.post(url, json=payload, headers=headers, timeout=30)
+                resp_data = resp.json()
                 
-                if self.history_summary:
-                    self.history_summary = f"{self.history_summary}\n{response.text}"
-                else:
-                    self.history_summary = response.text
-                    
+                if resp.status_code == 200 and "choices" in resp_data:
+                    summary = resp_data["choices"][0]["message"]["content"]
+                    if self.history_summary:
+                        self.history_summary = f"{self.history_summary}\n{summary}"
+                    else:
+                        self.history_summary = summary
+                        
             except Exception as e:
                 print(f"[!] Could not summarize: {e}")
     
@@ -209,18 +179,19 @@ class GeminiClient:
 
 
 # Singleton
-_gemini = None
+_client = None
 
 def get_gemini():
-    global _gemini
-    if _gemini is None:
-        _gemini = GeminiClient()
-    return _gemini
+    """Get AI client instance (kept name for backward compatibility)"""
+    global _client
+    if _client is None:
+        _client = AIClient()
+    return _client
 
 
 if __name__ == "__main__":
-    # Test Gemini client
-    client = GeminiClient()
+    # Test AI client
+    client = AIClient()
     
     response = client.chat("Привет! Как тебя зовут?")
     print(f"ARIA: {response}")
