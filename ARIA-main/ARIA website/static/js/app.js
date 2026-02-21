@@ -77,8 +77,18 @@ document.addEventListener("DOMContentLoaded", () => {
             memory_placeholder: "Add a memory entry...",
             model_settings: "Model Settings",
             model_label: "Model",
-            api_key_label: "API Key",
+            api_keys_status: "API Keys",
             save_settings: "Save Settings",
+            personality: "AI Personality",
+            persona_default: "Default",
+            persona_chill: "Chill",
+            persona_bro: "Bro",
+            persona_angry: "Angry",
+            persona_formal: "Formal",
+            persona_pirate: "Pirate",
+            persona_sassy: "Sassy",
+            persona_nerd: "Nerd",
+            toast_personality_changed: "Personality set to",
             language: "Language",
             // Toasts
             toast_lights_toggled: "Lights toggled",
@@ -134,8 +144,18 @@ document.addEventListener("DOMContentLoaded", () => {
             memory_placeholder: "Добавить запись...",
             model_settings: "Настройки модели",
             model_label: "Модель",
-            api_key_label: "API Ключ",
+            api_keys_status: "API Ключи",
             save_settings: "Сохранить",
+            personality: "Личность ИИ",
+            persona_default: "Обычный",
+            persona_chill: "Спокойный",
+            persona_bro: "Братан",
+            persona_angry: "Злой",
+            persona_formal: "Формальный",
+            persona_pirate: "Пират",
+            persona_sassy: "Дерзкий",
+            persona_nerd: "Ботан",
+            toast_personality_changed: "Личность:",
             language: "Язык",
             toast_lights_toggled: "Свет переключён",
             toast_robot_called: "Робот вызван",
@@ -188,8 +208,18 @@ document.addEventListener("DOMContentLoaded", () => {
             memory_placeholder: "Жазба қосу...",
             model_settings: "Модель баптаулары",
             model_label: "Модель",
-            api_key_label: "API Кілт",
+            api_keys_status: "API Кілттер",
             save_settings: "Сақтау",
+            personality: "AI Тұлғасы",
+            persona_default: "Қалыпты",
+            persona_chill: "Сабырлы",
+            persona_bro: "Бро",
+            persona_angry: "Ашулы",
+            persona_formal: "Ресми",
+            persona_pirate: "Қарақшы",
+            persona_sassy: "Өжет",
+            persona_nerd: "Нерд",
+            toast_personality_changed: "Тұлға:",
             language: "Тіл",
             toast_lights_toggled: "Жарық ауыстырылды",
             toast_robot_called: "Робот шақырылды",
@@ -382,19 +412,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ─── Model Settings ───
     const modelSelect = document.getElementById("modelSelect");
-    const apiKeyInput = document.getElementById("apiKeyInput");
-    const toggleApiKey = document.getElementById("toggleApiKey");
     const saveSettingsBtn = document.getElementById("saveSettingsBtn");
-
-    toggleApiKey.addEventListener("click", () => {
-        const icon = toggleApiKey.querySelector(".material-icons-round");
-        apiKeyInput.type = apiKeyInput.type === "password" ? "text" : "password";
-        icon.textContent = apiKeyInput.type === "password" ? "visibility" : "visibility_off";
-    });
+    const apiKeyCount = document.getElementById("apiKeyCount");
+    const apiKeyBadge = document.getElementById("apiKeyBadge");
 
     saveSettingsBtn.addEventListener("click", async () => {
         const payload = { model: modelSelect.value };
-        if (apiKeyInput.value) payload.api_key = apiKeyInput.value;
         try {
             const resp = await fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
             showToast(resp.ok ? t("toast_settings_saved") : t("toast_save_failed"), resp.ok ? "success" : "error");
@@ -407,13 +430,21 @@ document.addEventListener("DOMContentLoaded", () => {
             if (resp.ok) {
                 const d = await resp.json();
                 modelSelect.value = d.model;
-                // Apply the saved language
+                if (d.api_keys_count) {
+                    apiKeyCount.textContent = `${d.api_keys_count} keys loaded`;
+                    apiKeyBadge.textContent = "Active";
+                }
                 if (d.language && translations[d.language]) {
                     currentLang = d.language;
                     document.querySelectorAll(".lang-btn").forEach(b => {
                         b.classList.toggle("active", b.dataset.lang === d.language);
                     });
                     applyLanguage(d.language);
+                }
+                if (d.personality) {
+                    document.querySelectorAll(".persona-btn").forEach(b => {
+                        b.classList.toggle("active", b.dataset.persona === d.personality);
+                    });
                 }
             }
         } catch {}
@@ -434,6 +465,24 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    // ─── Personality ───
+    document.querySelectorAll(".persona-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            document.querySelectorAll(".persona-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            const persona = btn.dataset.persona;
+            const label = btn.querySelector(".persona-name").textContent;
+            showToast(`${t("toast_personality_changed")} ${label}`, "info");
+            try {
+                await fetch("/api/settings", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ personality: persona }),
+                });
+            } catch {}
+        });
+    });
+
     // ─── Server Status ───
     async function checkStatus() {
         const dots = document.querySelectorAll(".status-dot");
@@ -450,6 +499,221 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
     setInterval(checkStatus, 15000);
+
+    // ═══════════════════════ WEATHER ═══════════════════════
+
+    const weatherBody = document.getElementById("weatherBody");
+    const weatherForecastSection = document.getElementById("weatherForecastSection");
+    const weatherCityInput = document.getElementById("weatherCityInput");
+    const weatherGoBtn = document.getElementById("weatherGoBtn");
+    const weatherLiveDot = document.getElementById("weatherLiveDot");
+
+    const WX_ICONS = {
+        "01d": "wb_sunny", "01n": "nights_stay",
+        "02d": "cloud_queue", "02n": "nights_stay",
+        "03d": "cloud", "03n": "cloud",
+        "04d": "filter_drama", "04n": "filter_drama",
+        "09d": "grain", "09n": "grain",
+        "10d": "opacity", "10n": "opacity",
+        "11d": "flash_on", "11n": "flash_on",
+        "13d": "ac_unit", "13n": "ac_unit",
+        "50d": "blur_on", "50n": "blur_on",
+    };
+    function wxIcon(code) { return WX_ICONS[code] || "cloud"; }
+
+    function windDir(deg) {
+        const dirs = ["N","NE","E","SE","S","SW","W","NW"];
+        return dirs[Math.round(deg / 45) % 8];
+    }
+
+    let wxClockInterval = null;
+    let wxLastData = null;
+
+    function startWxClock(localtimeStr) {
+        if (wxClockInterval) clearInterval(wxClockInterval);
+        const parts = localtimeStr.split(" ");
+        if (parts.length < 2) return;
+        const [datePart, timePart] = parts;
+        const [y, m, d] = datePart.split("-").map(Number);
+        const [h, mi] = timePart.split(":").map(Number);
+        let cityTime = new Date(y, m - 1, d, h, mi, 0);
+        const fetchedAt = Date.now();
+
+        function updateClockDisplay() {
+            const elapsed = Date.now() - fetchedAt;
+            const now = new Date(cityTime.getTime() + elapsed);
+            const hh = now.getHours().toString().padStart(2, "0");
+            const mm = now.getMinutes().toString().padStart(2, "0");
+            const ss = now.getSeconds().toString().padStart(2, "0");
+            const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+            const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+            const dayName = dayNames[now.getDay()];
+            const monthName = monthNames[now.getMonth()];
+            const dateNum = now.getDate();
+            const el = document.getElementById("wxLocalClock");
+            if (el) el.textContent = `${dayName}, ${monthName} ${dateNum}  ${hh}:${mm}:${ss}`;
+        }
+        updateClockDisplay();
+        wxClockInterval = setInterval(updateClockDisplay, 1000);
+    }
+
+    async function loadWeather(city, silent) {
+        if (!city) return;
+        if (!silent) {
+            weatherBody.innerHTML = `<div class="weather-placeholder-state"><span class="material-icons-round weather-spin">sync</span><p>Loading...</p></div>`;
+            weatherForecastSection.innerHTML = "";
+            weatherLiveDot.classList.remove("live");
+        }
+
+        try {
+            const r = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
+            if (!r.ok) {
+                const e = await r.json();
+                weatherBody.innerHTML = `<div class="weather-placeholder-state error"><span class="material-icons-round">cloud_off</span><p>${escapeHtml(e.error || "City not found")}</p></div>`;
+                weatherLiveDot.classList.remove("live");
+                return;
+            }
+            const w = await r.json();
+            w._fetchedAtMs = Date.now();
+            wxLastData = w;
+            weatherLiveDot.classList.add("live");
+
+            const sunrise = w.sunrise || "--:--";
+            const sunset = w.sunset || "--:--";
+
+            const temp = Math.round(w.temp);
+            const feelsLike = Math.round(w.feels_like);
+            const tempMin = Math.round(w.temp_min);
+            const tempMax = Math.round(w.temp_max);
+            const windKph = Math.round(w.wind_kph);
+            const pressure = Math.round(w.pressure);
+            const visKm = w.vis_km;
+
+            weatherBody.innerHTML = `
+                <div class="wx-time-bar">
+                    <span class="material-icons-round wx-time-icon">schedule</span>
+                    <span class="wx-local-clock" id="wxLocalClock">--:--:--</span>
+                    <span class="wx-tz-label">${escapeHtml(w.tz_id || "")}</span>
+                </div>
+                <div class="wx-hero">
+                    <div class="wx-hero-left">
+                        <div class="wx-icon-wrap"><span class="material-icons-round">${wxIcon(w.icon)}</span></div>
+                        <div class="wx-hero-info">
+                            <div class="wx-temp">${temp}<span class="wx-deg">°C</span></div>
+                            <div class="wx-location">${escapeHtml(w.city)}, ${escapeHtml(w.country)}</div>
+                            <div class="wx-condition">${escapeHtml(w.description)}</div>
+                        </div>
+                    </div>
+                    <div class="wx-hero-right">
+                        <div class="wx-minmax">
+                            <span class="material-icons-round">arrow_upward</span>${tempMax}°
+                            <span class="material-icons-round">arrow_downward</span>${tempMin}°
+                        </div>
+                        <div class="wx-feels">Feels like ${feelsLike}°C</div>
+                    </div>
+                </div>
+                <div class="wx-grid">
+                    <div class="wx-stat">
+                        <span class="material-icons-round">air</span>
+                        <div class="wx-stat-info">
+                            <span class="wx-stat-val">${windKph} km/h ${w.wind_dir || windDir(w.wind_deg)}</span>
+                            <span class="wx-stat-lbl">Wind</span>
+                        </div>
+                    </div>
+                    <div class="wx-stat">
+                        <span class="material-icons-round">opacity</span>
+                        <div class="wx-stat-info">
+                            <span class="wx-stat-val">${w.humidity}%</span>
+                            <span class="wx-stat-lbl">Humidity</span>
+                        </div>
+                    </div>
+                    <div class="wx-stat">
+                        <span class="material-icons-round">speed</span>
+                        <div class="wx-stat-info">
+                            <span class="wx-stat-val">${pressure} hPa</span>
+                            <span class="wx-stat-lbl">Pressure</span>
+                        </div>
+                    </div>
+                    <div class="wx-stat">
+                        <span class="material-icons-round">visibility</span>
+                        <div class="wx-stat-info">
+                            <span class="wx-stat-val">${visKm} km</span>
+                            <span class="wx-stat-lbl">Visibility</span>
+                        </div>
+                    </div>
+                    <div class="wx-stat">
+                        <span class="material-icons-round">cloud</span>
+                        <div class="wx-stat-info">
+                            <span class="wx-stat-val">${w.clouds}%</span>
+                            <span class="wx-stat-lbl">Clouds</span>
+                        </div>
+                    </div>
+                    <div class="wx-stat">
+                        <span class="material-icons-round">wb_sunny</span>
+                        <div class="wx-stat-info">
+                            <span class="wx-stat-val">${sunrise} / ${sunset}</span>
+                            <span class="wx-stat-lbl">Rise / Set</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="wx-updated-bar">Updated: ${escapeHtml(w.last_updated || w.localtime || "just now")}</div>
+            `;
+
+            if (w.localtime) startWxClock(w.localtime);
+            loadForecast(city);
+        } catch {
+            weatherBody.innerHTML = `<div class="weather-placeholder-state error"><span class="material-icons-round">cloud_off</span><p>Cannot connect</p></div>`;
+        }
+    }
+
+    async function loadForecast(city) {
+        try {
+            const r = await fetch(`/api/forecast?city=${encodeURIComponent(city)}`);
+            if (!r.ok) return;
+            const d = await r.json();
+
+            const nowEpoch = d.localtime_epoch || (wxLastData && wxLastData.localtime_epoch) || Math.floor(Date.now() / 1000);
+            const upcoming = d.forecast.filter(f => f.dt >= nowEpoch - 1800);
+            if (!upcoming.length) return;
+
+            const todayDate = upcoming[0].date;
+
+            let html = `<div class="wx-forecast-title">Forecast</div><div class="wx-forecast-scroll">`;
+            upcoming.slice(0, 16).forEach(f => {
+                const lt = f.local_time || "";
+                const timePart = lt.split(" ")[1] || "??:??";
+                const hour = timePart.slice(0, 5);
+                const dayLabel = f.date === todayDate ? "Today" : "Tmrw";
+                html += `
+                    <div class="wx-fc-item">
+                        <span class="wx-fc-day">${dayLabel}</span>
+                        <span class="wx-fc-hour">${hour}</span>
+                        <span class="material-icons-round wx-fc-icon">${wxIcon(f.icon)}</span>
+                        <span class="wx-fc-temp">${Math.round(f.temp)}°</span>
+                        <span class="wx-fc-wind"><span class="material-icons-round" style="font-size:12px">air</span>${Math.round(f.wind_kph)}</span>
+                    </div>`;
+            });
+            html += `</div>`;
+            weatherForecastSection.innerHTML = html;
+        } catch {}
+    }
+
+    weatherGoBtn.addEventListener("click", () => {
+        const city = weatherCityInput.value.trim();
+        if (city) loadWeather(city);
+    });
+    weatherCityInput.addEventListener("keydown", e => {
+        if (e.key === "Enter") {
+            const city = weatherCityInput.value.trim();
+            if (city) loadWeather(city);
+        }
+    });
+
+    loadWeather("Almaty");
+    setInterval(() => {
+        const city = weatherCityInput.value.trim() || "Almaty";
+        loadWeather(city, true);
+    }, 180000);
 
     // ─── D-Pad ───
     document.querySelectorAll(".dpad-btn").forEach(btn => {
