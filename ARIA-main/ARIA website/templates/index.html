@@ -125,21 +125,26 @@
                 <div class="card-header">
                     <span class="material-icons-round card-icon">videocam</span>
                     <h2 data-i18n="live_stream">Live Stream</h2>
-                    <span class="live-badge">● LIVE</span>
+                    <span class="live-badge" id="cameraStatus">● OFFLINE</span>
                 </div>
-                <div class="camera-feed">
-                    <div class="camera-placeholder">
+                <div class="camera-feed" id="cameraFeed">
+                    <img id="cameraStream" alt="Camera Stream">
+                    <div class="camera-placeholder" id="cameraPlaceholder">
                         <span class="material-icons-round">videocam_off</span>
                         <p data-i18n="camera_unavailable">Camera feed not available</p>
+                        <button class="btn-camera-retry" id="cameraRetryBtn">
+                            <span class="material-icons-round" style="font-size:18px">refresh</span>
+                            Retry
+                        </button>
                     </div>
                 </div>
                 <div class="camera-controls">
                     <div class="dpad">
-                        <button class="dpad-btn dpad-up"><span class="material-icons-round">arrow_upward</span></button>
-                        <button class="dpad-btn dpad-left"><span class="material-icons-round">arrow_back</span></button>
-                        <button class="dpad-btn dpad-center"><span class="material-icons-round">radio_button_checked</span></button>
-                        <button class="dpad-btn dpad-right"><span class="material-icons-round">arrow_forward</span></button>
-                        <button class="dpad-btn dpad-down"><span class="material-icons-round">arrow_downward</span></button>
+                        <button class="dpad-btn dpad-up" data-dir="up"><span class="material-icons-round">arrow_upward</span></button>
+                        <button class="dpad-btn dpad-left" data-dir="left"><span class="material-icons-round">arrow_back</span></button>
+                        <button class="dpad-btn dpad-center" id="micToggleBtn"><span class="material-icons-round">mic</span></button>
+                        <button class="dpad-btn dpad-right" data-dir="right"><span class="material-icons-round">arrow_forward</span></button>
+                        <button class="dpad-btn dpad-down" data-dir="down"><span class="material-icons-round">arrow_downward</span></button>
                     </div>
                 </div>
             </div>
@@ -429,6 +434,7 @@
     </main>
 
     <div class="toast-container" id="toastContainer"></div>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

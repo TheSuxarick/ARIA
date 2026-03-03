@@ -482,6 +482,7 @@ document.addEventListener("DOMContentLoaded", () => {
         pageTitle.dataset.i18n = titleKey;
         sidebar.classList.remove("open");
         overlay.classList.remove("show");
+        if (pageName === "camera" && !cameraIp) discoverCamera();
     }
 
     navLinks.forEach(link => {
@@ -922,15 +923,181 @@ document.addEventListener("DOMContentLoaded", () => {
         loadWeather(city, true);
     }, 180000);
 
-    // ─── D-Pad ───
-    document.querySelectorAll(".dpad-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const map = { "dpad-up": "cam_up", "dpad-down": "cam_down", "dpad-left": "cam_left", "dpad-right": "cam_right", "dpad-center": "cam_center" };
-            for (const [cls, key] of Object.entries(map)) {
-                if (btn.classList.contains(cls)) { showToast(t(key), "info"); break; }
+    // ─── Camera & D-Pad ───
+    let cameraIp = null;
+    let cameraDiscovering = false;
+    const cameraStream = document.getElementById("cameraStream");
+    const cameraPlaceholder = document.getElementById("cameraPlaceholder");
+    const cameraStatusEl = document.getElementById("cameraStatus");
+    const cameraRetryBtn = document.getElementById("cameraRetryBtn");
+
+    function setCameraOnline(ip, streamUrl) {
+        cameraIp = ip;
+        cameraStream.src = streamUrl;
+        cameraStream.style.display = "block";
+        cameraPlaceholder.style.display = "none";
+        cameraStatusEl.textContent = "● LIVE";
+        cameraStatusEl.style.color = "var(--danger)";
+    }
+
+    function setCameraOffline() {
+        cameraIp = null;
+        cameraStream.src = "";
+        cameraStream.style.display = "none";
+        cameraPlaceholder.style.display = "flex";
+        cameraStatusEl.textContent = "● OFFLINE";
+        cameraStatusEl.style.color = "var(--text-muted)";
+    }
+
+    async function discoverCamera() {
+        if (cameraDiscovering) return;
+        cameraDiscovering = true;
+        cameraStatusEl.textContent = "● SCANNING...";
+        cameraStatusEl.style.color = "var(--warning)";
+        try {
+            const resp = await fetch("/api/camera/discover");
+            if (resp.ok) {
+                const data = await resp.json();
+                setCameraOnline(data.ip, data.stream_url);
+                showToast(`Camera found: ${data.ip}`, "success");
+            } else {
+                setCameraOffline();
+                showToast("Camera not found", "error");
+            }
+        } catch {
+            setCameraOffline();
+        }
+        cameraDiscovering = false;
+    }
+
+    if (cameraRetryBtn) cameraRetryBtn.addEventListener("click", discoverCamera);
+
+    if (cameraStream) {
+        cameraStream.addEventListener("error", () => {
+            setCameraOffline();
+        });
+    }
+
+    document.querySelectorAll(".dpad-btn[data-dir]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const dir = btn.dataset.dir;
+            if (!cameraIp) { showToast("Camera offline", "error"); return; }
+            btn.style.transform = "scale(0.85)";
+            setTimeout(() => btn.style.transform = "", 150);
+            try {
+                const resp = await fetch("/api/camera/control", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ direction: dir })
+                });
+                if (!resp.ok) showToast("Camera control failed", "error");
+            } catch {
+                showToast("Camera unreachable", "error");
             }
         });
     });
+
+    // ─── Audio Intercom (browser <-> ESP32) ───
+    const micToggleBtn = document.getElementById("micToggleBtn");
+    let micActive = false;
+    let _aSocket = null;
+    let _aMicCtx = null, _aMicStream = null, _aMicProc = null;
+    let _aPlayCtx = null, _aNextTime = 0;
+
+    async function startIntercom() {
+        _aSocket = io("/audio");
+
+        _aPlayCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+        _aNextTime = 0;
+
+        _aSocket.on("esp_audio", (raw) => {
+            if (!_aPlayCtx) return;
+            const pcm = new Int16Array(raw);
+            const f32 = new Float32Array(pcm.length);
+            for (let i = 0; i < pcm.length; i++) f32[i] = pcm[i] / 32768.0;
+            const buf = _aPlayCtx.createBuffer(1, f32.length, 16000);
+            buf.getChannelData(0).set(f32);
+            const src = _aPlayCtx.createBufferSource();
+            src.buffer = buf;
+            src.connect(_aPlayCtx.destination);
+            const now = _aPlayCtx.currentTime;
+            if (_aNextTime < now) _aNextTime = now + 0.05;
+            src.start(_aNextTime);
+            _aNextTime += buf.duration;
+        });
+
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            try {
+                _aMicCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+                const rate = _aMicCtx.sampleRate;
+                _aMicStream = await navigator.mediaDevices.getUserMedia({
+                    audio: { echoCancellation: true, noiseSuppression: true }
+                });
+                const source = _aMicCtx.createMediaStreamSource(_aMicStream);
+                const bufSz = rate <= 16000 ? 512 : 2048;
+                _aMicProc = _aMicCtx.createScriptProcessor(bufSz, 1, 1);
+
+                _aMicProc.onaudioprocess = (e) => {
+                    if (!_aSocket) return;
+                    let f = e.inputBuffer.getChannelData(0);
+                    if (rate !== 16000) {
+                        const ratio = rate / 16000;
+                        const newLen = Math.round(f.length / ratio);
+                        const rs = new Float32Array(newLen);
+                        for (let i = 0; i < newLen; i++) rs[i] = f[Math.round(i * ratio)];
+                        f = rs;
+                    }
+                    const pcm = new Int16Array(f.length);
+                    for (let i = 0; i < f.length; i++) {
+                        const s = Math.max(-1, Math.min(1, f[i]));
+                        pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                    }
+                    _aSocket.emit("browser_audio", pcm.buffer);
+                };
+
+                const mute = _aMicCtx.createGain();
+                mute.gain.value = 0;
+                source.connect(_aMicProc);
+                _aMicProc.connect(mute);
+                mute.connect(_aMicCtx.destination);
+            } catch (err) {
+                showToast("Mic blocked (HTTPS required) — listen only", "error");
+            }
+        } else {
+            showToast("No mic on HTTP — listen only mode", "error");
+        }
+    }
+
+    function stopIntercom() {
+        if (_aMicProc) { _aMicProc.disconnect(); _aMicProc = null; }
+        if (_aMicStream) { _aMicStream.getTracks().forEach(t => t.stop()); _aMicStream = null; }
+        if (_aMicCtx) { _aMicCtx.close(); _aMicCtx = null; }
+        if (_aPlayCtx) { _aPlayCtx.close(); _aPlayCtx = null; }
+        if (_aSocket) { _aSocket.disconnect(); _aSocket = null; }
+    }
+
+    if (micToggleBtn) {
+        micToggleBtn.addEventListener("click", async () => {
+            micActive = !micActive;
+            const icon = micToggleBtn.querySelector(".material-icons-round");
+            if (micActive) {
+                try {
+                    await startIntercom();
+                    icon.textContent = "mic";
+                    micToggleBtn.classList.add("mic-active");
+                    showToast("Intercom active", "success");
+                } catch (e) {
+                    micActive = false;
+                    showToast("Failed: " + e.message, "error");
+                }
+            } else {
+                stopIntercom();
+                icon.textContent = "mic_off";
+                micToggleBtn.classList.remove("mic-active");
+                showToast("Intercom off", "info");
+            }
+        });
+    }
 
     // ═══════════════════════ EMAIL AUTHENTICATION ═══════════════════════
     const accountIconBtn = document.getElementById('accountIconBtn');

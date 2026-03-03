@@ -1,7 +1,16 @@
+import sys
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
+from flask_socketio import SocketIO
 import requests
 import re
 import os
+import subprocess
+import socket as _socket
+import threading as _threading
 from datetime import datetime, timedelta
 from pathlib import Path
 from gmail_service import GmailService
@@ -26,6 +35,7 @@ _load_env()
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 
 # Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///aria_email.db'
@@ -968,6 +978,178 @@ def sync_emails():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
+
+# ═══════════════════════ AUDIO INTERCOM (browser <-> ESP32) ═══════════════════════
+
+AUDIO_MIC_PORT = 12345
+AUDIO_SPK_PORT = 12346
+_esp32_audio_ip = None
+_audio_listeners = 0
+_audio_bridge_ok = False
+_udp_recv = None
+_udp_send = None
+
+
+def _init_audio_bridge():
+    global _audio_bridge_ok, _udp_recv, _udp_send
+
+    try:
+        _udp_recv = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)
+        _udp_recv.setsockopt(_socket.SOL_SOCKET, _socket.SO_RCVBUF, 65536)
+        _udp_recv.bind(("0.0.0.0", AUDIO_MIC_PORT))
+
+        _udp_send = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)
+
+        def _recv_loop():
+            global _esp32_audio_ip
+            while True:
+                try:
+                    data, addr = _udp_recv.recvfrom(4096)
+                    _esp32_audio_ip = addr[0]
+                    if _audio_listeners > 0:
+                        socketio.emit("esp_audio", data, namespace="/audio")
+                except Exception:
+                    continue
+
+        _threading.Thread(target=_recv_loop, daemon=True).start()
+        _audio_bridge_ok = True
+        print("[AUDIO] Bridge active on UDP port", AUDIO_MIC_PORT)
+    except OSError:
+        print("[AUDIO] Port 12345 in use -- audio bridge disabled")
+
+
+_init_audio_bridge()
+
+
+@socketio.on("connect", namespace="/audio")
+def _on_audio_connect():
+    global _audio_listeners
+    _audio_listeners += 1
+    print(f"[AUDIO] Client connected ({_audio_listeners} listeners)")
+
+
+@socketio.on("disconnect", namespace="/audio")
+def _on_audio_disconnect():
+    global _audio_listeners
+    _audio_listeners = max(0, _audio_listeners - 1)
+    print(f"[AUDIO] Client disconnected ({_audio_listeners} listeners)")
+
+
+@socketio.on("browser_audio", namespace="/audio")
+def _on_browser_audio(data):
+    if _esp32_audio_ip and _udp_send:
+        try:
+            _udp_send.sendto(data, (_esp32_audio_ip, AUDIO_SPK_PORT))
+        except Exception:
+            pass
+
+
+@app.route("/api/audio/status", methods=["GET"])
+def audio_status():
+    return jsonify({
+        "bridge": _audio_bridge_ok,
+        "esp32_ip": _esp32_audio_ip,
+        "listeners": _audio_listeners,
+    })
+
+
+# ═══════════════════════ CAMERA / DEVICE CONTROL ═══════════════════════
+
+KNOWN_DEVICES = {
+    "88:13:bf:6c:60:94": "Camera",
+    "9c:9c:1f:e9:96:f4": "Speaker",
+}
+CAMERA_MAC = "88:13:bf:6c:60:94"
+_camera_ip = None
+
+
+def _find_ip_by_mac(target_mac):
+    """Look up an IP from the OS ARP table by MAC address."""
+    target = target_mac.lower()
+    try:
+        output = subprocess.check_output(["arp", "-a"], text=True, timeout=5)
+        for line in output.splitlines():
+            ip_m = re.search(r"(\d+\.\d+\.\d+\.\d+)", line)
+            mac_m = re.search(r"([\da-fA-F]{2}[:-]){5}[\da-fA-F]{2}", line)
+            if ip_m and mac_m:
+                mac = mac_m.group(0).lower().replace("-", ":")
+                if mac == target:
+                    return ip_m.group(1)
+    except Exception:
+        pass
+    return None
+
+
+def _ping_sweep_subnet():
+    """Quick parallel ping sweep to populate the ARP cache."""
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        local_ip = s.getsockname()[0]
+    finally:
+        s.close()
+    prefix = ".".join(local_ip.split(".")[:3])
+    procs = []
+    for i in range(1, 255):
+        p = subprocess.Popen(
+            ["ping", "-n", "1", "-w", "200", f"{prefix}.{i}"],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+        procs.append(p)
+    for p in procs:
+        p.wait()
+
+
+@app.route("/api/camera/discover", methods=["GET"])
+def camera_discover():
+    global _camera_ip
+    force = request.args.get("force", "false") == "true"
+
+    if _camera_ip and not force:
+        try:
+            requests.get(f"http://{_camera_ip}/", timeout=2)
+            return jsonify({
+                "ip": _camera_ip,
+                "stream_url": f"http://{_camera_ip}:81/stream",
+            })
+        except Exception:
+            _camera_ip = None
+
+    ip = _find_ip_by_mac(CAMERA_MAC)
+    if not ip:
+        _ping_sweep_subnet()
+        ip = _find_ip_by_mac(CAMERA_MAC)
+
+    if ip:
+        _camera_ip = ip
+        return jsonify({
+            "ip": ip,
+            "stream_url": f"http://{ip}:81/stream",
+        })
+    return jsonify({"error": "Camera not found on network"}), 404
+
+
+@app.route("/api/camera/control", methods=["POST"])
+def camera_control():
+    global _camera_ip
+    if not _camera_ip:
+        _camera_ip = _find_ip_by_mac(CAMERA_MAC)
+    if not _camera_ip:
+        return jsonify({"error": "Camera not connected"}), 404
+
+    data = request.get_json()
+    direction = data.get("direction", "")
+    if direction not in ("up", "down", "left", "right"):
+        return jsonify({"error": "Invalid direction"}), 400
+
+    try:
+        requests.get(f"http://{_camera_ip}/action?go={direction}", timeout=3)
+        return jsonify({"status": "ok", "direction": direction})
+    except Exception as e:
+        _camera_ip = None
+        return jsonify({"error": f"Camera unreachable: {str(e)}"}), 502
 
 
 if __name__ == '__main__':
