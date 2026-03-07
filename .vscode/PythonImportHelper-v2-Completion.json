@@ -1,11 +1,116 @@
 [
     {
-        "label": "os",
+        "label": "sys",
         "kind": 6,
         "isExtraImport": true,
-        "importPath": "os",
-        "description": "os",
-        "detail": "os",
+        "importPath": "sys",
+        "description": "sys",
+        "detail": "sys",
+        "documentation": {}
+    },
+    {
+        "label": "io",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "io",
+        "description": "io",
+        "detail": "io",
+        "documentation": {}
+    },
+    {
+        "label": "Flask",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "render_template",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "request",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "jsonify",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "redirect",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "url_for",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "session",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "Flask",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "request",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "jsonify",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "send_from_directory",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "SocketIO",
+        "importPath": "flask_socketio",
+        "description": "flask_socketio",
+        "isExtraImport": true,
+        "detail": "flask_socketio",
         "documentation": {}
     },
     {
@@ -15,6 +120,720 @@
         "importPath": "requests",
         "description": "requests",
         "detail": "requests",
+        "documentation": {}
+    },
+    {
+        "label": "re",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "re",
+        "description": "re",
+        "detail": "re",
+        "documentation": {}
+    },
+    {
+        "label": "os",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
+        "documentation": {}
+    },
+    {
+        "label": "subprocess",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "subprocess",
+        "description": "subprocess",
+        "detail": "subprocess",
+        "documentation": {}
+    },
+    {
+        "label": "socket",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "socket",
+        "description": "socket",
+        "detail": "socket",
+        "documentation": {}
+    },
+    {
+        "label": "threading",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "threading",
+        "description": "threading",
+        "detail": "threading",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "datetime",
+        "description": "datetime",
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "timedelta",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "Path",
+        "importPath": "pathlib",
+        "description": "pathlib",
+        "isExtraImport": true,
+        "detail": "pathlib",
+        "documentation": {}
+    },
+    {
+        "label": "Path",
+        "importPath": "pathlib",
+        "description": "pathlib",
+        "isExtraImport": true,
+        "detail": "pathlib",
+        "documentation": {}
+    },
+    {
+        "label": "GmailService",
+        "importPath": "gmail_service",
+        "description": "gmail_service",
+        "isExtraImport": true,
+        "detail": "gmail_service",
+        "documentation": {}
+    },
+    {
+        "label": "db",
+        "importPath": "models",
+        "description": "models",
+        "isExtraImport": true,
+        "detail": "models",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "models",
+        "description": "models",
+        "isExtraImport": true,
+        "detail": "models",
+        "documentation": {}
+    },
+    {
+        "label": "Session",
+        "importPath": "models",
+        "description": "models",
+        "isExtraImport": true,
+        "detail": "models",
+        "documentation": {}
+    },
+    {
+        "label": "GmailAccount",
+        "importPath": "models",
+        "description": "models",
+        "isExtraImport": true,
+        "detail": "models",
+        "documentation": {}
+    },
+    {
+        "label": "EmailMessage",
+        "importPath": "models",
+        "description": "models",
+        "isExtraImport": true,
+        "detail": "models",
+        "documentation": {}
+    },
+    {
+        "label": "hashlib",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "hashlib",
+        "description": "hashlib",
+        "detail": "hashlib",
+        "documentation": {}
+    },
+    {
+        "label": "secrets",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "secrets",
+        "description": "secrets",
+        "detail": "secrets",
+        "documentation": {}
+    },
+    {
+        "label": "base64",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "base64",
+        "description": "base64",
+        "detail": "base64",
+        "documentation": {}
+    },
+    {
+        "label": "json",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "json",
+        "description": "json",
+        "detail": "json",
+        "documentation": {}
+    },
+    {
+        "label": "Request",
+        "importPath": "google.auth.transport.requests",
+        "description": "google.auth.transport.requests",
+        "isExtraImport": true,
+        "detail": "google.auth.transport.requests",
+        "documentation": {}
+    },
+    {
+        "label": "Credentials",
+        "importPath": "google.oauth2.credentials",
+        "description": "google.oauth2.credentials",
+        "isExtraImport": true,
+        "detail": "google.oauth2.credentials",
+        "documentation": {}
+    },
+    {
+        "label": "RefreshError",
+        "importPath": "google.auth.exceptions",
+        "description": "google.auth.exceptions",
+        "isExtraImport": true,
+        "detail": "google.auth.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "Flow",
+        "importPath": "google_auth_oauthlib.flow",
+        "description": "google_auth_oauthlib.flow",
+        "isExtraImport": true,
+        "detail": "google_auth_oauthlib.flow",
+        "documentation": {}
+    },
+    {
+        "label": "build",
+        "importPath": "googleapiclient.discovery",
+        "description": "googleapiclient.discovery",
+        "isExtraImport": true,
+        "detail": "googleapiclient.discovery",
+        "documentation": {}
+    },
+    {
+        "label": "SQLAlchemy",
+        "importPath": "flask_sqlalchemy",
+        "description": "flask_sqlalchemy",
+        "isExtraImport": true,
+        "detail": "flask_sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "time",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "time",
+        "description": "time",
+        "detail": "time",
+        "documentation": {}
+    },
+    {
+        "label": "sounddevice",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "sounddevice",
+        "description": "sounddevice",
+        "detail": "sounddevice",
+        "documentation": {}
+    },
+    {
+        "label": "numpy",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "numpy",
+        "description": "numpy",
+        "detail": "numpy",
+        "documentation": {}
+    },
+    {
+        "label": "Enum",
+        "importPath": "enum",
+        "description": "enum",
+        "isExtraImport": true,
+        "detail": "enum",
+        "documentation": {}
+    },
+    {
+        "label": "SYSTEM_PROMPT",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "SAMPLE_RATE",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "CHANNELS",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "CHUNK_SIZE",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "AUDIO_INPUT_DEVICE",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "GEMINI_API_KEYS",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "GEMINI_MODEL",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "SYSTEM_PROMPT",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "QDRANT_HOST",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "QDRANT_PORT",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "QDRANT_COLLECTION",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "RAG_TOP_K",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "SOUNDS_DIR",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "SAMPLE_RATE",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "WHISPER_MODEL",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "WHISPER_LANGUAGE",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "SAMPLE_RATE",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "GEMINI_API_KEYS",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "ESP32_CAM_IP",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "YEELIGHT_IP",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "OPENWEATHER_API_KEY",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "DEFAULT_CITY",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "TTS_VOICE",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "TTS_VOICE_RUSSIAN",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "TTS_VOICE_KAZAKH",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "TTS_VOICE_ENGLISH",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "WAKE_WORD_THRESHOLD",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "SAMPLE_RATE",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "AUDIO_INPUT_DEVICE",
+        "importPath": "config",
+        "description": "config",
+        "isExtraImport": true,
+        "detail": "config",
+        "documentation": {}
+    },
+    {
+        "label": "get_audio_handler",
+        "importPath": "audio_handler",
+        "description": "audio_handler",
+        "isExtraImport": true,
+        "detail": "audio_handler",
+        "documentation": {}
+    },
+    {
+        "label": "get_wake_word_detector",
+        "importPath": "wake_word",
+        "description": "wake_word",
+        "isExtraImport": true,
+        "detail": "wake_word",
+        "documentation": {}
+    },
+    {
+        "label": "get_stt",
+        "importPath": "stt",
+        "description": "stt",
+        "isExtraImport": true,
+        "detail": "stt",
+        "documentation": {}
+    },
+    {
+        "label": "get_tts",
+        "importPath": "tts",
+        "description": "tts",
+        "isExtraImport": true,
+        "detail": "tts",
+        "documentation": {}
+    },
+    {
+        "label": "get_gemini",
+        "importPath": "gemini_client",
+        "description": "gemini_client",
+        "isExtraImport": true,
+        "detail": "gemini_client",
+        "documentation": {}
+    },
+    {
+        "label": "get_rag",
+        "importPath": "rag",
+        "description": "rag",
+        "isExtraImport": true,
+        "detail": "rag",
+        "documentation": {}
+    },
+    {
+        "label": "RAGMemory",
+        "importPath": "rag",
+        "description": "rag",
+        "isExtraImport": true,
+        "detail": "rag",
+        "documentation": {}
+    },
+    {
+        "label": "RAGMemory",
+        "importPath": "rag",
+        "description": "rag",
+        "isExtraImport": true,
+        "detail": "rag",
+        "documentation": {}
+    },
+    {
+        "label": "get_tools",
+        "importPath": "tools",
+        "description": "tools",
+        "isExtraImport": true,
+        "detail": "tools",
+        "documentation": {}
+    },
+    {
+        "label": "get_sound_player",
+        "importPath": "sounds",
+        "description": "sounds",
+        "isExtraImport": true,
+        "detail": "sounds",
+        "documentation": {}
+    },
+    {
+        "label": "queue",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "queue",
+        "description": "queue",
+        "detail": "queue",
+        "documentation": {}
+    },
+    {
+        "label": "load_dotenv",
+        "importPath": "dotenv",
+        "description": "dotenv",
+        "isExtraImport": true,
+        "detail": "dotenv",
+        "documentation": {}
+    },
+    {
+        "label": "load_dotenv",
+        "importPath": "dotenv",
+        "description": "dotenv",
+        "isExtraImport": true,
+        "detail": "dotenv",
+        "documentation": {}
+    },
+    {
+        "label": "load_dotenv",
+        "importPath": "dotenv",
+        "description": "dotenv",
+        "isExtraImport": true,
+        "detail": "dotenv",
+        "documentation": {}
+    },
+    {
+        "label": "genai",
+        "importPath": "google",
+        "description": "google",
+        "isExtraImport": true,
+        "detail": "google",
+        "documentation": {}
+    },
+    {
+        "label": "genai",
+        "importPath": "google",
+        "description": "google",
+        "isExtraImport": true,
+        "detail": "google",
+        "documentation": {}
+    },
+    {
+        "label": "types",
+        "importPath": "google.genai",
+        "description": "google.genai",
+        "isExtraImport": true,
+        "detail": "google.genai",
+        "documentation": {}
+    },
+    {
+        "label": "types",
+        "importPath": "google.genai",
+        "description": "google.genai",
+        "isExtraImport": true,
+        "detail": "google.genai",
+        "documentation": {}
+    },
+    {
+        "label": "argparse",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "argparse",
+        "description": "argparse",
+        "detail": "argparse",
+        "documentation": {}
+    },
+    {
+        "label": "QdrantClient",
+        "importPath": "qdrant_client",
+        "description": "qdrant_client",
+        "isExtraImport": true,
+        "detail": "qdrant_client",
+        "documentation": {}
+    },
+    {
+        "label": "Distance",
+        "importPath": "qdrant_client.models",
+        "description": "qdrant_client.models",
+        "isExtraImport": true,
+        "detail": "qdrant_client.models",
+        "documentation": {}
+    },
+    {
+        "label": "VectorParams",
+        "importPath": "qdrant_client.models",
+        "description": "qdrant_client.models",
+        "isExtraImport": true,
+        "detail": "qdrant_client.models",
+        "documentation": {}
+    },
+    {
+        "label": "WhisperModel",
+        "importPath": "faster_whisper",
+        "description": "faster_whisper",
+        "isExtraImport": true,
+        "detail": "faster_whisper",
+        "documentation": {}
+    },
+    {
+        "label": "tempfile",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "tempfile",
+        "description": "tempfile",
+        "detail": "tempfile",
+        "documentation": {}
+    },
+    {
+        "label": "asyncio",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "asyncio",
+        "description": "asyncio",
+        "detail": "asyncio",
+        "documentation": {}
+    },
+    {
+        "label": "edge_tts",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "edge_tts",
+        "description": "edge_tts",
+        "detail": "edge_tts",
         "documentation": {}
     },
     {
@@ -33,23 +852,6 @@
         "importPath": "speech_recognition",
         "description": "speech_recognition",
         "detail": "speech_recognition",
-        "documentation": {}
-    },
-    {
-        "label": "datetime",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "datetime",
-        "description": "datetime",
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
         "documentation": {}
     },
     {
@@ -89,65 +891,12 @@
         "documentation": {}
     },
     {
-        "label": "subprocess",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "subprocess",
-        "description": "subprocess",
-        "detail": "subprocess",
-        "documentation": {}
-    },
-    {
-        "label": "threading",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "threading",
-        "description": "threading",
-        "detail": "threading",
-        "documentation": {}
-    },
-    {
-        "label": "time",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "time",
-        "description": "time",
-        "detail": "time",
-        "documentation": {}
-    },
-    {
-        "label": "sys",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "sys",
-        "description": "sys",
-        "detail": "sys",
-        "documentation": {}
-    },
-    {
-        "label": "load_dotenv",
-        "importPath": "dotenv",
-        "description": "dotenv",
-        "isExtraImport": true,
-        "detail": "dotenv",
-        "documentation": {}
-    },
-    {
         "label": "cv2",
         "kind": 6,
         "isExtraImport": true,
         "importPath": "cv2",
         "description": "cv2",
         "detail": "cv2",
-        "documentation": {}
-    },
-    {
-        "label": "numpy",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "numpy",
-        "description": "numpy",
-        "detail": "numpy",
         "documentation": {}
     },
     {
@@ -168,309 +917,2039 @@
         "documentation": {}
     },
     {
-        "label": "speak",
-        "kind": 2,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "peekOfCode": "def speak(audio):\n    print(f\"{BOTNAME}: {audio}\")\n    engine.say(audio)\n    engine.runAndWait()\n# Wish Me Function\ndef wish_me():\n    hour = int(datetime.datetime.now().hour)\n    if 0 <= hour < 12:\n        speak(f\"Good Morning {USER}!\")\n    elif 12 <= hour < 18:",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "label": "CORS",
+        "importPath": "flask_cors",
+        "description": "flask_cors",
+        "isExtraImport": true,
+        "detail": "flask_cors",
         "documentation": {}
     },
     {
-        "label": "wish_me",
-        "kind": 2,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "peekOfCode": "def wish_me():\n    hour = int(datetime.datetime.now().hour)\n    if 0 <= hour < 12:\n        speak(f\"Good Morning {USER}!\")\n    elif 12 <= hour < 18:\n        speak(f\"Good Afternoon {USER}!\")\n    else:\n        speak(f\"Good Evening {USER}!\")\n    speak(f\"I am {BOTNAME}. How can I help you?\")\n# Take Command Function",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "label": "Bulb",
+        "importPath": "yeelight",
+        "description": "yeelight",
+        "isExtraImport": true,
+        "detail": "yeelight",
         "documentation": {}
     },
     {
-        "label": "take_command",
-        "kind": 2,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "peekOfCode": "def take_command():\n    r = sr.Recognizer()\n    with sr.Microphone() as source:\n        print(\"Listening...\")\n        r.pause_threshold = 1\n        audio = r.listen(source)\n    try:\n        print(\"Recognizing...\")\n        query = r.recognize_google(audio, language='en-US')\n        print(f\"{USER}: {query}\\n\")",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "label": "random_loop",
+        "importPath": "yeelight.flows",
+        "description": "yeelight.flows",
+        "isExtraImport": true,
+        "detail": "yeelight.flows",
         "documentation": {}
     },
     {
-        "label": "send_email",
-        "kind": 2,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "peekOfCode": "def send_email(to, subject, body):\n    try:\n        server = smtplib.SMTP('smtp.gmail.com', 587)\n        server.starttls()\n        server.login(EMAIL, EMAIL_PASSWORD)\n        message = f\"Subject: {subject}\\n\\n{body}\"\n        server.sendmail(EMAIL, to, message)\n        server.quit()\n        speak(\"Email has been sent successfully!\")\n    except Exception as e:",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "label": "disco",
+        "importPath": "yeelight.flows",
+        "description": "yeelight.flows",
+        "isExtraImport": true,
+        "detail": "yeelight.flows",
         "documentation": {}
     },
     {
-        "label": "calculate",
-        "kind": 2,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "peekOfCode": "def calculate(expression):\n    try:\n        result = eval(expression)\n        speak(f\"The answer is {result}\")\n    except Exception as e:\n        speak(\"Sorry, I couldn't calculate that.\")\n        print(e)\n# Open installed apps\ndef open_application(app_name):\n    try:",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "label": "lsd",
+        "importPath": "yeelight.flows",
+        "description": "yeelight.flows",
+        "isExtraImport": true,
+        "detail": "yeelight.flows",
         "documentation": {}
     },
     {
-        "label": "open_application",
-        "kind": 2,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "peekOfCode": "def open_application(app_name):\n    try:\n        if 'calculator' in app_name:\n            subprocess.Popen('calc.exe')\n            speak(\"Opening Calculator\")\n        elif 'arduino' in app_name:\n            subprocess.Popen(r\"C:\\Users\\Lenovo\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\")\n            speak(\"Opening Arduino IDE\")\n        elif 'steam' in app_name:\n            subprocess.Popen(r\"C:\\Program Files (x86)\\Steam\\Steam.exe\")",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "label": "app",
+        "importPath": "app",
+        "description": "app",
+        "isExtraImport": true,
+        "detail": "app",
         "documentation": {}
     },
     {
-        "label": "take_notes",
-        "kind": 2,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "peekOfCode": "def take_notes():\n    speak(\"What would you like to note down?\")\n    note = take_command()\n    if note != \"None\":\n        with open(\"notes.txt\", \"a\") as file:\n            file.write(f\"{datetime.datetime.now()}: {note}\\n\")\n        speak(\"Your note has been saved.\")\n# Set Alarm Function\ndef set_alarm():\n    speak(\"Please tell me the time for the alarm in HH:MM format.\")",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "label": "socketio",
+        "importPath": "app",
+        "description": "app",
+        "isExtraImport": true,
+        "detail": "app",
         "documentation": {}
     },
     {
-        "label": "set_alarm",
+        "label": "redirect_127_to_localhost",
         "kind": 2,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "peekOfCode": "def set_alarm():\n    speak(\"Please tell me the time for the alarm in HH:MM format.\")\n    alarm_time = input(\"Enter the alarm time in HH:MM format: \")  # Take input manually\n    if alarm_time != \"None\":\n        try:\n            alarm_hour, alarm_minute = map(int, alarm_time.split(\":\"))\n            current_time = datetime.datetime.now()\n            alarm_time_obj = current_time.replace(hour=alarm_hour, minute=alarm_minute, second=0, microsecond=0)\n            if alarm_time_obj < current_time:\n                alarm_time_obj += datetime.timedelta(days=1)  # Set alarm for next day",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def redirect_127_to_localhost():\n    \"\"\"Перенаправляем 127.0.0.1 на localhost для совместимости с OAuth\"\"\"\n    if request.host.startswith('127.0.0.1'):\n        # Заменяем 127.0.0.1 на localhost в URL\n        new_host = request.host.replace('127.0.0.1', 'localhost')\n        url = request.url.replace(f\"http://{request.host}\", f\"http://{new_host}\")\n        print(f\"\\n[REDIRECT] 127.0.0.1 → localhost\")\n        print(f\"[REDIRECT] Оригинальный URL: {request.url}\")\n        print(f\"[REDIRECT] Новый URL: {url}\")\n        return redirect(url, code=301)",
+        "detail": "ARIA website.app",
         "documentation": {}
     },
     {
-        "label": "website_search",
+        "label": "fetch_weather",
         "kind": 2,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "peekOfCode": "def website_search(query):\n    if 'anime' in query:\n        speak(\"Opening Anime website.\")\n        webbrowser.open(\"https://jut.su/anime/\")\n    elif 'korean website' in query:\n        speak(\"Opening Dorama website.\")\n        webbrowser.open(\"https://doramy.club/\")\n    elif 'portal' in query:\n        speak(\"Opening SDU Portal.\")\n        webbrowser.open(\"https://my.sdu.edu.kz/index.php\")",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def fetch_weather(city):\n    try:\n        resp = requests.get(\n            f\"{OWM_BASE}/weather\",\n            params={\"q\": city, \"appid\": OWM_KEY, \"units\": \"metric\"},\n            timeout=10,\n        )\n        if resp.status_code != 200:\n            return None\n        d = resp.json()",
+        "detail": "ARIA website.app",
         "documentation": {}
     },
     {
-        "label": "newLook_wrapper",
+        "label": "fetch_forecast",
         "kind": 2,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "peekOfCode": "def newLook_wrapper(follow_person, record, show_debug=True):\n    global tracking_active\n    try:\n        # Clear the stop event before starting\n        stop_tracking_event.clear()\n        # Start tracking\n        newLook(follow_person=follow_person, record=record, show_debug=show_debug)\n    except Exception as e:\n        print(f\"Error in newLook wrapper: {e}\")\n        import traceback",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def fetch_forecast(city):\n    try:\n        resp = requests.get(\n            f\"{OWM_BASE}/forecast\",\n            params={\"q\": city, \"appid\": OWM_KEY, \"units\": \"metric\"},\n            timeout=10,\n        )\n        if resp.status_code != 200:\n            return None\n        d = resp.json()",
+        "detail": "ARIA website.app",
         "documentation": {}
     },
     {
-        "label": "toggle_person_following",
+        "label": "detect_weather_query",
         "kind": 2,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "peekOfCode": "def toggle_person_following(follow=True, record=True, show_debug=True):\n    global person_tracking_thread, tracking_active\n    # Check if tracking module is available\n    if not tracking_module_available:\n        speak(\"Person tracking functionality is not available. Please make sure newLook.py is in the same directory.\")\n        return\n    try:\n        # If tracking is active, stop it first\n        if tracking_active and person_tracking_thread and person_tracking_thread.is_alive():\n            speak(\"Stopping current tracking session...\")",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def detect_weather_query(message):\n    msg = message.lower()\n    if not any(kw in msg for kw in WEATHER_KEYWORDS):\n        return None\n    city_patterns = [\n        r\"weather\\s+(?:in|at|for)\\s+([a-zA-Z\\s\\-]+)\",\n        r\"погод[аеу]\\s+(?:в|во)\\s+([а-яА-ЯёЁ\\s\\-]+)\",\n        r\"температур[аеу]\\s+(?:в|во)\\s+([а-яА-ЯёЁ\\s\\-]+)\",\n        r\"ауа райы\\s+([а-яА-ЯёЁәіңғүұқөһa-zA-Z\\s\\-]+)\",\n        r\"(?:in|at|for)\\s+([a-zA-Z\\s\\-]+?)(?:\\?|$|\\.)\",",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "index",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def index():\n    return render_template(\"index.html\")\ndef _gemini_call(model, system_text, contents):\n    global _gemini_key_index\n    last_error = \"\"\n    for _attempt in range(len(GEMINI_API_KEYS)):\n        key = GEMINI_API_KEYS[_gemini_key_index]\n        url = f\"{GEMINI_BASE}/models/{model}:generateContent?key={key}\"\n        payload = {\n            \"contents\": contents,",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "get_recent_emails",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def get_recent_emails(limit=5):\n    \"\"\"Fetch recent emails from the database for context.\"\"\"\n    try:\n        from models import EmailMessage, GmailAccount\n        # Get recent emails ordered by received_at\n        emails = EmailMessage.query.order_by(\n            EmailMessage.received_at.desc()\n        ).limit(limit).all()\n        if not emails:\n            return None",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "chat",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def chat():\n    data = request.get_json()\n    user_message = data.get(\"message\", \"\")\n    email_data = data.get(\"email\", None)  # Extract email if present\n    if not user_message:\n        return jsonify({\"error\": \"Empty message\"}), 400\n    chat_history.append({\"role\": \"user\", \"text\": user_message})\n    try:\n        model = settings.get(\"model\", \"gemini-2.0-flash\")\n        personality = settings.get(\"personality\", \"default\")",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "weather",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def weather():\n    city = request.args.get(\"city\", \"Almaty\")\n    w = fetch_weather(city)\n    if w:\n        return jsonify(w)\n    return jsonify({\"error\": \"City not found or API error\"}), 404\n@app.route(\"/api/forecast\", methods=[\"GET\"])\ndef forecast():\n    city = request.args.get(\"city\", \"Almaty\")\n    data = fetch_forecast(city)",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "forecast",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def forecast():\n    city = request.args.get(\"city\", \"Almaty\")\n    data = fetch_forecast(city)\n    if data:\n        return jsonify(data)\n    return jsonify({\"error\": \"City not found or API error\"}), 404\n@app.route(\"/api/quick-action\", methods=[\"POST\"])\ndef quick_action():\n    data = request.get_json()\n    action = data.get(\"action\", \"\")",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "quick_action",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def quick_action():\n    data = request.get_json()\n    action = data.get(\"action\", \"\")\n    responses = {\n        \"light\": {\"status\": \"success\", \"message\": \"Lights toggled\"},\n        \"robot\": {\"status\": \"success\", \"message\": \"Robot called\"},\n    }\n    return jsonify(responses.get(action, {\"status\": \"error\", \"message\": \"Unknown action\"}))\n@app.route(\"/api/settings\", methods=[\"GET\"])\ndef get_settings():",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "get_settings",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def get_settings():\n    return jsonify({\n        **settings,\n        \"api_keys_count\": len(GEMINI_API_KEYS),\n        \"current_key_index\": _gemini_key_index,\n    })\n@app.route(\"/api/settings\", methods=[\"POST\"])\ndef update_settings():\n    data = request.get_json()\n    for key in (\"model\", \"language\", \"personality\"):",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "update_settings",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def update_settings():\n    data = request.get_json()\n    for key in (\"model\", \"language\", \"personality\"):\n        if key in data:\n            settings[key] = data[key]\n    return jsonify({\"status\": \"success\"})\n@app.route(\"/api/memory\", methods=[\"GET\"])\ndef get_memory():\n    return jsonify({\"memory\": context_memory})\n@app.route(\"/api/memory\", methods=[\"POST\"])",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "get_memory",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def get_memory():\n    return jsonify({\"memory\": context_memory})\n@app.route(\"/api/memory\", methods=[\"POST\"])\ndef add_memory():\n    text = request.get_json().get(\"text\", \"\")\n    if text:\n        context_memory.append({\"text\": text})\n    return jsonify({\"status\": \"success\", \"memory\": context_memory})\n@app.route(\"/api/memory/<int:index>\", methods=[\"DELETE\"])\ndef delete_memory(index):",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "add_memory",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def add_memory():\n    text = request.get_json().get(\"text\", \"\")\n    if text:\n        context_memory.append({\"text\": text})\n    return jsonify({\"status\": \"success\", \"memory\": context_memory})\n@app.route(\"/api/memory/<int:index>\", methods=[\"DELETE\"])\ndef delete_memory(index):\n    if 0 <= index < len(context_memory):\n        context_memory.pop(index)\n    return jsonify({\"status\": \"success\", \"memory\": context_memory})",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "delete_memory",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def delete_memory(index):\n    if 0 <= index < len(context_memory):\n        context_memory.pop(index)\n    return jsonify({\"status\": \"success\", \"memory\": context_memory})\n@app.route(\"/api/server-status\", methods=[\"GET\"])\ndef server_status():\n    return jsonify({\"status\": \"online\"})\n@app.route(\"/api/play-music\", methods=[\"POST\"])\ndef play_music():\n    data = request.get_json()",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "server_status",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def server_status():\n    return jsonify({\"status\": \"online\"})\n@app.route(\"/api/play-music\", methods=[\"POST\"])\ndef play_music():\n    data = request.get_json()\n    query = data.get(\"query\", \"\").strip()\n    if not query:\n        return jsonify({\"error\": \"No query provided\"}), 400\n    if not YOUTUBE_API_KEY:\n        return jsonify({\"error\": \"YouTube API key not set\"}), 500",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "play_music",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def play_music():\n    data = request.get_json()\n    query = data.get(\"query\", \"\").strip()\n    if not query:\n        return jsonify({\"error\": \"No query provided\"}), 400\n    if not YOUTUBE_API_KEY:\n        return jsonify({\"error\": \"YouTube API key not set\"}), 500\n    def is_embeddable(video_id):\n        \"\"\"Проверить, разрешено ли видео для встраивания\"\"\"\n        try:",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "hash_password",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def hash_password(password):\n    \"\"\"Hash password with salt\"\"\"\n    salt = secrets.token_hex(16)\n    pwd_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)\n    return f\"{salt}${pwd_hash.hex()}\"\ndef verify_password(stored_hash, password):\n    \"\"\"Verify password against hash\"\"\"\n    try:\n        salt, pwd_hash = stored_hash.split('$')\n        return hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000).hex() == pwd_hash",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "verify_password",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def verify_password(stored_hash, password):\n    \"\"\"Verify password against hash\"\"\"\n    try:\n        salt, pwd_hash = stored_hash.split('$')\n        return hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000).hex() == pwd_hash\n    except:\n        return False\ndef create_session_token(user_id):\n    \"\"\"Create a new session token for a user\"\"\"\n    token = secrets.token_urlsafe(32)",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "create_session_token",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def create_session_token(user_id):\n    \"\"\"Create a new session token for a user\"\"\"\n    token = secrets.token_urlsafe(32)\n    expires_at = datetime.utcnow() + timedelta(days=7)  # 7 day session\n    session_obj = Session(\n        token=token,\n        user_id=user_id,\n        expires_at=expires_at\n    )\n    db.session.add(session_obj)",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "verify_session_token",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def verify_session_token(token):\n    \"\"\"Verify session token and return user if valid\"\"\"\n    session_obj = Session.query.filter_by(token=token).first()\n    if not session_obj:\n        return None\n    if session_obj.expires_at < datetime.utcnow():\n        db.session.delete(session_obj)\n        db.session.commit()\n        return None\n    return session_obj.user",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "email_register",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def email_register():\n    \"\"\"Register new email account\"\"\"\n    try:\n        data = request.json\n        email = data.get('email', '').strip()\n        password = data.get('password', '').strip()\n        if not email or not password:\n            return jsonify({\"error\": \"Email and password required\"}), 400\n        # Check if email already exists\n        existing_user = User.query.filter_by(email=email).first()",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "email_login",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def email_login():\n    \"\"\"Login to email account\"\"\"\n    try:\n        data = request.json\n        email = data.get('email', '').strip()\n        password = data.get('password', '').strip()\n        if not email or not password:\n            return jsonify({\"error\": \"Email and password required\"}), 400\n        # Find user in database\n        user = User.query.filter_by(email=email).first()",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "email_logout",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def email_logout():\n    \"\"\"Logout from email account\"\"\"\n    try:\n        session_token = request.headers.get('X-Session-Token')\n        if session_token:\n            session_obj = Session.query.filter_by(token=session_token).first()\n            if session_obj:\n                db.session.delete(session_obj)\n                db.session.commit()\n        return jsonify({",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "get_accounts",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def get_accounts():\n    \"\"\"Get list of registered accounts\"\"\"\n    try:\n        accounts = [user.email for user in User.query.all()]\n        return jsonify({\n            \"accounts\": accounts,\n            \"total\": len(accounts)\n        }), 200\n    except Exception as e:\n        return jsonify({\"error\": str(e)}), 500",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "verify_email",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def verify_email():\n    \"\"\"Verify if email session is valid\"\"\"\n    try:\n        session_token = request.headers.get('X-Session-Token')\n        if not session_token:\n            return jsonify({\"authenticated\": False}), 401\n        user = verify_session_token(session_token)\n        if not user:\n            return jsonify({\"authenticated\": False}), 401\n        return jsonify({",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "gmail_login",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def gmail_login():\n    \"\"\"Redirect to Gmail authentication page\"\"\"\n    try:\n        print(f\"\\n[LOGIN] 🔐 Инициирую OAuth авторизацию...\")\n        auth_result = gmail_service.get_auth_url()\n        if 'error' in auth_result:\n            print(f\"[LOGIN] ❌ Ошибка: {auth_result['error']}\")\n            return jsonify({\"error\": auth_result['error']}), 400\n        auth_url = auth_result['auth_url']\n        print(f\"[LOGIN] ✅ Перенаправляю на Google по ссылке...\")",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "gmail_callback",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def gmail_callback():\n    \"\"\"Handle Gmail OAuth callback\"\"\"\n    try:\n        code = request.args.get('code')\n        state = request.args.get('state')\n        error = request.args.get('error')\n        print(f\"\\n[CALLBACK] Получен запрос от Google\")\n        print(f\"[CALLBACK] URL: {request.url}\")\n        print(f\"[CALLBACK] Code: {code[:20] if code else 'None'}...\")\n        print(f\"[CALLBACK] State: {state}\")",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "gmail_status",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def gmail_status():\n    \"\"\"Check Gmail authentication status\"\"\"\n    try:\n        is_auth = gmail_service.is_authenticated()\n        gmail_email = session.get('gmail_email', '')\n        print(f\"\\n[STATUS] Проверка статуса авторизации\")\n        print(f\"[STATUS] is_authenticated: {is_auth}\")\n        print(f\"[STATUS] Email в сессии: {gmail_email}\")\n        print(f\"[STATUS] token.json существует: {Path('token.json').exists()}\")\n        return jsonify({",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "get_gmail_emails",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def get_gmail_emails():\n    \"\"\"Fetch emails from Gmail inbox\"\"\"\n    try:\n        if not gmail_service.is_authenticated():\n            return jsonify({\"error\": \"Not authenticated with Gmail\"}), 401\n        max_results = request.args.get('max_results', 10, type=int)\n        result = gmail_service.get_emails(max_results=max_results)\n        if 'error' in result:\n            return jsonify(result), 400\n        # Cache emails in database",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "send_gmail_email",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def send_gmail_email():\n    \"\"\"Send email through Gmail\"\"\"\n    try:\n        if not gmail_service.is_authenticated():\n            return jsonify({\"error\": \"Not authenticated with Gmail\"}), 401\n        data = request.json\n        to = data.get('to', '').strip()\n        subject = data.get('subject', '').strip()\n        body = data.get('body', '').strip()\n        if not all([to, subject, body]):",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "gmail_logout",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def gmail_logout():\n    \"\"\"Logout from Gmail\"\"\"\n    try:\n        # 1. Полностью убиваем куку сессии Flask\n        session.clear() \n        # 2. Физически удаляем файл token.json (чтобы Гугл тоже нас забыл)\n        gmail_service._clear_credentials()\n        return jsonify({\n            \"success\": True,\n            \"message\": \"Logged out from Gmail and cleared session\"",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "get_inbox",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def get_inbox():\n    \"\"\"Get inbox emails (cached from Gmail or local)\"\"\"\n    try:\n        gmail_email = session.get('gmail_email', '')\n        max_results = request.args.get('max_results', 50, type=int)\n        if not gmail_email:\n            return jsonify({\"emails\": [], \"source\": \"none\"}), 200\n        # Get Gmail account\n        gmail_account = GmailAccount.query.filter_by(email=gmail_email).first()\n        if not gmail_account:",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "sync_emails",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def sync_emails():\n    \"\"\"Fetch fresh emails from Gmail and cache them\"\"\"\n    try:\n        if not gmail_service.is_authenticated():\n            return jsonify({\"error\": \"Not authenticated with Gmail\"}), 401\n        gmail_email = session.get('gmail_email', '')\n        if not gmail_email:\n            return jsonify({\"error\": \"No Gmail email in session\"}), 400\n        # 🔥 ВОТ НАША ЗАЩИТА: Проверяем, есть ли аккаунт в базе данных\n        gmail_account = GmailAccount.query.filter_by(email=gmail_email).first()",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "audio_status",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def audio_status():\n    return jsonify({\n        \"bridge\": _audio_bridge_ok,\n        \"esp32_ip\": _esp32_audio_ip,\n        \"listeners\": _audio_listeners,\n    })\n# ═══════════════════════ CAMERA / DEVICE CONTROL ═══════════════════════\nKNOWN_DEVICES = {\n    \"88:13:bf:6c:60:94\": \"Camera\",\n    \"9c:9c:1f:e9:96:f4\": \"Speaker\",",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "camera_discover",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def camera_discover():\n    global _camera_ip\n    force = request.args.get(\"force\", \"false\") == \"true\"\n    if _camera_ip and not force:\n        try:\n            requests.get(f\"http://{_camera_ip}/\", timeout=2)\n            return jsonify({\n                \"ip\": _camera_ip,\n                \"stream_url\": f\"http://{_camera_ip}:81/stream\",\n            })",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "camera_control",
+        "kind": 2,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "def camera_control():\n    global _camera_ip\n    if not _camera_ip:\n        _camera_ip = _find_ip_by_mac(CAMERA_MAC)\n    if not _camera_ip:\n        return jsonify({\"error\": \"Camera not connected\"}), 404\n    data = request.get_json()\n    direction = data.get(\"direction\", \"\")\n    if direction not in (\"up\", \"down\", \"left\", \"right\"):\n        return jsonify({\"error\": \"Invalid direction\"}), 400",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "sys.stdout",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')\nsys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')\nfrom flask import Flask, render_template, request, jsonify, redirect, url_for, session\nfrom flask_socketio import SocketIO\nimport requests\nimport re\nimport os\nimport subprocess\nimport socket as _socket\nimport threading as _threading",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "sys.stderr",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')\nfrom flask import Flask, render_template, request, jsonify, redirect, url_for, session\nfrom flask_socketio import SocketIO\nimport requests\nimport re\nimport os\nimport subprocess\nimport socket as _socket\nimport threading as _threading\nfrom datetime import datetime, timedelta",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "app",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "app = Flask(__name__)\napp.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')\nsocketio = SocketIO(app, cors_allowed_origins=\"*\", async_mode=\"threading\")\n# Database configuration\napp.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///aria_email.db'\napp.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False\n# Session configuration для правильной работы с localhost\napp.config['SESSION_COOKIE_SECURE'] = False  # localhost не использует HTTPS\napp.config['SESSION_COOKIE_HTTPONLY'] = True  # Защита от XSS\napp.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Для OAuth redirect",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "app.secret_key",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')\nsocketio = SocketIO(app, cors_allowed_origins=\"*\", async_mode=\"threading\")\n# Database configuration\napp.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///aria_email.db'\napp.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False\n# Session configuration для правильной работы с localhost\napp.config['SESSION_COOKIE_SECURE'] = False  # localhost не использует HTTPS\napp.config['SESSION_COOKIE_HTTPONLY'] = True  # Защита от XSS\napp.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Для OAuth redirect\n# Initialize database",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "socketio",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "socketio = SocketIO(app, cors_allowed_origins=\"*\", async_mode=\"threading\")\n# Database configuration\napp.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///aria_email.db'\napp.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False\n# Session configuration для правильной работы с localhost\napp.config['SESSION_COOKIE_SECURE'] = False  # localhost не использует HTTPS\napp.config['SESSION_COOKIE_HTTPONLY'] = True  # Защита от XSS\napp.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Для OAuth redirect\n# Initialize database\ndb.init_app(app)",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "app.config['SQLALCHEMY_DATABASE_URI']",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///aria_email.db'\napp.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False\n# Session configuration для правильной работы с localhost\napp.config['SESSION_COOKIE_SECURE'] = False  # localhost не использует HTTPS\napp.config['SESSION_COOKIE_HTTPONLY'] = True  # Защита от XSS\napp.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Для OAuth redirect\n# Initialize database\ndb.init_app(app)\n# Initialize Gmail service\ngmail_service = GmailService()",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "app.config['SQLALCHEMY_TRACK_MODIFICATIONS']",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False\n# Session configuration для правильной работы с localhost\napp.config['SESSION_COOKIE_SECURE'] = False  # localhost не использует HTTPS\napp.config['SESSION_COOKIE_HTTPONLY'] = True  # Защита от XSS\napp.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Для OAuth redirect\n# Initialize database\ndb.init_app(app)\n# Initialize Gmail service\ngmail_service = GmailService()\n# ⚠️ ВАЖНО: Редирект 127.0.0.1 → localhost (для OAuth) ",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "app.config['SESSION_COOKIE_SECURE']",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "app.config['SESSION_COOKIE_SECURE'] = False  # localhost не использует HTTPS\napp.config['SESSION_COOKIE_HTTPONLY'] = True  # Защита от XSS\napp.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Для OAuth redirect\n# Initialize database\ndb.init_app(app)\n# Initialize Gmail service\ngmail_service = GmailService()\n# ⚠️ ВАЖНО: Редирект 127.0.0.1 → localhost (для OAuth) \n@app.before_request\ndef redirect_127_to_localhost():",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "app.config['SESSION_COOKIE_HTTPONLY']",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "app.config['SESSION_COOKIE_HTTPONLY'] = True  # Защита от XSS\napp.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Для OAuth redirect\n# Initialize database\ndb.init_app(app)\n# Initialize Gmail service\ngmail_service = GmailService()\n# ⚠️ ВАЖНО: Редирект 127.0.0.1 → localhost (для OAuth) \n@app.before_request\ndef redirect_127_to_localhost():\n    \"\"\"Перенаправляем 127.0.0.1 на localhost для совместимости с OAuth\"\"\"",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "app.config['SESSION_COOKIE_SAMESITE']",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Для OAuth redirect\n# Initialize database\ndb.init_app(app)\n# Initialize Gmail service\ngmail_service = GmailService()\n# ⚠️ ВАЖНО: Редирект 127.0.0.1 → localhost (для OAuth) \n@app.before_request\ndef redirect_127_to_localhost():\n    \"\"\"Перенаправляем 127.0.0.1 на localhost для совместимости с OAuth\"\"\"\n    if request.host.startswith('127.0.0.1'):",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "gmail_service",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "gmail_service = GmailService()\n# ⚠️ ВАЖНО: Редирект 127.0.0.1 → localhost (для OAuth) \n@app.before_request\ndef redirect_127_to_localhost():\n    \"\"\"Перенаправляем 127.0.0.1 на localhost для совместимости с OAuth\"\"\"\n    if request.host.startswith('127.0.0.1'):\n        # Заменяем 127.0.0.1 на localhost в URL\n        new_host = request.host.replace('127.0.0.1', 'localhost')\n        url = request.url.replace(f\"http://{request.host}\", f\"http://{new_host}\")\n        print(f\"\\n[REDIRECT] 127.0.0.1 → localhost\")",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "context_memory",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "context_memory = []\nsettings = {\n    \"model\": \"gemini-2.5-flash\",\n    \"language\": \"EN\",\n    \"personality\": \"default\",\n}\nchat_history = []\nGEMINI_API_KEYS = [\n    k.strip() for k in os.environ.get(\"GEMINI_API_KEYS\", \"\").split(\",\") if k.strip()\n]",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "settings",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "settings = {\n    \"model\": \"gemini-2.5-flash\",\n    \"language\": \"EN\",\n    \"personality\": \"default\",\n}\nchat_history = []\nGEMINI_API_KEYS = [\n    k.strip() for k in os.environ.get(\"GEMINI_API_KEYS\", \"\").split(\",\") if k.strip()\n]\nGEMINI_BASE = \"https://generativelanguage.googleapis.com/v1beta\"",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "chat_history",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "chat_history = []\nGEMINI_API_KEYS = [\n    k.strip() for k in os.environ.get(\"GEMINI_API_KEYS\", \"\").split(\",\") if k.strip()\n]\nGEMINI_BASE = \"https://generativelanguage.googleapis.com/v1beta\"\n_gemini_key_index = 0\nPERSONALITY_PROMPTS = {\n    \"default\": (\n        \"You are ARIA, a smart home AI assistant. \"\n        \"You are helpful, friendly, and knowledgeable. \"",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "GEMINI_API_KEYS",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "GEMINI_API_KEYS = [\n    k.strip() for k in os.environ.get(\"GEMINI_API_KEYS\", \"\").split(\",\") if k.strip()\n]\nGEMINI_BASE = \"https://generativelanguage.googleapis.com/v1beta\"\n_gemini_key_index = 0\nPERSONALITY_PROMPTS = {\n    \"default\": (\n        \"You are ARIA, a smart home AI assistant. \"\n        \"You are helpful, friendly, and knowledgeable. \"\n        \"You can see and read emails that the user explicitly shares with you in the current conversation. \"",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "GEMINI_BASE",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "GEMINI_BASE = \"https://generativelanguage.googleapis.com/v1beta\"\n_gemini_key_index = 0\nPERSONALITY_PROMPTS = {\n    \"default\": (\n        \"You are ARIA, a smart home AI assistant. \"\n        \"You are helpful, friendly, and knowledgeable. \"\n        \"You can see and read emails that the user explicitly shares with you in the current conversation. \"\n        \"When an email is provided in the context, you can analyze it, summarize it, help draft replies, or answer questions about it.\"\n    ),\n    \"chill\": (",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "_gemini_key_index",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "_gemini_key_index = 0\nPERSONALITY_PROMPTS = {\n    \"default\": (\n        \"You are ARIA, a smart home AI assistant. \"\n        \"You are helpful, friendly, and knowledgeable. \"\n        \"You can see and read emails that the user explicitly shares with you in the current conversation. \"\n        \"When an email is provided in the context, you can analyze it, summarize it, help draft replies, or answer questions about it.\"\n    ),\n    \"chill\": (\n        \"You are ARIA, a super chill and laid-back smart home AI assistant. \"",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "PERSONALITY_PROMPTS",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "PERSONALITY_PROMPTS = {\n    \"default\": (\n        \"You are ARIA, a smart home AI assistant. \"\n        \"You are helpful, friendly, and knowledgeable. \"\n        \"You can see and read emails that the user explicitly shares with you in the current conversation. \"\n        \"When an email is provided in the context, you can analyze it, summarize it, help draft replies, or answer questions about it.\"\n    ),\n    \"chill\": (\n        \"You are ARIA, a super chill and laid-back smart home AI assistant. \"\n        \"You speak in a relaxed, calm, easygoing tone. Use casual language, \"",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "OWM_KEY",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "OWM_KEY = os.environ.get(\"OWM_KEY\", \"\")\nOWM_BASE = \"https://api.openweathermap.org/data/2.5\"\nYOUTUBE_API_KEY = os.environ.get(\"YOUTUBE_API_KEY\", \"\")\nYOUTUBE_SEARCH_URL = \"https://www.googleapis.com/youtube/v3/search\"\nWEATHER_KEYWORDS = [\n    \"weather\", \"temperature\", \"forecast\", \"wind\", \"humidity\", \"rain\", \"snow\", \"storm\",\n    \"погода\", \"температура\", \"прогноз\", \"ветер\", \"влажность\", \"дождь\", \"снег\",\n    \"ауа райы\", \"температура\", \"болжам\", \"жел\", \"ылғалдылық\", \"жаңбыр\", \"қар\",\n    \"how cold\", \"how hot\", \"how warm\", \"какая погода\", \"сколько градусов\",\n]",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "OWM_BASE",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "OWM_BASE = \"https://api.openweathermap.org/data/2.5\"\nYOUTUBE_API_KEY = os.environ.get(\"YOUTUBE_API_KEY\", \"\")\nYOUTUBE_SEARCH_URL = \"https://www.googleapis.com/youtube/v3/search\"\nWEATHER_KEYWORDS = [\n    \"weather\", \"temperature\", \"forecast\", \"wind\", \"humidity\", \"rain\", \"snow\", \"storm\",\n    \"погода\", \"температура\", \"прогноз\", \"ветер\", \"влажность\", \"дождь\", \"снег\",\n    \"ауа райы\", \"температура\", \"болжам\", \"жел\", \"ылғалдылық\", \"жаңбыр\", \"қар\",\n    \"how cold\", \"how hot\", \"how warm\", \"какая погода\", \"сколько градусов\",\n]\nWIND_DIRS = [\"N\", \"NNE\", \"NE\", \"ENE\", \"E\", \"ESE\", \"SE\", \"SSE\",",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "YOUTUBE_API_KEY",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "YOUTUBE_API_KEY = os.environ.get(\"YOUTUBE_API_KEY\", \"\")\nYOUTUBE_SEARCH_URL = \"https://www.googleapis.com/youtube/v3/search\"\nWEATHER_KEYWORDS = [\n    \"weather\", \"temperature\", \"forecast\", \"wind\", \"humidity\", \"rain\", \"snow\", \"storm\",\n    \"погода\", \"температура\", \"прогноз\", \"ветер\", \"влажность\", \"дождь\", \"снег\",\n    \"ауа райы\", \"температура\", \"болжам\", \"жел\", \"ылғалдылық\", \"жаңбыр\", \"қар\",\n    \"how cold\", \"how hot\", \"how warm\", \"какая погода\", \"сколько градусов\",\n]\nWIND_DIRS = [\"N\", \"NNE\", \"NE\", \"ENE\", \"E\", \"ESE\", \"SE\", \"SSE\",\n             \"S\", \"SSW\", \"SW\", \"WSW\", \"W\", \"WNW\", \"NW\", \"NNW\"]",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "YOUTUBE_SEARCH_URL",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "YOUTUBE_SEARCH_URL = \"https://www.googleapis.com/youtube/v3/search\"\nWEATHER_KEYWORDS = [\n    \"weather\", \"temperature\", \"forecast\", \"wind\", \"humidity\", \"rain\", \"snow\", \"storm\",\n    \"погода\", \"температура\", \"прогноз\", \"ветер\", \"влажность\", \"дождь\", \"снег\",\n    \"ауа райы\", \"температура\", \"болжам\", \"жел\", \"ылғалдылық\", \"жаңбыр\", \"қар\",\n    \"how cold\", \"how hot\", \"how warm\", \"какая погода\", \"сколько градусов\",\n]\nWIND_DIRS = [\"N\", \"NNE\", \"NE\", \"ENE\", \"E\", \"ESE\", \"SE\", \"SSE\",\n             \"S\", \"SSW\", \"SW\", \"WSW\", \"W\", \"WNW\", \"NW\", \"NNW\"]\ndef _wind_dir(deg):",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "WEATHER_KEYWORDS",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "WEATHER_KEYWORDS = [\n    \"weather\", \"temperature\", \"forecast\", \"wind\", \"humidity\", \"rain\", \"snow\", \"storm\",\n    \"погода\", \"температура\", \"прогноз\", \"ветер\", \"влажность\", \"дождь\", \"снег\",\n    \"ауа райы\", \"температура\", \"болжам\", \"жел\", \"ылғалдылық\", \"жаңбыр\", \"қар\",\n    \"how cold\", \"how hot\", \"how warm\", \"какая погода\", \"сколько градусов\",\n]\nWIND_DIRS = [\"N\", \"NNE\", \"NE\", \"ENE\", \"E\", \"ESE\", \"SE\", \"SSE\",\n             \"S\", \"SSW\", \"SW\", \"WSW\", \"W\", \"WNW\", \"NW\", \"NNW\"]\ndef _wind_dir(deg):\n    if deg is None:",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "WIND_DIRS",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "WIND_DIRS = [\"N\", \"NNE\", \"NE\", \"ENE\", \"E\", \"ESE\", \"SE\", \"SSE\",\n             \"S\", \"SSW\", \"SW\", \"WSW\", \"W\", \"WNW\", \"NW\", \"NNW\"]\ndef _wind_dir(deg):\n    if deg is None:\n        return \"\"\n    return WIND_DIRS[round(deg / 22.5) % 16]\ndef _epoch_to_hhmm(epoch, tz_offset):\n    dt = datetime.utcfromtimestamp(epoch + tz_offset)\n    return dt.strftime(\"%I:%M %p\")\ndef _epoch_to_localtime(epoch, tz_offset):",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "AUDIO_MIC_PORT",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "AUDIO_MIC_PORT = 12345\nAUDIO_SPK_PORT = 12346\n_esp32_audio_ip = None\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "AUDIO_SPK_PORT",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "AUDIO_SPK_PORT = 12346\n_esp32_audio_ip = None\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:\n        _udp_recv = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "_esp32_audio_ip",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "_esp32_audio_ip = None\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:\n        _udp_recv = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        _udp_recv.setsockopt(_socket.SOL_SOCKET, _socket.SO_RCVBUF, 65536)",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "_audio_listeners",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:\n        _udp_recv = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        _udp_recv.setsockopt(_socket.SOL_SOCKET, _socket.SO_RCVBUF, 65536)\n        _udp_recv.bind((\"0.0.0.0\", AUDIO_MIC_PORT))",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "_audio_bridge_ok",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:\n        _udp_recv = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        _udp_recv.setsockopt(_socket.SOL_SOCKET, _socket.SO_RCVBUF, 65536)\n        _udp_recv.bind((\"0.0.0.0\", AUDIO_MIC_PORT))\n        _udp_send = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "_udp_recv",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "_udp_recv = None\n_udp_send = None\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:\n        _udp_recv = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        _udp_recv.setsockopt(_socket.SOL_SOCKET, _socket.SO_RCVBUF, 65536)\n        _udp_recv.bind((\"0.0.0.0\", AUDIO_MIC_PORT))\n        _udp_send = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        def _recv_loop():",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "_udp_send",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "_udp_send = None\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:\n        _udp_recv = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        _udp_recv.setsockopt(_socket.SOL_SOCKET, _socket.SO_RCVBUF, 65536)\n        _udp_recv.bind((\"0.0.0.0\", AUDIO_MIC_PORT))\n        _udp_send = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        def _recv_loop():\n            global _esp32_audio_ip",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "KNOWN_DEVICES",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "KNOWN_DEVICES = {\n    \"88:13:bf:6c:60:94\": \"Camera\",\n    \"9c:9c:1f:e9:96:f4\": \"Speaker\",\n}\nCAMERA_MAC = \"88:13:bf:6c:60:94\"\n_camera_ip = None\ndef _find_ip_by_mac(target_mac):\n    \"\"\"Look up an IP from the OS ARP table by MAC address.\"\"\"\n    target = target_mac.lower()\n    try:",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "CAMERA_MAC",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "CAMERA_MAC = \"88:13:bf:6c:60:94\"\n_camera_ip = None\ndef _find_ip_by_mac(target_mac):\n    \"\"\"Look up an IP from the OS ARP table by MAC address.\"\"\"\n    target = target_mac.lower()\n    try:\n        output = subprocess.check_output([\"arp\", \"-a\"], text=True, timeout=5)\n        for line in output.splitlines():\n            ip_m = re.search(r\"(\\d+\\.\\d+\\.\\d+\\.\\d+)\", line)\n            mac_m = re.search(r\"([\\da-fA-F]{2}[:-]){5}[\\da-fA-F]{2}\", line)",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "_camera_ip",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "_camera_ip = None\ndef _find_ip_by_mac(target_mac):\n    \"\"\"Look up an IP from the OS ARP table by MAC address.\"\"\"\n    target = target_mac.lower()\n    try:\n        output = subprocess.check_output([\"arp\", \"-a\"], text=True, timeout=5)\n        for line in output.splitlines():\n            ip_m = re.search(r\"(\\d+\\.\\d+\\.\\d+\\.\\d+)\", line)\n            mac_m = re.search(r\"([\\da-fA-F]{2}[:-]){5}[\\da-fA-F]{2}\", line)\n            if ip_m and mac_m:",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "GmailService",
+        "kind": 6,
+        "importPath": "ARIA website.gmail_service",
+        "description": "ARIA website.gmail_service",
+        "peekOfCode": "class GmailService:\n    \"\"\"Handle Gmail authentication and operations.\"\"\"\n    def __init__(self):\n        self.credentials_file = Path(__file__).resolve().parent / 'credentials.json'\n        self.token_file = Path(__file__).resolve().parent / 'token.json'\n        self.scopes = [\n            'https://www.googleapis.com/auth/gmail.readonly',\n            'https://www.googleapis.com/auth/gmail.send',\n            'https://www.googleapis.com/auth/gmail.modify'\n        ]",
+        "detail": "ARIA website.gmail_service",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "kind": 6,
+        "importPath": "ARIA website.models",
+        "description": "ARIA website.models",
+        "peekOfCode": "class User(db.Model):\n    \"\"\"User account model for local email authentication.\"\"\"\n    __tablename__ = 'users'\n    id = db.Column(db.Integer, primary_key=True)\n    email = db.Column(db.String(255), unique=True, nullable=False, index=True)\n    password_hash = db.Column(db.String(255), nullable=False)\n    created_at = db.Column(db.DateTime, default=datetime.utcnow)\n    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)\n    def __repr__(self):\n        return f'<User {self.email}>'",
+        "detail": "ARIA website.models",
+        "documentation": {}
+    },
+    {
+        "label": "Session",
+        "kind": 6,
+        "importPath": "ARIA website.models",
+        "description": "ARIA website.models",
+        "peekOfCode": "class Session(db.Model):\n    \"\"\"Session tokens for user authentication.\"\"\"\n    __tablename__ = 'sessions'\n    id = db.Column(db.Integer, primary_key=True)\n    token = db.Column(db.String(255), unique=True, nullable=False, index=True)\n    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    created_at = db.Column(db.DateTime, default=datetime.utcnow)\n    expires_at = db.Column(db.DateTime, nullable=False)\n    user = db.relationship('User', backref=db.backref('sessions', lazy='dynamic'))\n    def __repr__(self):",
+        "detail": "ARIA website.models",
+        "documentation": {}
+    },
+    {
+        "label": "GmailAccount",
+        "kind": 6,
+        "importPath": "ARIA website.models",
+        "description": "ARIA website.models",
+        "peekOfCode": "class GmailAccount(db.Model):\n    \"\"\"Gmail account OAuth credentials storage.\"\"\"\n    __tablename__ = 'gmail_accounts'\n    id = db.Column(db.Integer, primary_key=True)\n    email = db.Column(db.String(255), unique=True, nullable=False, index=True)\n    access_token = db.Column(db.Text, nullable=False)\n    refresh_token = db.Column(db.Text, nullable=True)\n    token_expiry = db.Column(db.DateTime, nullable=True)\n    created_at = db.Column(db.DateTime, default=datetime.utcnow)\n    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)",
+        "detail": "ARIA website.models",
+        "documentation": {}
+    },
+    {
+        "label": "EmailMessage",
+        "kind": 6,
+        "importPath": "ARIA website.models",
+        "description": "ARIA website.models",
+        "peekOfCode": "class EmailMessage(db.Model):\n    \"\"\"Cached email messages from Gmail.\"\"\"\n    __tablename__ = 'email_messages'\n    id = db.Column(db.Integer, primary_key=True)\n    gmail_id = db.Column(db.String(255), nullable=False, index=True)  # Gmail message ID\n    account_id = db.Column(db.Integer, db.ForeignKey('gmail_accounts.id'), nullable=False)\n    sender = db.Column(db.String(255), nullable=False)\n    subject = db.Column(db.String(500), nullable=False)\n    body = db.Column(db.Text, nullable=True)\n    received_at = db.Column(db.DateTime, nullable=False)",
+        "detail": "ARIA website.models",
+        "documentation": {}
+    },
+    {
+        "label": "db",
+        "kind": 5,
+        "importPath": "ARIA website.models",
+        "description": "ARIA website.models",
+        "peekOfCode": "db = SQLAlchemy()\nclass User(db.Model):\n    \"\"\"User account model for local email authentication.\"\"\"\n    __tablename__ = 'users'\n    id = db.Column(db.Integer, primary_key=True)\n    email = db.Column(db.String(255), unique=True, nullable=False, index=True)\n    password_hash = db.Column(db.String(255), nullable=False)\n    created_at = db.Column(db.DateTime, default=datetime.utcnow)\n    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)\n    def __repr__(self):",
+        "detail": "ARIA website.models",
+        "documentation": {}
+    },
+    {
+        "label": "get_local_ip",
+        "kind": 2,
+        "importPath": "To_Delete_Later.aria.test.find_esp32",
+        "description": "To_Delete_Later.aria.test.find_esp32",
+        "peekOfCode": "def get_local_ip():\n    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\n    try:\n        s.connect(('8.8.8.8', 80))\n        ip = s.getsockname()[0]\n    finally:\n        s.close()\n    return ip\nlocal_ip = get_local_ip()\nprint(f\"\\nYour IP: {local_ip}\")",
+        "detail": "To_Delete_Later.aria.test.find_esp32",
+        "documentation": {}
+    },
+    {
+        "label": "TARGET_MAC",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.test.find_esp32",
+        "description": "To_Delete_Later.aria.test.find_esp32",
+        "peekOfCode": "TARGET_MAC = \"88:13:bf:6c:60:94\"\nprint(\"=\"*50)\nprint(\"Finding ESP32-CAM on network\")\nprint(f\"Looking for MAC: {TARGET_MAC}\")\nprint(\"=\"*50)\n# Get local IP to determine network range\ndef get_local_ip():\n    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\n    try:\n        s.connect(('8.8.8.8', 80))",
+        "detail": "To_Delete_Later.aria.test.find_esp32",
+        "documentation": {}
+    },
+    {
+        "label": "local_ip",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.test.find_esp32",
+        "description": "To_Delete_Later.aria.test.find_esp32",
+        "peekOfCode": "local_ip = get_local_ip()\nprint(f\"\\nYour IP: {local_ip}\")\n# Get network prefix (e.g., 192.168.1)\nnetwork_prefix = '.'.join(local_ip.split('.')[:-1])\nprint(f\"Network: {network_prefix}.0/24\")\n# Method 1: Check ARP cache first\nprint(\"\\n[1] Checking ARP cache...\")\ntry:\n    result = subprocess.run(['arp', '-a'], capture_output=True, text=True)\n    lines = result.stdout.lower()",
+        "detail": "To_Delete_Later.aria.test.find_esp32",
+        "documentation": {}
+    },
+    {
+        "label": "network_prefix",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.test.find_esp32",
+        "description": "To_Delete_Later.aria.test.find_esp32",
+        "peekOfCode": "network_prefix = '.'.join(local_ip.split('.')[:-1])\nprint(f\"Network: {network_prefix}.0/24\")\n# Method 1: Check ARP cache first\nprint(\"\\n[1] Checking ARP cache...\")\ntry:\n    result = subprocess.run(['arp', '-a'], capture_output=True, text=True)\n    lines = result.stdout.lower()\n    # Look for MAC address (with different separators)\n    mac_variants = [\n        TARGET_MAC.lower(),",
+        "detail": "To_Delete_Later.aria.test.find_esp32",
+        "documentation": {}
+    },
+    {
+        "label": "result",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.test.find_esp32",
+        "description": "To_Delete_Later.aria.test.find_esp32",
+        "peekOfCode": "result = subprocess.run(['arp', '-a'], capture_output=True, text=True)\nfor line in result.stdout.split('\\n'):\n    line_lower = line.lower()\n    for mac in mac_variants:\n        if mac in line_lower:\n            ip_match = re.search(r'(\\d+\\.\\d+\\.\\d+\\.\\d+)', line)\n            if ip_match:\n                found_ip = ip_match.group(1)\n                print(f\"    FOUND: {found_ip}\")\n                print(f\"\\n>>> ESP32-CAM IP: {found_ip}\")",
+        "detail": "To_Delete_Later.aria.test.find_esp32",
+        "documentation": {}
+    },
+    {
+        "label": "devices",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.test.test_mic",
+        "description": "To_Delete_Later.aria.test.test_mic",
+        "peekOfCode": "devices = sd.query_devices()\ninput_devices = []\nfor i, d in enumerate(devices):\n    if d['max_input_channels'] > 0:\n        input_devices.append((i, d['name'][:40]))\nprint(f\"\\nFound {len(input_devices)} input devices. Testing each...\")\nprint(\"(Say something during each test!)\\n\")\nworking = []\nfor device_id, name in input_devices:\n    try:",
+        "detail": "To_Delete_Later.aria.test.test_mic",
+        "documentation": {}
+    },
+    {
+        "label": "input_devices",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.test.test_mic",
+        "description": "To_Delete_Later.aria.test.test_mic",
+        "peekOfCode": "input_devices = []\nfor i, d in enumerate(devices):\n    if d['max_input_channels'] > 0:\n        input_devices.append((i, d['name'][:40]))\nprint(f\"\\nFound {len(input_devices)} input devices. Testing each...\")\nprint(\"(Say something during each test!)\\n\")\nworking = []\nfor device_id, name in input_devices:\n    try:\n        # Try to open and record",
+        "detail": "To_Delete_Later.aria.test.test_mic",
+        "documentation": {}
+    },
+    {
+        "label": "working",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.test.test_mic",
+        "description": "To_Delete_Later.aria.test.test_mic",
+        "peekOfCode": "working = []\nfor device_id, name in input_devices:\n    try:\n        # Try to open and record\n        audio = sd.rec(\n            16000,  # 1 second at 16kHz\n            samplerate=16000,\n            channels=1,\n            dtype='float32',\n            device=device_id",
+        "detail": "To_Delete_Later.aria.test.test_mic",
+        "documentation": {}
+    },
+    {
+        "label": "AssistantState",
+        "kind": 6,
+        "importPath": "To_Delete_Later.aria.assistant",
+        "description": "To_Delete_Later.aria.assistant",
+        "peekOfCode": "class AssistantState(Enum):\n    \"\"\"States of the assistant\"\"\"\n    IDLE = \"idle\"               # Waiting for wake word\n    LISTENING = \"listening\"     # Recording user speech\n    PROCESSING = \"processing\"   # Processing with Gemini\n    SPEAKING = \"speaking\"       # TTS output\n    EXECUTING = \"executing\"     # Executing tool commands\nclass AriaAssistant:\n    \"\"\"\n    ARIA - AI Home Assistant",
+        "detail": "To_Delete_Later.aria.assistant",
+        "documentation": {}
+    },
+    {
+        "label": "AriaAssistant",
+        "kind": 6,
+        "importPath": "To_Delete_Later.aria.assistant",
+        "description": "To_Delete_Later.aria.assistant",
+        "peekOfCode": "class AriaAssistant:\n    \"\"\"\n    ARIA - AI Home Assistant\n    Flow:\n    1. Wait for \"Ok ARIA\" wake word\n    2. Play listening sound\n    3. Record user speech until silence\n    4. Play stop sound\n    5. Transcribe with Whisper\n    6. Get relevant memories from Qdrant",
+        "detail": "To_Delete_Later.aria.assistant",
         "documentation": {}
     },
     {
         "label": "main",
         "kind": 2,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "peekOfCode": "def main():\n    wish_me()\n    while True:\n        query = take_command()\n        if 'wikipedia' in query:\n            query = query.replace('wikipedia', '').strip()\n            if query == \"\":\n                speak('What should I search on Wikipedia?')\n                query = take_command()\n            if query != \"None\" and query.strip() != \"\":",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "importPath": "To_Delete_Later.aria.assistant",
+        "description": "To_Delete_Later.aria.assistant",
+        "peekOfCode": "def main():\n    \"\"\"Main entry point\"\"\"\n    assistant = AriaAssistant()\n    assistant.start()\nif __name__ == \"__main__\":\n    main()",
+        "detail": "To_Delete_Later.aria.assistant",
         "documentation": {}
     },
     {
-        "label": "USER",
-        "kind": 5,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "peekOfCode": "USER = os.getenv(\"SIR\") or \"User\"\nBOTNAME = os.getenv(\"BOTNAME\") or \"Assistant\"\nEMAIL = os.getenv(\"EMAIL\")\nEMAIL_PASSWORD = os.getenv(\"EMAIL_PASSWORD\")\nNEWS_API_KEY = os.getenv(\"NEWS_API_KEY\")\nOPENWEATHER_API_KEY = os.getenv(\"OPENWEATHER_API_KEY\")\n# Import the newLook module and get access to the stop_tracking_event\n# Use a try-except to handle potential import errors gracefully\ntry:\n    from newLook import newLook, stop_tracking_event",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "label": "AudioHandler",
+        "kind": 6,
+        "importPath": "To_Delete_Later.aria.audio_handler",
+        "description": "To_Delete_Later.aria.audio_handler",
+        "peekOfCode": "class AudioHandler:\n    \"\"\"Handles audio input/output for ARIA\"\"\"\n    def __init__(self):\n        self.sample_rate = SAMPLE_RATE\n        self.channels = CHANNELS\n        self.chunk_size = CHUNK_SIZE\n        self.audio_queue = queue.Queue()\n        self.is_recording = False\n        self._stream = None\n    def _audio_callback(self, indata, frames, time, status):",
+        "detail": "To_Delete_Later.aria.audio_handler",
         "documentation": {}
     },
     {
-        "label": "BOTNAME",
-        "kind": 5,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "peekOfCode": "BOTNAME = os.getenv(\"BOTNAME\") or \"Assistant\"\nEMAIL = os.getenv(\"EMAIL\")\nEMAIL_PASSWORD = os.getenv(\"EMAIL_PASSWORD\")\nNEWS_API_KEY = os.getenv(\"NEWS_API_KEY\")\nOPENWEATHER_API_KEY = os.getenv(\"OPENWEATHER_API_KEY\")\n# Import the newLook module and get access to the stop_tracking_event\n# Use a try-except to handle potential import errors gracefully\ntry:\n    from newLook import newLook, stop_tracking_event\n    tracking_module_available = True",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "label": "get_audio_handler",
+        "kind": 2,
+        "importPath": "To_Delete_Later.aria.audio_handler",
+        "description": "To_Delete_Later.aria.audio_handler",
+        "peekOfCode": "def get_audio_handler():\n    global _audio_handler\n    if _audio_handler is None:\n        _audio_handler = AudioHandler()\n    return _audio_handler\nif __name__ == \"__main__\":\n    # Test audio\n    handler = AudioHandler()\n    print(\"Available devices:\")\n    print(handler.get_audio_devices())",
+        "detail": "To_Delete_Later.aria.audio_handler",
         "documentation": {}
     },
     {
-        "label": "EMAIL",
+        "label": "_audio_handler",
         "kind": 5,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "peekOfCode": "EMAIL = os.getenv(\"EMAIL\")\nEMAIL_PASSWORD = os.getenv(\"EMAIL_PASSWORD\")\nNEWS_API_KEY = os.getenv(\"NEWS_API_KEY\")\nOPENWEATHER_API_KEY = os.getenv(\"OPENWEATHER_API_KEY\")\n# Import the newLook module and get access to the stop_tracking_event\n# Use a try-except to handle potential import errors gracefully\ntry:\n    from newLook import newLook, stop_tracking_event\n    tracking_module_available = True\nexcept ImportError:",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "importPath": "To_Delete_Later.aria.audio_handler",
+        "description": "To_Delete_Later.aria.audio_handler",
+        "peekOfCode": "_audio_handler = None\ndef get_audio_handler():\n    global _audio_handler\n    if _audio_handler is None:\n        _audio_handler = AudioHandler()\n    return _audio_handler\nif __name__ == \"__main__\":\n    # Test audio\n    handler = AudioHandler()\n    print(\"Available devices:\")",
+        "detail": "To_Delete_Later.aria.audio_handler",
         "documentation": {}
     },
     {
-        "label": "EMAIL_PASSWORD",
-        "kind": 5,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "peekOfCode": "EMAIL_PASSWORD = os.getenv(\"EMAIL_PASSWORD\")\nNEWS_API_KEY = os.getenv(\"NEWS_API_KEY\")\nOPENWEATHER_API_KEY = os.getenv(\"OPENWEATHER_API_KEY\")\n# Import the newLook module and get access to the stop_tracking_event\n# Use a try-except to handle potential import errors gracefully\ntry:\n    from newLook import newLook, stop_tracking_event\n    tracking_module_available = True\nexcept ImportError:\n    print(\"Warning: newLook module not found. Person tracking will be disabled.\")",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "label": "get_api_keys",
+        "kind": 2,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "def get_api_keys():\n    \"\"\"Get all available Gemini API keys for rotation\"\"\"\n    keys = []\n    # Check for numbered keys first\n    i = 1\n    while True:\n        key = os.getenv(f'google_api_{i}')\n        if key:\n            keys.append(key)\n            i += 1",
+        "detail": "To_Delete_Later.aria.config",
         "documentation": {}
     },
     {
-        "label": "NEWS_API_KEY",
+        "label": "GEMINI_API_KEYS",
         "kind": 5,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "peekOfCode": "NEWS_API_KEY = os.getenv(\"NEWS_API_KEY\")\nOPENWEATHER_API_KEY = os.getenv(\"OPENWEATHER_API_KEY\")\n# Import the newLook module and get access to the stop_tracking_event\n# Use a try-except to handle potential import errors gracefully\ntry:\n    from newLook import newLook, stop_tracking_event\n    tracking_module_available = True\nexcept ImportError:\n    print(\"Warning: newLook module not found. Person tracking will be disabled.\")\n    tracking_module_available = False",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "GEMINI_API_KEYS = get_api_keys()\nGEMINI_MODEL = \"gemini-2.5-flash-lite\"\n# =============================================================================\n# ESP32-CAM\n# =============================================================================\nESP32_CAM_IP = os.getenv('ESP32_CAM_IP', '10.183.3.186')\n# =============================================================================\n# YEELIGHT\n# =============================================================================\nYEELIGHT_IP = os.getenv('YEELIGHT_IP', '172.16.255.52')",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "GEMINI_MODEL",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "GEMINI_MODEL = \"gemini-2.5-flash-lite\"\n# =============================================================================\n# ESP32-CAM\n# =============================================================================\nESP32_CAM_IP = os.getenv('ESP32_CAM_IP', '10.183.3.186')\n# =============================================================================\n# YEELIGHT\n# =============================================================================\nYEELIGHT_IP = os.getenv('YEELIGHT_IP', '172.16.255.52')\n# =============================================================================",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "ESP32_CAM_IP",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "ESP32_CAM_IP = os.getenv('ESP32_CAM_IP', '10.183.3.186')\n# =============================================================================\n# YEELIGHT\n# =============================================================================\nYEELIGHT_IP = os.getenv('YEELIGHT_IP', '172.16.255.52')\n# =============================================================================\n# QDRANT RAG\n# =============================================================================\nQDRANT_HOST = os.getenv('QDRANT_HOST', 'localhost')\nQDRANT_PORT = int(os.getenv('QDRANT_PORT', 6333))",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "YEELIGHT_IP",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "YEELIGHT_IP = os.getenv('YEELIGHT_IP', '172.16.255.52')\n# =============================================================================\n# QDRANT RAG\n# =============================================================================\nQDRANT_HOST = os.getenv('QDRANT_HOST', 'localhost')\nQDRANT_PORT = int(os.getenv('QDRANT_PORT', 6333))\nQDRANT_COLLECTION = os.getenv('QDRANT_COLLECTION', 'soul')\nRAG_TOP_K = 5  # Number of memories to retrieve\n# =============================================================================\n# WEATHER",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "QDRANT_HOST",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "QDRANT_HOST = os.getenv('QDRANT_HOST', 'localhost')\nQDRANT_PORT = int(os.getenv('QDRANT_PORT', 6333))\nQDRANT_COLLECTION = os.getenv('QDRANT_COLLECTION', 'soul')\nRAG_TOP_K = 5  # Number of memories to retrieve\n# =============================================================================\n# WEATHER\n# =============================================================================\nOPENWEATHER_API_KEY = os.getenv('OPENWEATHER_API_KEY', '')\nDEFAULT_CITY = os.getenv('DEFAULT_CITY', 'Almaty')\n# =============================================================================",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "QDRANT_PORT",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "QDRANT_PORT = int(os.getenv('QDRANT_PORT', 6333))\nQDRANT_COLLECTION = os.getenv('QDRANT_COLLECTION', 'soul')\nRAG_TOP_K = 5  # Number of memories to retrieve\n# =============================================================================\n# WEATHER\n# =============================================================================\nOPENWEATHER_API_KEY = os.getenv('OPENWEATHER_API_KEY', '')\nDEFAULT_CITY = os.getenv('DEFAULT_CITY', 'Almaty')\n# =============================================================================\n# TTS SETTINGS",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "QDRANT_COLLECTION",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "QDRANT_COLLECTION = os.getenv('QDRANT_COLLECTION', 'soul')\nRAG_TOP_K = 5  # Number of memories to retrieve\n# =============================================================================\n# WEATHER\n# =============================================================================\nOPENWEATHER_API_KEY = os.getenv('OPENWEATHER_API_KEY', '')\nDEFAULT_CITY = os.getenv('DEFAULT_CITY', 'Almaty')\n# =============================================================================\n# TTS SETTINGS\n# =============================================================================",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "RAG_TOP_K",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "RAG_TOP_K = 5  # Number of memories to retrieve\n# =============================================================================\n# WEATHER\n# =============================================================================\nOPENWEATHER_API_KEY = os.getenv('OPENWEATHER_API_KEY', '')\nDEFAULT_CITY = os.getenv('DEFAULT_CITY', 'Almaty')\n# =============================================================================\n# TTS SETTINGS\n# =============================================================================\n# Microsoft Edge TTS voices",
+        "detail": "To_Delete_Later.aria.config",
         "documentation": {}
     },
     {
         "label": "OPENWEATHER_API_KEY",
         "kind": 5,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "OPENWEATHER_API_KEY = os.getenv('OPENWEATHER_API_KEY', '')\nDEFAULT_CITY = os.getenv('DEFAULT_CITY', 'Almaty')\n# =============================================================================\n# TTS SETTINGS\n# =============================================================================\n# Microsoft Edge TTS voices\nTTS_VOICE_RUSSIAN = \"ru-RU-SvetlanaNeural\"\nTTS_VOICE_KAZAKH = \"kk-KZ-AigulNeural\"\nTTS_VOICE_ENGLISH = \"en-US-AriaNeural\"\n# Current default voice (Russian for now)",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "DEFAULT_CITY",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "DEFAULT_CITY = os.getenv('DEFAULT_CITY', 'Almaty')\n# =============================================================================\n# TTS SETTINGS\n# =============================================================================\n# Microsoft Edge TTS voices\nTTS_VOICE_RUSSIAN = \"ru-RU-SvetlanaNeural\"\nTTS_VOICE_KAZAKH = \"kk-KZ-AigulNeural\"\nTTS_VOICE_ENGLISH = \"en-US-AriaNeural\"\n# Current default voice (Russian for now)\nTTS_VOICE = TTS_VOICE_RUSSIAN",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "TTS_VOICE_RUSSIAN",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "TTS_VOICE_RUSSIAN = \"ru-RU-SvetlanaNeural\"\nTTS_VOICE_KAZAKH = \"kk-KZ-AigulNeural\"\nTTS_VOICE_ENGLISH = \"en-US-AriaNeural\"\n# Current default voice (Russian for now)\nTTS_VOICE = TTS_VOICE_RUSSIAN\n# =============================================================================\n# WHISPER STT SETTINGS\n# =============================================================================\nWHISPER_MODEL = \"base\"  # tiny, base, small, medium, large\nWHISPER_LANGUAGE = \"ru\"  # Russian for now",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "TTS_VOICE_KAZAKH",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "TTS_VOICE_KAZAKH = \"kk-KZ-AigulNeural\"\nTTS_VOICE_ENGLISH = \"en-US-AriaNeural\"\n# Current default voice (Russian for now)\nTTS_VOICE = TTS_VOICE_RUSSIAN\n# =============================================================================\n# WHISPER STT SETTINGS\n# =============================================================================\nWHISPER_MODEL = \"base\"  # tiny, base, small, medium, large\nWHISPER_LANGUAGE = \"ru\"  # Russian for now\n# =============================================================================",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "TTS_VOICE_ENGLISH",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "TTS_VOICE_ENGLISH = \"en-US-AriaNeural\"\n# Current default voice (Russian for now)\nTTS_VOICE = TTS_VOICE_RUSSIAN\n# =============================================================================\n# WHISPER STT SETTINGS\n# =============================================================================\nWHISPER_MODEL = \"base\"  # tiny, base, small, medium, large\nWHISPER_LANGUAGE = \"ru\"  # Russian for now\n# =============================================================================\n# WAKE WORD SETTINGS",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "TTS_VOICE",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "TTS_VOICE = TTS_VOICE_RUSSIAN\n# =============================================================================\n# WHISPER STT SETTINGS\n# =============================================================================\nWHISPER_MODEL = \"base\"  # tiny, base, small, medium, large\nWHISPER_LANGUAGE = \"ru\"  # Russian for now\n# =============================================================================\n# WAKE WORD SETTINGS\n# =============================================================================\nWAKE_WORD = \"ok_aria\"  # Custom wake word",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "WHISPER_MODEL",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "WHISPER_MODEL = \"base\"  # tiny, base, small, medium, large\nWHISPER_LANGUAGE = \"ru\"  # Russian for now\n# =============================================================================\n# WAKE WORD SETTINGS\n# =============================================================================\nWAKE_WORD = \"ok_aria\"  # Custom wake word\nWAKE_WORD_THRESHOLD = 0.5  # Detection sensitivity (0-1)\n# =============================================================================\n# CONVERSATION SETTINGS\n# =============================================================================",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "WHISPER_LANGUAGE",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "WHISPER_LANGUAGE = \"ru\"  # Russian for now\n# =============================================================================\n# WAKE WORD SETTINGS\n# =============================================================================\nWAKE_WORD = \"ok_aria\"  # Custom wake word\nWAKE_WORD_THRESHOLD = 0.5  # Detection sensitivity (0-1)\n# =============================================================================\n# CONVERSATION SETTINGS\n# =============================================================================\nMAX_HISTORY_TURNS = 10  # Keep last N turns before summarizing",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "WAKE_WORD",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "WAKE_WORD = \"ok_aria\"  # Custom wake word\nWAKE_WORD_THRESHOLD = 0.5  # Detection sensitivity (0-1)\n# =============================================================================\n# CONVERSATION SETTINGS\n# =============================================================================\nMAX_HISTORY_TURNS = 10  # Keep last N turns before summarizing\nSUMMARIZE_AFTER = 10  # Summarize conversation after this many turns\n# =============================================================================\n# AUDIO SETTINGS\n# =============================================================================",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "WAKE_WORD_THRESHOLD",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "WAKE_WORD_THRESHOLD = 0.5  # Detection sensitivity (0-1)\n# =============================================================================\n# CONVERSATION SETTINGS\n# =============================================================================\nMAX_HISTORY_TURNS = 10  # Keep last N turns before summarizing\nSUMMARIZE_AFTER = 10  # Summarize conversation after this many turns\n# =============================================================================\n# AUDIO SETTINGS\n# =============================================================================\nSAMPLE_RATE = 16000",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "MAX_HISTORY_TURNS",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "MAX_HISTORY_TURNS = 10  # Keep last N turns before summarizing\nSUMMARIZE_AFTER = 10  # Summarize conversation after this many turns\n# =============================================================================\n# AUDIO SETTINGS\n# =============================================================================\nSAMPLE_RATE = 16000\nCHANNELS = 1\nCHUNK_SIZE = 1024\nAUDIO_INPUT_DEVICE = 1  # Intel Smart Sound microphone\n# =============================================================================",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "SUMMARIZE_AFTER",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "SUMMARIZE_AFTER = 10  # Summarize conversation after this many turns\n# =============================================================================\n# AUDIO SETTINGS\n# =============================================================================\nSAMPLE_RATE = 16000\nCHANNELS = 1\nCHUNK_SIZE = 1024\nAUDIO_INPUT_DEVICE = 1  # Intel Smart Sound microphone\n# =============================================================================\n# PATHS",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "SAMPLE_RATE",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "SAMPLE_RATE = 16000\nCHANNELS = 1\nCHUNK_SIZE = 1024\nAUDIO_INPUT_DEVICE = 1  # Intel Smart Sound microphone\n# =============================================================================\n# PATHS\n# =============================================================================\nSOUNDS_DIR = os.path.join(os.path.dirname(__file__), 'sounds')\n# =============================================================================\n# SYSTEM PROMPT",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "CHANNELS",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "CHANNELS = 1\nCHUNK_SIZE = 1024\nAUDIO_INPUT_DEVICE = 1  # Intel Smart Sound microphone\n# =============================================================================\n# PATHS\n# =============================================================================\nSOUNDS_DIR = os.path.join(os.path.dirname(__file__), 'sounds')\n# =============================================================================\n# SYSTEM PROMPT\n# =============================================================================",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "CHUNK_SIZE",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "CHUNK_SIZE = 1024\nAUDIO_INPUT_DEVICE = 1  # Intel Smart Sound microphone\n# =============================================================================\n# PATHS\n# =============================================================================\nSOUNDS_DIR = os.path.join(os.path.dirname(__file__), 'sounds')\n# =============================================================================\n# SYSTEM PROMPT\n# =============================================================================\nSYSTEM_PROMPT = \"\"\"Ты ARIA - умный домашний помощник. ",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "AUDIO_INPUT_DEVICE",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "AUDIO_INPUT_DEVICE = 1  # Intel Smart Sound microphone\n# =============================================================================\n# PATHS\n# =============================================================================\nSOUNDS_DIR = os.path.join(os.path.dirname(__file__), 'sounds')\n# =============================================================================\n# SYSTEM PROMPT\n# =============================================================================\nSYSTEM_PROMPT = \"\"\"Ты ARIA - умный домашний помощник. \nХарактер:",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "SOUNDS_DIR",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "SOUNDS_DIR = os.path.join(os.path.dirname(__file__), 'sounds')\n# =============================================================================\n# SYSTEM PROMPT\n# =============================================================================\nSYSTEM_PROMPT = \"\"\"Ты ARIA - умный домашний помощник. \nХарактер:\n- Дружелюбная и отзывчивая\n- Отвечаешь кратко и по делу, потому что твои ответы озвучиваются\n- Говоришь естественно, как в разговоре\n- НЕ используешь markdown, эмодзи, списки - только чистый текст для озвучки",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "SYSTEM_PROMPT",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.config",
+        "description": "To_Delete_Later.aria.config",
+        "peekOfCode": "SYSTEM_PROMPT = \"\"\"Ты ARIA - умный домашний помощник. \nХарактер:\n- Дружелюбная и отзывчивая\n- Отвечаешь кратко и по делу, потому что твои ответы озвучиваются\n- Говоришь естественно, как в разговоре\n- НЕ используешь markdown, эмодзи, списки - только чистый текст для озвучки\nВозможности:\n- Управление умной лампой (включить/выключить свет, изменить яркость, цвет)\n- Камера с поворотом (посмотреть что происходит, повернуть камеру)\n- Включить музыку с YouTube",
+        "detail": "To_Delete_Later.aria.config",
+        "documentation": {}
+    },
+    {
+        "label": "GeminiClient",
+        "kind": 6,
+        "importPath": "To_Delete_Later.aria.gemini_client",
+        "description": "To_Delete_Later.aria.gemini_client",
+        "peekOfCode": "class GeminiClient:\n    \"\"\"Gemini API client with key rotation\"\"\"\n    def __init__(self):\n        self.api_keys = GEMINI_API_KEYS.copy()\n        self.current_key_index = 0\n        self.client = None\n        self.model = GEMINI_MODEL\n        # Conversation history\n        self.history = []\n        self.history_summary = \"\"",
+        "detail": "To_Delete_Later.aria.gemini_client",
+        "documentation": {}
+    },
+    {
+        "label": "get_gemini",
+        "kind": 2,
+        "importPath": "To_Delete_Later.aria.gemini_client",
+        "description": "To_Delete_Later.aria.gemini_client",
+        "peekOfCode": "def get_gemini():\n    global _gemini\n    if _gemini is None:\n        _gemini = GeminiClient()\n    return _gemini\nif __name__ == \"__main__\":\n    # Test Gemini client\n    client = GeminiClient()\n    response = client.chat(\"Привет! Как тебя зовут?\")\n    print(f\"ARIA: {response}\")",
+        "detail": "To_Delete_Later.aria.gemini_client",
+        "documentation": {}
+    },
+    {
+        "label": "_gemini",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.gemini_client",
+        "description": "To_Delete_Later.aria.gemini_client",
+        "peekOfCode": "_gemini = None\ndef get_gemini():\n    global _gemini\n    if _gemini is None:\n        _gemini = GeminiClient()\n    return _gemini\nif __name__ == \"__main__\":\n    # Test Gemini client\n    client = GeminiClient()\n    response = client.chat(\"Привет! Как тебя зовут?\")",
+        "detail": "To_Delete_Later.aria.gemini_client",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "To_Delete_Later.aria.main",
+        "description": "To_Delete_Later.aria.main",
+        "peekOfCode": "def main():\n    parser = argparse.ArgumentParser(description='ARIA Home Assistant')\n    parser.add_argument('--text', action='store_true', help='Text input mode')\n    parser.add_argument('--test', action='store_true', help='Test components')\n    args = parser.parse_args()\n    if args.test:\n        test_components()\n    elif args.text:\n        text_mode()\n    else:",
+        "detail": "To_Delete_Later.aria.main",
+        "documentation": {}
+    },
+    {
+        "label": "voice_mode",
+        "kind": 2,
+        "importPath": "To_Delete_Later.aria.main",
+        "description": "To_Delete_Later.aria.main",
+        "peekOfCode": "def voice_mode():\n    \"\"\"Normal voice-activated mode\"\"\"\n    from assistant import AriaAssistant\n    assistant = AriaAssistant()\n    assistant.start()\ndef text_mode():\n    \"\"\"Text input mode for testing without microphone\"\"\"\n    from assistant import AriaAssistant\n    print(\"\\n\" + \"=\"*50)\n    print(\"ARIA - Text Mode\")",
+        "detail": "To_Delete_Later.aria.main",
+        "documentation": {}
+    },
+    {
+        "label": "text_mode",
+        "kind": 2,
+        "importPath": "To_Delete_Later.aria.main",
+        "description": "To_Delete_Later.aria.main",
+        "peekOfCode": "def text_mode():\n    \"\"\"Text input mode for testing without microphone\"\"\"\n    from assistant import AriaAssistant\n    print(\"\\n\" + \"=\"*50)\n    print(\"ARIA - Text Mode\")\n    print(\"=\"*50)\n    print(\"Type your messages (or 'quit' to exit)\")\n    print(\"=\"*50 + \"\\n\")\n    assistant = AriaAssistant()\n    # Don't start wake word detection",
+        "detail": "To_Delete_Later.aria.main",
+        "documentation": {}
+    },
+    {
+        "label": "test_components",
+        "kind": 2,
+        "importPath": "To_Delete_Later.aria.main",
+        "description": "To_Delete_Later.aria.main",
+        "peekOfCode": "def test_components():\n    \"\"\"Test individual components\"\"\"\n    print(\"\\n[TEST] Testing ARIA Components\\n\")\n    # Test 1: Audio\n    print(\"[1] Testing Audio...\")\n    try:\n        from audio_handler import AudioHandler\n        audio = AudioHandler()\n        devices = audio.get_audio_devices()\n        print(f\"   [OK] Found {len(devices)} audio devices\")",
+        "detail": "To_Delete_Later.aria.main",
+        "documentation": {}
+    },
+    {
+        "label": "RAGMemory",
+        "kind": 6,
+        "importPath": "To_Delete_Later.aria.rag",
+        "description": "To_Delete_Later.aria.rag",
+        "peekOfCode": "class RAGMemory:\n    \"\"\"RAG-based memory retrieval from Qdrant\"\"\"\n    def __init__(self):\n        self.host = QDRANT_HOST\n        self.port = QDRANT_PORT\n        self.collection = QDRANT_COLLECTION\n        self.top_k = RAG_TOP_K\n        self.client = None\n        self.embedding_model = None\n        # API key rotation for embeddings",
+        "detail": "To_Delete_Later.aria.rag",
+        "documentation": {}
+    },
+    {
+        "label": "get_rag",
+        "kind": 2,
+        "importPath": "To_Delete_Later.aria.rag",
+        "description": "To_Delete_Later.aria.rag",
+        "peekOfCode": "def get_rag():\n    global _rag\n    if _rag is None:\n        _rag = RAGMemory()\n    return _rag\nif __name__ == \"__main__\":\n    # Test RAG\n    rag = RAGMemory()\n    print(\"Testing RAG connection...\")\n    if rag.connect():",
+        "detail": "To_Delete_Later.aria.rag",
+        "documentation": {}
+    },
+    {
+        "label": "_rag",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.rag",
+        "description": "To_Delete_Later.aria.rag",
+        "peekOfCode": "_rag = None\ndef get_rag():\n    global _rag\n    if _rag is None:\n        _rag = RAGMemory()\n    return _rag\nif __name__ == \"__main__\":\n    # Test RAG\n    rag = RAGMemory()\n    print(\"Testing RAG connection...\")",
+        "detail": "To_Delete_Later.aria.rag",
+        "documentation": {}
+    },
+    {
+        "label": "SoundPlayer",
+        "kind": 6,
+        "importPath": "To_Delete_Later.aria.sounds",
+        "description": "To_Delete_Later.aria.sounds",
+        "peekOfCode": "class SoundPlayer:\n    \"\"\"Play ARIA sound effects\"\"\"\n    def __init__(self):\n        # Pre-generate sounds\n        self.sounds = {\n            'listen_start': generate_listen_start_sound(),\n            'listen_stop': generate_listen_stop_sound(),\n            'error': generate_error_sound(),\n            'success': generate_success_sound()\n        }",
+        "detail": "To_Delete_Later.aria.sounds",
+        "documentation": {}
+    },
+    {
+        "label": "generate_sine_wave",
+        "kind": 2,
+        "importPath": "To_Delete_Later.aria.sounds",
+        "description": "To_Delete_Later.aria.sounds",
+        "peekOfCode": "def generate_sine_wave(frequency, duration, sample_rate=SAMPLE_RATE, amplitude=0.3):\n    \"\"\"Generate a sine wave\"\"\"\n    t = np.linspace(0, duration, int(sample_rate * duration), False)\n    wave = amplitude * np.sin(2 * np.pi * frequency * t)\n    return wave.astype(np.float32)\ndef apply_envelope(audio, attack=0.05, decay=0.1, sustain=0.7, release=0.15):\n    \"\"\"Apply ADSR envelope to audio\"\"\"\n    length = len(audio)\n    attack_samples = int(length * attack)\n    decay_samples = int(length * decay)",
+        "detail": "To_Delete_Later.aria.sounds",
+        "documentation": {}
+    },
+    {
+        "label": "apply_envelope",
+        "kind": 2,
+        "importPath": "To_Delete_Later.aria.sounds",
+        "description": "To_Delete_Later.aria.sounds",
+        "peekOfCode": "def apply_envelope(audio, attack=0.05, decay=0.1, sustain=0.7, release=0.15):\n    \"\"\"Apply ADSR envelope to audio\"\"\"\n    length = len(audio)\n    attack_samples = int(length * attack)\n    decay_samples = int(length * decay)\n    release_samples = int(length * release)\n    sustain_samples = length - attack_samples - decay_samples - release_samples\n    envelope = np.concatenate([\n        np.linspace(0, 1, attack_samples),  # Attack\n        np.linspace(1, sustain, decay_samples),  # Decay",
+        "detail": "To_Delete_Later.aria.sounds",
+        "documentation": {}
+    },
+    {
+        "label": "generate_listen_start_sound",
+        "kind": 2,
+        "importPath": "To_Delete_Later.aria.sounds",
+        "description": "To_Delete_Later.aria.sounds",
+        "peekOfCode": "def generate_listen_start_sound():\n    \"\"\"\n    Generate a pleasant \"listening started\" sound\n    Two ascending tones like Siri/Google\n    \"\"\"\n    # Two quick ascending notes\n    note1 = generate_sine_wave(880, 0.12)   # A5\n    note2 = generate_sine_wave(1318, 0.15)  # E6\n    # Add harmonics for richness\n    note1 += generate_sine_wave(1760, 0.12, amplitude=0.15)  # Octave harmonic",
+        "detail": "To_Delete_Later.aria.sounds",
+        "documentation": {}
+    },
+    {
+        "label": "generate_listen_stop_sound",
+        "kind": 2,
+        "importPath": "To_Delete_Later.aria.sounds",
+        "description": "To_Delete_Later.aria.sounds",
+        "peekOfCode": "def generate_listen_stop_sound():\n    \"\"\"\n    Generate a pleasant \"listening stopped\" sound\n    Two descending tones\n    \"\"\"\n    # Two quick descending notes\n    note1 = generate_sine_wave(1318, 0.1)   # E6\n    note2 = generate_sine_wave(880, 0.18)   # A5\n    # Add harmonics\n    note1 += generate_sine_wave(2636, 0.1, amplitude=0.12)",
+        "detail": "To_Delete_Later.aria.sounds",
+        "documentation": {}
+    },
+    {
+        "label": "generate_error_sound",
+        "kind": 2,
+        "importPath": "To_Delete_Later.aria.sounds",
+        "description": "To_Delete_Later.aria.sounds",
+        "peekOfCode": "def generate_error_sound():\n    \"\"\"Generate a gentle error sound\"\"\"\n    # Low tone\n    sound = generate_sine_wave(330, 0.3)  # E4\n    sound += generate_sine_wave(277, 0.3, amplitude=0.2)  # C#4 - minor second for tension\n    sound = apply_envelope(sound, attack=0.05, release=0.4)\n    sound = sound / np.max(np.abs(sound)) * 0.35\n    return sound\ndef generate_success_sound():\n    \"\"\"Generate a pleasant success sound\"\"\"",
+        "detail": "To_Delete_Later.aria.sounds",
+        "documentation": {}
+    },
+    {
+        "label": "generate_success_sound",
+        "kind": 2,
+        "importPath": "To_Delete_Later.aria.sounds",
+        "description": "To_Delete_Later.aria.sounds",
+        "peekOfCode": "def generate_success_sound():\n    \"\"\"Generate a pleasant success sound\"\"\"\n    # Major chord arpeggio (C-E-G)\n    note1 = generate_sine_wave(523, 0.1)   # C5\n    note2 = generate_sine_wave(659, 0.1)   # E5\n    note3 = generate_sine_wave(784, 0.15)  # G5\n    note1 = apply_envelope(note1, attack=0.02, release=0.2)\n    note2 = apply_envelope(note2, attack=0.02, release=0.2)\n    note3 = apply_envelope(note3, attack=0.02, release=0.3)\n    gap = np.zeros(int(SAMPLE_RATE * 0.02), dtype=np.float32)",
+        "detail": "To_Delete_Later.aria.sounds",
+        "documentation": {}
+    },
+    {
+        "label": "get_sound_player",
+        "kind": 2,
+        "importPath": "To_Delete_Later.aria.sounds",
+        "description": "To_Delete_Later.aria.sounds",
+        "peekOfCode": "def get_sound_player():\n    global _player\n    if _player is None:\n        _player = SoundPlayer()\n    return _player\nif __name__ == \"__main__\":\n    import time\n    player = SoundPlayer()\n    print(\"Playing listen start sound...\")\n    player.play_listen_start()",
+        "detail": "To_Delete_Later.aria.sounds",
+        "documentation": {}
+    },
+    {
+        "label": "_player",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.sounds",
+        "description": "To_Delete_Later.aria.sounds",
+        "peekOfCode": "_player = None\ndef get_sound_player():\n    global _player\n    if _player is None:\n        _player = SoundPlayer()\n    return _player\nif __name__ == \"__main__\":\n    import time\n    player = SoundPlayer()\n    print(\"Playing listen start sound...\")",
+        "detail": "To_Delete_Later.aria.sounds",
+        "documentation": {}
+    },
+    {
+        "label": "SpeechToText",
+        "kind": 6,
+        "importPath": "To_Delete_Later.aria.stt",
+        "description": "To_Delete_Later.aria.stt",
+        "peekOfCode": "class SpeechToText:\n    \"\"\"Speech-to-Text using faster-whisper (local, no API)\"\"\"\n    def __init__(self, model_size=None, language=None):\n        self.model_size = model_size or WHISPER_MODEL\n        self.language = language or WHISPER_LANGUAGE\n        self.model = None\n    def load_model(self):\n        \"\"\"Load Whisper model (lazy loading)\"\"\"\n        if self.model is None:\n            print(f\"[*] Loading Whisper model '{self.model_size}'...\")",
+        "detail": "To_Delete_Later.aria.stt",
+        "documentation": {}
+    },
+    {
+        "label": "get_stt",
+        "kind": 2,
+        "importPath": "To_Delete_Later.aria.stt",
+        "description": "To_Delete_Later.aria.stt",
+        "peekOfCode": "def get_stt():\n    global _stt\n    if _stt is None:\n        _stt = SpeechToText()\n    return _stt\nif __name__ == \"__main__\":\n    # Test STT\n    from audio_handler import AudioHandler\n    stt = SpeechToText()\n    audio = AudioHandler()",
+        "detail": "To_Delete_Later.aria.stt",
+        "documentation": {}
+    },
+    {
+        "label": "_stt",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.stt",
+        "description": "To_Delete_Later.aria.stt",
+        "peekOfCode": "_stt = None\ndef get_stt():\n    global _stt\n    if _stt is None:\n        _stt = SpeechToText()\n    return _stt\nif __name__ == \"__main__\":\n    # Test STT\n    from audio_handler import AudioHandler\n    stt = SpeechToText()",
+        "detail": "To_Delete_Later.aria.stt",
+        "documentation": {}
+    },
+    {
+        "label": "rag",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.test_rag",
+        "description": "To_Delete_Later.aria.test_rag",
+        "peekOfCode": "rag = RAGMemory()\n# Test 1: Connection\nprint(\"\\n[1] Testing Qdrant connection...\")\nif rag.connect():\n    print(\"    [OK] Connected!\")\nelse:\n    print(\"    [FAIL] Could not connect\")\n    exit(1)\n# Test 2: Collection info\nprint(\"\\n[2] Getting collection info...\")",
+        "detail": "To_Delete_Later.aria.test_rag",
+        "documentation": {}
+    },
+    {
+        "label": "info",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.test_rag",
+        "description": "To_Delete_Later.aria.test_rag",
+        "peekOfCode": "info = rag.get_collection_info()\nif info:\n    print(f\"    Collection: {info['name']}\")\n    print(f\"    Points: {info['points_count']}\")\nelse:\n    print(\"    [FAIL] Could not get collection info\")\n# Test 3: Search\nprint(\"\\n[3] Testing search (query: 'programming')...\")\ntry:\n    memories = rag.search(\"programming\")",
+        "detail": "To_Delete_Later.aria.test_rag",
+        "documentation": {}
+    },
+    {
+        "label": "rag",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.test_rag_rotation",
+        "description": "To_Delete_Later.aria.test_rag_rotation",
+        "peekOfCode": "rag = RAGMemory()\nrag.connect()\ntry:\n    memories = rag.search(\"test query\")\n    if memories:\n        print(f\"\\n[OK] RAG returned {len(memories)} memories!\")\n        for i, m in enumerate(memories[:2], 1):\n            print(f\"    {i}. {m[:80]}...\")\n    else:\n        print(\"\\n[OK] RAG search completed (no memories found)\")",
+        "detail": "To_Delete_Later.aria.test_rag_rotation",
+        "documentation": {}
+    },
+    {
+        "label": "ESP32Camera",
+        "kind": 6,
+        "importPath": "To_Delete_Later.aria.tools",
+        "description": "To_Delete_Later.aria.tools",
+        "peekOfCode": "class ESP32Camera:\n    \"\"\"Control ESP32-CAM pan/tilt and capture images\"\"\"\n    def __init__(self, ip=None):\n        self.ip = ip or ESP32_CAM_IP\n    def move(self, direction):\n        \"\"\"Move camera: up, down, left, right\"\"\"\n        try:\n            requests.get(f\"http://{self.ip}/action?go={direction}\", timeout=2)\n            return True\n        except Exception as e:",
+        "detail": "To_Delete_Later.aria.tools",
+        "documentation": {}
+    },
+    {
+        "label": "SmartBulb",
+        "kind": 6,
+        "importPath": "To_Delete_Later.aria.tools",
+        "description": "To_Delete_Later.aria.tools",
+        "peekOfCode": "class SmartBulb:\n    \"\"\"Control Yeelight smart bulb\"\"\"\n    def __init__(self, ip=None):\n        self.ip = ip or YEELIGHT_IP\n        self._bulb = None\n    def _get_bulb(self):\n        if self._bulb is None:\n            from yeelight import Bulb\n            self._bulb = Bulb(self.ip)\n        return self._bulb",
+        "detail": "To_Delete_Later.aria.tools",
+        "documentation": {}
+    },
+    {
+        "label": "YouTubePlayer",
+        "kind": 6,
+        "importPath": "To_Delete_Later.aria.tools",
+        "description": "To_Delete_Later.aria.tools",
+        "peekOfCode": "class YouTubePlayer:\n    \"\"\"Play music from YouTube using yt-dlp\"\"\"\n    def __init__(self):\n        self.current_process = None\n    def search_and_play(self, query):\n        \"\"\"Search YouTube and play first result\"\"\"\n        try:\n            # First, get the video URL using yt-dlp\n            search_url = f\"ytsearch1:{query}\"\n            # Get audio URL",
+        "detail": "To_Delete_Later.aria.tools",
+        "documentation": {}
+    },
+    {
+        "label": "Weather",
+        "kind": 6,
+        "importPath": "To_Delete_Later.aria.tools",
+        "description": "To_Delete_Later.aria.tools",
+        "peekOfCode": "class Weather:\n    \"\"\"Get weather information using OpenWeatherMap\"\"\"\n    def __init__(self):\n        self.api_key = OPENWEATHER_API_KEY\n        self.default_city = DEFAULT_CITY\n    def get_weather(self, city=None):\n        \"\"\"Get current weather for a city\"\"\"\n        city = city or self.default_city\n        if not self.api_key:\n            # Fallback to wttr.in (no API key needed)",
+        "detail": "To_Delete_Later.aria.tools",
+        "documentation": {}
+    },
+    {
+        "label": "EmailClient",
+        "kind": 6,
+        "importPath": "To_Delete_Later.aria.tools",
+        "description": "To_Delete_Later.aria.tools",
+        "peekOfCode": "class EmailClient:\n    \"\"\"Read and summarize Gmail emails\"\"\"\n    def __init__(self):\n        self.service = None\n        self.credentials_file = os.getenv('GMAIL_CREDENTIALS_FILE', 'credentials.json')\n    def _get_service(self):\n        \"\"\"Initialize Gmail API service\"\"\"\n        if self.service:\n            return self.service\n        try:",
+        "detail": "To_Delete_Later.aria.tools",
+        "documentation": {}
+    },
+    {
+        "label": "ToolManager",
+        "kind": 6,
+        "importPath": "To_Delete_Later.aria.tools",
+        "description": "To_Delete_Later.aria.tools",
+        "peekOfCode": "class ToolManager:\n    \"\"\"Manages all ARIA tools\"\"\"\n    def __init__(self):\n        self.camera = ESP32Camera()\n        self.bulb = SmartBulb()\n        self.youtube = YouTubePlayer()\n        self.weather = Weather()\n        self.email = EmailClient()\n    def execute_command(self, command, args=None):\n        \"\"\"",
+        "detail": "To_Delete_Later.aria.tools",
+        "documentation": {}
+    },
+    {
+        "label": "get_tools",
+        "kind": 2,
+        "importPath": "To_Delete_Later.aria.tools",
+        "description": "To_Delete_Later.aria.tools",
+        "peekOfCode": "def get_tools():\n    global _tools\n    if _tools is None:\n        _tools = ToolManager()\n    return _tools\nif __name__ == \"__main__\":\n    # Test tools\n    tools = ToolManager()\n    print(\"Testing weather...\")\n    print(tools.weather.get_weather())",
+        "detail": "To_Delete_Later.aria.tools",
+        "documentation": {}
+    },
+    {
+        "label": "_tools",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.tools",
+        "description": "To_Delete_Later.aria.tools",
+        "peekOfCode": "_tools = None\ndef get_tools():\n    global _tools\n    if _tools is None:\n        _tools = ToolManager()\n    return _tools\nif __name__ == \"__main__\":\n    # Test tools\n    tools = ToolManager()\n    print(\"Testing weather...\")",
+        "detail": "To_Delete_Later.aria.tools",
+        "documentation": {}
+    },
+    {
+        "label": "TextToSpeech",
+        "kind": 6,
+        "importPath": "To_Delete_Later.aria.tts",
+        "description": "To_Delete_Later.aria.tts",
+        "peekOfCode": "class TextToSpeech:\n    \"\"\"Text-to-Speech using Edge TTS\"\"\"\n    def __init__(self, voice=None):\n        self.voice = voice or TTS_VOICE\n        self.temp_dir = tempfile.gettempdir()\n    def set_voice(self, voice):\n        \"\"\"Change TTS voice\"\"\"\n        self.voice = voice\n    def set_russian(self):\n        self.voice = TTS_VOICE_RUSSIAN",
+        "detail": "To_Delete_Later.aria.tts",
+        "documentation": {}
+    },
+    {
+        "label": "get_tts",
+        "kind": 2,
+        "importPath": "To_Delete_Later.aria.tts",
+        "description": "To_Delete_Later.aria.tts",
+        "peekOfCode": "def get_tts():\n    global _tts\n    if _tts is None:\n        _tts = TextToSpeech()\n    return _tts\nif __name__ == \"__main__\":\n    # Test TTS\n    tts = TextToSpeech()\n    print(\"Testing Russian voice...\")\n    tts.set_russian()",
+        "detail": "To_Delete_Later.aria.tts",
+        "documentation": {}
+    },
+    {
+        "label": "_tts",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.tts",
+        "description": "To_Delete_Later.aria.tts",
+        "peekOfCode": "_tts = None\ndef get_tts():\n    global _tts\n    if _tts is None:\n        _tts = TextToSpeech()\n    return _tts\nif __name__ == \"__main__\":\n    # Test TTS\n    tts = TextToSpeech()\n    print(\"Testing Russian voice...\")",
+        "detail": "To_Delete_Later.aria.tts",
+        "documentation": {}
+    },
+    {
+        "label": "WakeWordDetector",
+        "kind": 6,
+        "importPath": "To_Delete_Later.aria.wake_word",
+        "description": "To_Delete_Later.aria.wake_word",
+        "peekOfCode": "class WakeWordDetector:\n    \"\"\"\n    Detects \"Ok ARIA\" wake word locally\n    Uses openwakeword if available, otherwise falls back to \n    continuous Whisper-based keyword detection\n    \"\"\"\n    def __init__(self, callback=None):\n        \"\"\"\n        Args:\n            callback: Function to call when wake word detected",
+        "detail": "To_Delete_Later.aria.wake_word",
+        "documentation": {}
+    },
+    {
+        "label": "get_wake_word_detector",
+        "kind": 2,
+        "importPath": "To_Delete_Later.aria.wake_word",
+        "description": "To_Delete_Later.aria.wake_word",
+        "peekOfCode": "def get_wake_word_detector(callback=None):\n    global _detector\n    if _detector is None:\n        _detector = WakeWordDetector(callback)\n    elif callback:\n        _detector.callback = callback\n    return _detector\nif __name__ == \"__main__\":\n    # Test wake word detection\n    def on_wake_word():",
+        "detail": "To_Delete_Later.aria.wake_word",
+        "documentation": {}
+    },
+    {
+        "label": "OPENWAKEWORD_AVAILABLE",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.wake_word",
+        "description": "To_Delete_Later.aria.wake_word",
+        "peekOfCode": "OPENWAKEWORD_AVAILABLE = False  # Disabled - use Whisper for custom wake words\nclass WakeWordDetector:\n    \"\"\"\n    Detects \"Ok ARIA\" wake word locally\n    Uses openwakeword if available, otherwise falls back to \n    continuous Whisper-based keyword detection\n    \"\"\"\n    def __init__(self, callback=None):\n        \"\"\"\n        Args:",
+        "detail": "To_Delete_Later.aria.wake_word",
+        "documentation": {}
+    },
+    {
+        "label": "_detector",
+        "kind": 5,
+        "importPath": "To_Delete_Later.aria.wake_word",
+        "description": "To_Delete_Later.aria.wake_word",
+        "peekOfCode": "_detector = None\ndef get_wake_word_detector(callback=None):\n    global _detector\n    if _detector is None:\n        _detector = WakeWordDetector(callback)\n    elif callback:\n        _detector.callback = callback\n    return _detector\nif __name__ == \"__main__\":\n    # Test wake word detection",
+        "detail": "To_Delete_Later.aria.wake_word",
+        "documentation": {}
+    },
+    {
+        "label": "speak",
+        "kind": 2,
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "peekOfCode": "def speak(audio):\n    print(f\"{BOTNAME}: {audio}\")\n    engine.say(audio)\n    engine.runAndWait()\n# Wish Me Function\ndef wish_me():\n    hour = int(datetime.datetime.now().hour)\n    if 0 <= hour < 12:\n        speak(f\"Good Morning {USER}!\")\n    elif 12 <= hour < 18:",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "documentation": {}
+    },
+    {
+        "label": "wish_me",
+        "kind": 2,
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "peekOfCode": "def wish_me():\n    hour = int(datetime.datetime.now().hour)\n    if 0 <= hour < 12:\n        speak(f\"Good Morning {USER}!\")\n    elif 12 <= hour < 18:\n        speak(f\"Good Afternoon {USER}!\")\n    else:\n        speak(f\"Good Evening {USER}!\")\n    speak(f\"I am {BOTNAME}. How can I help you?\")\n# Take Command Function",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "documentation": {}
+    },
+    {
+        "label": "take_command",
+        "kind": 2,
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "peekOfCode": "def take_command():\n    r = sr.Recognizer()\n    with sr.Microphone() as source:\n        print(\"Listening...\")\n        r.pause_threshold = 1\n        audio = r.listen(source)\n    try:\n        print(\"Recognizing...\")\n        query = r.recognize_google(audio, language='en-US')\n        print(f\"{USER}: {query}\\n\")",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "documentation": {}
+    },
+    {
+        "label": "send_email",
+        "kind": 2,
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "peekOfCode": "def send_email(to, subject, body):\n    try:\n        server = smtplib.SMTP('smtp.gmail.com', 587)\n        server.starttls()\n        server.login(EMAIL, EMAIL_PASSWORD)\n        message = f\"Subject: {subject}\\n\\n{body}\"\n        server.sendmail(EMAIL, to, message)\n        server.quit()\n        speak(\"Email has been sent successfully!\")\n    except Exception as e:",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "documentation": {}
+    },
+    {
+        "label": "calculate",
+        "kind": 2,
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "peekOfCode": "def calculate(expression):\n    try:\n        result = eval(expression)\n        speak(f\"The answer is {result}\")\n    except Exception as e:\n        speak(\"Sorry, I couldn't calculate that.\")\n        print(e)\n# Open installed apps\ndef open_application(app_name):\n    try:",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "documentation": {}
+    },
+    {
+        "label": "open_application",
+        "kind": 2,
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "peekOfCode": "def open_application(app_name):\n    try:\n        if 'calculator' in app_name:\n            subprocess.Popen('calc.exe')\n            speak(\"Opening Calculator\")\n        elif 'arduino' in app_name:\n            subprocess.Popen(r\"C:\\Users\\Lenovo\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\")\n            speak(\"Opening Arduino IDE\")\n        elif 'steam' in app_name:\n            subprocess.Popen(r\"C:\\Program Files (x86)\\Steam\\Steam.exe\")",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "documentation": {}
+    },
+    {
+        "label": "take_notes",
+        "kind": 2,
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "peekOfCode": "def take_notes():\n    speak(\"What would you like to note down?\")\n    note = take_command()\n    if note != \"None\":\n        with open(\"notes.txt\", \"a\") as file:\n            file.write(f\"{datetime.datetime.now()}: {note}\\n\")\n        speak(\"Your note has been saved.\")\n# Set Alarm Function\ndef set_alarm():\n    speak(\"Please tell me the time for the alarm in HH:MM format.\")",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "documentation": {}
+    },
+    {
+        "label": "set_alarm",
+        "kind": 2,
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "peekOfCode": "def set_alarm():\n    speak(\"Please tell me the time for the alarm in HH:MM format.\")\n    alarm_time = input(\"Enter the alarm time in HH:MM format: \")  # Take input manually\n    if alarm_time != \"None\":\n        try:\n            alarm_hour, alarm_minute = map(int, alarm_time.split(\":\"))\n            current_time = datetime.datetime.now()\n            alarm_time_obj = current_time.replace(hour=alarm_hour, minute=alarm_minute, second=0, microsecond=0)\n            if alarm_time_obj < current_time:\n                alarm_time_obj += datetime.timedelta(days=1)  # Set alarm for next day",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "documentation": {}
+    },
+    {
+        "label": "website_search",
+        "kind": 2,
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "peekOfCode": "def website_search(query):\n    if 'anime' in query:\n        speak(\"Opening Anime website.\")\n        webbrowser.open(\"https://jut.su/anime/\")\n    elif 'korean website' in query:\n        speak(\"Opening Dorama website.\")\n        webbrowser.open(\"https://doramy.club/\")\n    elif 'portal' in query:\n        speak(\"Opening SDU Portal.\")\n        webbrowser.open(\"https://my.sdu.edu.kz/index.php\")",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "documentation": {}
+    },
+    {
+        "label": "newLook_wrapper",
+        "kind": 2,
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "peekOfCode": "def newLook_wrapper(follow_person, record, show_debug=True):\n    global tracking_active\n    try:\n        # Clear the stop event before starting\n        stop_tracking_event.clear()\n        # Start tracking\n        newLook(follow_person=follow_person, record=record, show_debug=show_debug)\n    except Exception as e:\n        print(f\"Error in newLook wrapper: {e}\")\n        import traceback",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "documentation": {}
+    },
+    {
+        "label": "toggle_person_following",
+        "kind": 2,
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "peekOfCode": "def toggle_person_following(follow=True, record=True, show_debug=True):\n    global person_tracking_thread, tracking_active\n    # Check if tracking module is available\n    if not tracking_module_available:\n        speak(\"Person tracking functionality is not available. Please make sure newLook.py is in the same directory.\")\n        return\n    try:\n        # If tracking is active, stop it first\n        if tracking_active and person_tracking_thread and person_tracking_thread.is_alive():\n            speak(\"Stopping current tracking session...\")",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "peekOfCode": "def main():\n    wish_me()\n    while True:\n        query = take_command()\n        if 'wikipedia' in query:\n            query = query.replace('wikipedia', '').strip()\n            if query == \"\":\n                speak('What should I search on Wikipedia?')\n                query = take_command()\n            if query != \"None\" and query.strip() != \"\":",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "documentation": {}
+    },
+    {
+        "label": "USER",
+        "kind": 5,
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "peekOfCode": "USER = os.getenv(\"SIR\") or \"User\"\nBOTNAME = os.getenv(\"BOTNAME\") or \"Assistant\"\nEMAIL = os.getenv(\"EMAIL\")\nEMAIL_PASSWORD = os.getenv(\"EMAIL_PASSWORD\")\nNEWS_API_KEY = os.getenv(\"NEWS_API_KEY\")\nOPENWEATHER_API_KEY = os.getenv(\"OPENWEATHER_API_KEY\")\n# Import the newLook module and get access to the stop_tracking_event\n# Use a try-except to handle potential import errors gracefully\ntry:\n    from newLook import newLook, stop_tracking_event",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "documentation": {}
+    },
+    {
+        "label": "BOTNAME",
+        "kind": 5,
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "peekOfCode": "BOTNAME = os.getenv(\"BOTNAME\") or \"Assistant\"\nEMAIL = os.getenv(\"EMAIL\")\nEMAIL_PASSWORD = os.getenv(\"EMAIL_PASSWORD\")\nNEWS_API_KEY = os.getenv(\"NEWS_API_KEY\")\nOPENWEATHER_API_KEY = os.getenv(\"OPENWEATHER_API_KEY\")\n# Import the newLook module and get access to the stop_tracking_event\n# Use a try-except to handle potential import errors gracefully\ntry:\n    from newLook import newLook, stop_tracking_event\n    tracking_module_available = True",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "documentation": {}
+    },
+    {
+        "label": "EMAIL",
+        "kind": 5,
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "peekOfCode": "EMAIL = os.getenv(\"EMAIL\")\nEMAIL_PASSWORD = os.getenv(\"EMAIL_PASSWORD\")\nNEWS_API_KEY = os.getenv(\"NEWS_API_KEY\")\nOPENWEATHER_API_KEY = os.getenv(\"OPENWEATHER_API_KEY\")\n# Import the newLook module and get access to the stop_tracking_event\n# Use a try-except to handle potential import errors gracefully\ntry:\n    from newLook import newLook, stop_tracking_event\n    tracking_module_available = True\nexcept ImportError:",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "documentation": {}
+    },
+    {
+        "label": "EMAIL_PASSWORD",
+        "kind": 5,
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "peekOfCode": "EMAIL_PASSWORD = os.getenv(\"EMAIL_PASSWORD\")\nNEWS_API_KEY = os.getenv(\"NEWS_API_KEY\")\nOPENWEATHER_API_KEY = os.getenv(\"OPENWEATHER_API_KEY\")\n# Import the newLook module and get access to the stop_tracking_event\n# Use a try-except to handle potential import errors gracefully\ntry:\n    from newLook import newLook, stop_tracking_event\n    tracking_module_available = True\nexcept ImportError:\n    print(\"Warning: newLook module not found. Person tracking will be disabled.\")",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "documentation": {}
+    },
+    {
+        "label": "NEWS_API_KEY",
+        "kind": 5,
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "peekOfCode": "NEWS_API_KEY = os.getenv(\"NEWS_API_KEY\")\nOPENWEATHER_API_KEY = os.getenv(\"OPENWEATHER_API_KEY\")\n# Import the newLook module and get access to the stop_tracking_event\n# Use a try-except to handle potential import errors gracefully\ntry:\n    from newLook import newLook, stop_tracking_event\n    tracking_module_available = True\nexcept ImportError:\n    print(\"Warning: newLook module not found. Person tracking will be disabled.\")\n    tracking_module_available = False",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "documentation": {}
+    },
+    {
+        "label": "OPENWEATHER_API_KEY",
+        "kind": 5,
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
         "peekOfCode": "OPENWEATHER_API_KEY = os.getenv(\"OPENWEATHER_API_KEY\")\n# Import the newLook module and get access to the stop_tracking_event\n# Use a try-except to handle potential import errors gracefully\ntry:\n    from newLook import newLook, stop_tracking_event\n    tracking_module_available = True\nexcept ImportError:\n    print(\"Warning: newLook module not found. Person tracking will be disabled.\")\n    tracking_module_available = False\n    # Create a dummy event object if the module is not available",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
         "documentation": {}
     },
     {
         "label": "person_tracking_thread",
         "kind": 5,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
         "peekOfCode": "person_tracking_thread = None\ntracking_active = False\n# Initialize Text-to-Speech Engine\nengine = pyttsx3.init()\nvoices = engine.getProperty('voices')\nengine.setProperty('voice', voices[1].id)  # Female voice\n# Speak Function\ndef speak(audio):\n    print(f\"{BOTNAME}: {audio}\")\n    engine.say(audio)",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
         "documentation": {}
     },
     {
         "label": "tracking_active",
         "kind": 5,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
         "peekOfCode": "tracking_active = False\n# Initialize Text-to-Speech Engine\nengine = pyttsx3.init()\nvoices = engine.getProperty('voices')\nengine.setProperty('voice', voices[1].id)  # Female voice\n# Speak Function\ndef speak(audio):\n    print(f\"{BOTNAME}: {audio}\")\n    engine.say(audio)\n    engine.runAndWait()",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
         "documentation": {}
     },
     {
         "label": "engine",
         "kind": 5,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
         "peekOfCode": "engine = pyttsx3.init()\nvoices = engine.getProperty('voices')\nengine.setProperty('voice', voices[1].id)  # Female voice\n# Speak Function\ndef speak(audio):\n    print(f\"{BOTNAME}: {audio}\")\n    engine.say(audio)\n    engine.runAndWait()\n# Wish Me Function\ndef wish_me():",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
         "documentation": {}
     },
     {
         "label": "voices",
         "kind": 5,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
         "peekOfCode": "voices = engine.getProperty('voices')\nengine.setProperty('voice', voices[1].id)  # Female voice\n# Speak Function\ndef speak(audio):\n    print(f\"{BOTNAME}: {audio}\")\n    engine.say(audio)\n    engine.runAndWait()\n# Wish Me Function\ndef wish_me():\n    hour = int(datetime.datetime.now().hour)",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.new gpt",
         "documentation": {}
     },
     {
         "label": "MjpegStreamReader",
         "kind": 6,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
         "peekOfCode": "class MjpegStreamReader:\n    def __init__(self, url):\n        self.url = url\n        self.frame = None\n        self.stopped = False\n        self.thread = None\n        self.last_frame_time = 0\n    def start(self):\n        \"\"\"Start the MJPEG stream reader thread\"\"\"\n        print(f\"Starting MJPEG stream reader for {self.url}\")",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
         "documentation": {}
     },
     {
         "label": "HeadTrackingCamera",
         "kind": 6,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
         "peekOfCode": "class HeadTrackingCamera:\n    def __init__(self, follow_person=True, record=False):\n        # Track and record settings\n        self.follow_person = follow_person\n        self.record = record\n        # Video recording properties\n        self.video_writer = None\n        self.recording_started = False\n        self.recording_path = \"\"\n        self.fps = 20  # Target frames per second for recording",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
         "documentation": {}
     },
     {
         "label": "newLook",
         "kind": 2,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
         "peekOfCode": "def newLook(follow_person=True, record=False, show_debug=True):\n    \"\"\"Main function to start the ESP32-CAM head tracking and/or recording\"\"\"\n    global stop_tracking_event\n    # Reset the stop event at the beginning of the function\n    stop_tracking_event.clear()\n    try:\n        print(\"ESP32-CAM Camera System\")\n        print(f\"Video stream: {VIDEO_STREAM_URL}\")\n        print(f\"Camera control: {CAMERA_CONTROL_URL}\")\n        if show_debug:",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
         "documentation": {}
     },
     {
         "label": "CAMERA_IP",
         "kind": 5,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
         "peekOfCode": "CAMERA_IP = \"192.168.143.186\"\nCAMERA_CONTROL_URL = f\"http://{CAMERA_IP}/action\"\nVIDEO_STREAM_URL = f\"http://{CAMERA_IP}:81/stream\"\n# Movement parameters\nMOVE_COOLDOWN = 0.12  # Seconds between camera movements (reduced from 0.5)\nCENTER_THRESHOLD = 0.1  # Distance from center before moving camera (reduced from 0.15)\nMOVEMENT_SMOOTHING = 2  # Number of frames to consider for smoothing movement\n# Global stop event to allow external termination\nstop_tracking_event = threading.Event()\nclass MjpegStreamReader:",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
         "documentation": {}
     },
     {
         "label": "CAMERA_CONTROL_URL",
         "kind": 5,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
         "peekOfCode": "CAMERA_CONTROL_URL = f\"http://{CAMERA_IP}/action\"\nVIDEO_STREAM_URL = f\"http://{CAMERA_IP}:81/stream\"\n# Movement parameters\nMOVE_COOLDOWN = 0.12  # Seconds between camera movements (reduced from 0.5)\nCENTER_THRESHOLD = 0.1  # Distance from center before moving camera (reduced from 0.15)\nMOVEMENT_SMOOTHING = 2  # Number of frames to consider for smoothing movement\n# Global stop event to allow external termination\nstop_tracking_event = threading.Event()\nclass MjpegStreamReader:\n    def __init__(self, url):",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
         "documentation": {}
     },
     {
         "label": "VIDEO_STREAM_URL",
         "kind": 5,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
         "peekOfCode": "VIDEO_STREAM_URL = f\"http://{CAMERA_IP}:81/stream\"\n# Movement parameters\nMOVE_COOLDOWN = 0.12  # Seconds between camera movements (reduced from 0.5)\nCENTER_THRESHOLD = 0.1  # Distance from center before moving camera (reduced from 0.15)\nMOVEMENT_SMOOTHING = 2  # Number of frames to consider for smoothing movement\n# Global stop event to allow external termination\nstop_tracking_event = threading.Event()\nclass MjpegStreamReader:\n    def __init__(self, url):\n        self.url = url",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
         "documentation": {}
     },
     {
         "label": "MOVE_COOLDOWN",
         "kind": 5,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
         "peekOfCode": "MOVE_COOLDOWN = 0.12  # Seconds between camera movements (reduced from 0.5)\nCENTER_THRESHOLD = 0.1  # Distance from center before moving camera (reduced from 0.15)\nMOVEMENT_SMOOTHING = 2  # Number of frames to consider for smoothing movement\n# Global stop event to allow external termination\nstop_tracking_event = threading.Event()\nclass MjpegStreamReader:\n    def __init__(self, url):\n        self.url = url\n        self.frame = None\n        self.stopped = False",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
         "documentation": {}
     },
     {
         "label": "CENTER_THRESHOLD",
         "kind": 5,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
         "peekOfCode": "CENTER_THRESHOLD = 0.1  # Distance from center before moving camera (reduced from 0.15)\nMOVEMENT_SMOOTHING = 2  # Number of frames to consider for smoothing movement\n# Global stop event to allow external termination\nstop_tracking_event = threading.Event()\nclass MjpegStreamReader:\n    def __init__(self, url):\n        self.url = url\n        self.frame = None\n        self.stopped = False\n        self.thread = None",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
         "documentation": {}
     },
     {
         "label": "MOVEMENT_SMOOTHING",
         "kind": 5,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
         "peekOfCode": "MOVEMENT_SMOOTHING = 2  # Number of frames to consider for smoothing movement\n# Global stop event to allow external termination\nstop_tracking_event = threading.Event()\nclass MjpegStreamReader:\n    def __init__(self, url):\n        self.url = url\n        self.frame = None\n        self.stopped = False\n        self.thread = None\n        self.last_frame_time = 0",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
         "documentation": {}
     },
     {
         "label": "stop_tracking_event",
         "kind": 5,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
         "peekOfCode": "stop_tracking_event = threading.Event()\nclass MjpegStreamReader:\n    def __init__(self, url):\n        self.url = url\n        self.frame = None\n        self.stopped = False\n        self.thread = None\n        self.last_frame_time = 0\n    def start(self):\n        \"\"\"Start the MJPEG stream reader thread\"\"\"",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.newLook",
         "documentation": {}
     },
     {
         "label": "start_ip",
         "kind": 5,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.scanner",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.scanner",
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.scanner",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.scanner",
         "peekOfCode": "start_ip = IPv4Address(\"192.168.1.186\")\nend_ip = IPv4Address(\"192.168.255.186\")\nfor ip_int in range(int(start_ip), int(end_ip) + 1, 256):  # шаг в 256, чтобы менять только второй байт\n    for last in range(186, 187):  # только 186-й адрес (как ты указал)\n        ip = IPv4Address(ip_int + last - 186)\n        url = f\"http://{ip}/\"\n        try:\n            r = requests.get(url, timeout=1)\n            print(f\"[+] Found site: {url} — Status: {r.status_code}\")\n        except requests.RequestException:",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.scanner",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.scanner",
         "documentation": {}
     },
     {
         "label": "end_ip",
         "kind": 5,
-        "importPath": "Smart ESP32-CAM Surveillance System.AUTOMATIC.scanner",
-        "description": "Smart ESP32-CAM Surveillance System.AUTOMATIC.scanner",
+        "importPath": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.scanner",
+        "description": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.scanner",
         "peekOfCode": "end_ip = IPv4Address(\"192.168.255.186\")\nfor ip_int in range(int(start_ip), int(end_ip) + 1, 256):  # шаг в 256, чтобы менять только второй байт\n    for last in range(186, 187):  # только 186-й адрес (как ты указал)\n        ip = IPv4Address(ip_int + last - 186)\n        url = f\"http://{ip}/\"\n        try:\n            r = requests.get(url, timeout=1)\n            print(f\"[+] Found site: {url} — Status: {r.status_code}\")\n        except requests.RequestException:\n            print(f\"[-] No response from: {url}\")",
-        "detail": "Smart ESP32-CAM Surveillance System.AUTOMATIC.scanner",
+        "detail": "To_Delete_Later.Smart ESP32-CAM Surveillance System.AUTOMATIC.scanner",
+        "documentation": {}
+    },
+    {
+        "label": "capture_frame_from_esp32",
+        "kind": 2,
+        "importPath": "To_Delete_Later.voice_chat_gemini.app",
+        "description": "To_Delete_Later.voice_chat_gemini.app",
+        "peekOfCode": "def capture_frame_from_esp32():\n    \"\"\"Capture a single frame from ESP32-CAM MJPEG stream\"\"\"\n    stream_url = f\"http://{ESP32_CAM_IP}:81/stream\"\n    try:\n        # Request the stream with a short timeout\n        response = requests.get(stream_url, stream=True, timeout=5)\n        if response.status_code != 200:\n            return None, f\"Failed to connect to camera: {response.status_code}\"\n        # Read until we find a complete JPEG frame\n        buffer = b''",
+        "detail": "To_Delete_Later.voice_chat_gemini.app",
+        "documentation": {}
+    },
+    {
+        "label": "index",
+        "kind": 2,
+        "importPath": "To_Delete_Later.voice_chat_gemini.app",
+        "description": "To_Delete_Later.voice_chat_gemini.app",
+        "peekOfCode": "def index():\n    return send_from_directory('static', 'index.html')\n@app.route('/chat', methods=['POST'])\ndef chat():\n    global conversation_history\n    if not client:\n        return jsonify({'error': 'API key not configured. Add google_api to .env file'}), 500\n    data = request.json\n    user_message = data.get('message', '')\n    if not user_message:",
+        "detail": "To_Delete_Later.voice_chat_gemini.app",
+        "documentation": {}
+    },
+    {
+        "label": "chat",
+        "kind": 2,
+        "importPath": "To_Delete_Later.voice_chat_gemini.app",
+        "description": "To_Delete_Later.voice_chat_gemini.app",
+        "peekOfCode": "def chat():\n    global conversation_history\n    if not client:\n        return jsonify({'error': 'API key not configured. Add google_api to .env file'}), 500\n    data = request.json\n    user_message = data.get('message', '')\n    if not user_message:\n        return jsonify({'error': 'No message provided'}), 400\n    # Build contents with system prompt and conversation history\n    contents = [",
+        "detail": "To_Delete_Later.voice_chat_gemini.app",
+        "documentation": {}
+    },
+    {
+        "label": "vision",
+        "kind": 2,
+        "importPath": "To_Delete_Later.voice_chat_gemini.app",
+        "description": "To_Delete_Later.voice_chat_gemini.app",
+        "peekOfCode": "def vision():\n    \"\"\"Capture image from ESP32-CAM and ask Gemini what it sees\"\"\"\n    global conversation_history\n    if not client:\n        return jsonify({'error': 'API key not configured'}), 500\n    data = request.json\n    question = data.get('question', 'What do you see in this image? Describe it briefly and conversationally.')\n    # Capture frame from ESP32-CAM\n    print(f\"Capturing frame from ESP32-CAM at {ESP32_CAM_IP}...\")\n    jpeg_data, error = capture_frame_from_esp32()",
+        "detail": "To_Delete_Later.voice_chat_gemini.app",
+        "documentation": {}
+    },
+    {
+        "label": "set_camera",
+        "kind": 2,
+        "importPath": "To_Delete_Later.voice_chat_gemini.app",
+        "description": "To_Delete_Later.voice_chat_gemini.app",
+        "peekOfCode": "def set_camera():\n    \"\"\"Update ESP32-CAM IP address\"\"\"\n    global ESP32_CAM_IP\n    data = request.json\n    new_ip = data.get('ip', '')\n    if new_ip:\n        ESP32_CAM_IP = new_ip\n        return jsonify({'success': True, 'ip': ESP32_CAM_IP})\n    return jsonify({'error': 'No IP provided'}), 400\n@app.route('/clear', methods=['POST'])",
+        "detail": "To_Delete_Later.voice_chat_gemini.app",
+        "documentation": {}
+    },
+    {
+        "label": "clear_history",
+        "kind": 2,
+        "importPath": "To_Delete_Later.voice_chat_gemini.app",
+        "description": "To_Delete_Later.voice_chat_gemini.app",
+        "peekOfCode": "def clear_history():\n    global conversation_history\n    conversation_history = []\n    return jsonify({'success': True, 'message': 'Conversation cleared'})\nif __name__ == '__main__':\n    print(\"🎤 Gemini Voice Chat Server Starting...\")\n    print(f\"📍 Open http://localhost:5000 in your browser\")\n    print(f\"🔑 API Key loaded: {'Yes' if GEMINI_API_KEY else 'No - add google_api to .env!'}\")\n    print(f\"📷 ESP32-CAM IP: {ESP32_CAM_IP}\")\n    app.run(debug=True, port=5000)",
+        "detail": "To_Delete_Later.voice_chat_gemini.app",
+        "documentation": {}
+    },
+    {
+        "label": "app",
+        "kind": 5,
+        "importPath": "To_Delete_Later.voice_chat_gemini.app",
+        "description": "To_Delete_Later.voice_chat_gemini.app",
+        "peekOfCode": "app = Flask(__name__, static_folder='static')\nCORS(app)\nGEMINI_API_KEY = os.getenv('google_api')\n# Initialize Gemini client\nclient = None\nif GEMINI_API_KEY:\n    client = genai.Client(api_key=GEMINI_API_KEY)\nMODEL_ID = \"gemini-2.5-flash-lite\"\n# ESP32-CAM configuration - UPDATE THIS IP!\nESP32_CAM_IP = os.getenv('ESP32_CAM_IP', '10.58.187.186')",
+        "detail": "To_Delete_Later.voice_chat_gemini.app",
+        "documentation": {}
+    },
+    {
+        "label": "GEMINI_API_KEY",
+        "kind": 5,
+        "importPath": "To_Delete_Later.voice_chat_gemini.app",
+        "description": "To_Delete_Later.voice_chat_gemini.app",
+        "peekOfCode": "GEMINI_API_KEY = os.getenv('google_api')\n# Initialize Gemini client\nclient = None\nif GEMINI_API_KEY:\n    client = genai.Client(api_key=GEMINI_API_KEY)\nMODEL_ID = \"gemini-2.5-flash-lite\"\n# ESP32-CAM configuration - UPDATE THIS IP!\nESP32_CAM_IP = os.getenv('ESP32_CAM_IP', '10.58.187.186')\n# Conversation history for context\nconversation_history = []",
+        "detail": "To_Delete_Later.voice_chat_gemini.app",
+        "documentation": {}
+    },
+    {
+        "label": "client",
+        "kind": 5,
+        "importPath": "To_Delete_Later.voice_chat_gemini.app",
+        "description": "To_Delete_Later.voice_chat_gemini.app",
+        "peekOfCode": "client = None\nif GEMINI_API_KEY:\n    client = genai.Client(api_key=GEMINI_API_KEY)\nMODEL_ID = \"gemini-2.5-flash-lite\"\n# ESP32-CAM configuration - UPDATE THIS IP!\nESP32_CAM_IP = os.getenv('ESP32_CAM_IP', '10.58.187.186')\n# Conversation history for context\nconversation_history = []\n# System prompt for the AI assistant\nSYSTEM_PROMPT = \"\"\"You are a helpful, friendly AI assistant. ",
+        "detail": "To_Delete_Later.voice_chat_gemini.app",
+        "documentation": {}
+    },
+    {
+        "label": "MODEL_ID",
+        "kind": 5,
+        "importPath": "To_Delete_Later.voice_chat_gemini.app",
+        "description": "To_Delete_Later.voice_chat_gemini.app",
+        "peekOfCode": "MODEL_ID = \"gemini-2.5-flash-lite\"\n# ESP32-CAM configuration - UPDATE THIS IP!\nESP32_CAM_IP = os.getenv('ESP32_CAM_IP', '10.58.187.186')\n# Conversation history for context\nconversation_history = []\n# System prompt for the AI assistant\nSYSTEM_PROMPT = \"\"\"You are a helpful, friendly AI assistant. \nKeep your responses concise and conversational since they will be read aloud.\nAvoid using markdown formatting, bullet points, or special characters.\nSpeak naturally as if having a conversation.\"\"\"",
+        "detail": "To_Delete_Later.voice_chat_gemini.app",
+        "documentation": {}
+    },
+    {
+        "label": "ESP32_CAM_IP",
+        "kind": 5,
+        "importPath": "To_Delete_Later.voice_chat_gemini.app",
+        "description": "To_Delete_Later.voice_chat_gemini.app",
+        "peekOfCode": "ESP32_CAM_IP = os.getenv('ESP32_CAM_IP', '10.58.187.186')\n# Conversation history for context\nconversation_history = []\n# System prompt for the AI assistant\nSYSTEM_PROMPT = \"\"\"You are a helpful, friendly AI assistant. \nKeep your responses concise and conversational since they will be read aloud.\nAvoid using markdown formatting, bullet points, or special characters.\nSpeak naturally as if having a conversation.\"\"\"\ndef capture_frame_from_esp32():\n    \"\"\"Capture a single frame from ESP32-CAM MJPEG stream\"\"\"",
+        "detail": "To_Delete_Later.voice_chat_gemini.app",
+        "documentation": {}
+    },
+    {
+        "label": "conversation_history",
+        "kind": 5,
+        "importPath": "To_Delete_Later.voice_chat_gemini.app",
+        "description": "To_Delete_Later.voice_chat_gemini.app",
+        "peekOfCode": "conversation_history = []\n# System prompt for the AI assistant\nSYSTEM_PROMPT = \"\"\"You are a helpful, friendly AI assistant. \nKeep your responses concise and conversational since they will be read aloud.\nAvoid using markdown formatting, bullet points, or special characters.\nSpeak naturally as if having a conversation.\"\"\"\ndef capture_frame_from_esp32():\n    \"\"\"Capture a single frame from ESP32-CAM MJPEG stream\"\"\"\n    stream_url = f\"http://{ESP32_CAM_IP}:81/stream\"\n    try:",
+        "detail": "To_Delete_Later.voice_chat_gemini.app",
+        "documentation": {}
+    },
+    {
+        "label": "SYSTEM_PROMPT",
+        "kind": 5,
+        "importPath": "To_Delete_Later.voice_chat_gemini.app",
+        "description": "To_Delete_Later.voice_chat_gemini.app",
+        "peekOfCode": "SYSTEM_PROMPT = \"\"\"You are a helpful, friendly AI assistant. \nKeep your responses concise and conversational since they will be read aloud.\nAvoid using markdown formatting, bullet points, or special characters.\nSpeak naturally as if having a conversation.\"\"\"\ndef capture_frame_from_esp32():\n    \"\"\"Capture a single frame from ESP32-CAM MJPEG stream\"\"\"\n    stream_url = f\"http://{ESP32_CAM_IP}:81/stream\"\n    try:\n        # Request the stream with a short timeout\n        response = requests.get(stream_url, stream=True, timeout=5)",
+        "detail": "To_Delete_Later.voice_chat_gemini.app",
+        "documentation": {}
+    },
+    {
+        "label": "VOICES",
+        "kind": 5,
+        "importPath": "To_Delete_Later.voice_chat_gemini.test_edge_tts",
+        "description": "To_Delete_Later.voice_chat_gemini.test_edge_tts",
+        "peekOfCode": "VOICES = {\n    \"russian\": \"ru-RU-SvetlanaNeural\",   # Svetlana - Russian\n    \"kazakh\": \"kk-KZ-AigulNeural\",        # Aigul - Kazakh\n    \"english\": \"en-US-JennyNeural\"        # Jenny - English (bonus)\n}\nasync def speak(text: str, voice: str, output_file: str):\n    \"\"\"Generate speech and save to file\"\"\"\n    communicate = edge_tts.Communicate(text, voice)\n    await communicate.save(output_file)\n    print(f\"Saved: {output_file}\")",
+        "detail": "To_Delete_Later.voice_chat_gemini.test_edge_tts",
+        "documentation": {}
+    },
+    {
+        "label": "bulb",
+        "kind": 5,
+        "importPath": "bulb_control",
+        "description": "bulb_control",
+        "peekOfCode": "bulb = Bulb(\"172.16.255.94\")\n# bulb = Bulb(\"10.72.61.149\")\n# # Turn on\n# bulb.turn_on()\n# # Turn off\n# bulb.turn_off()\n# Toggle\nbulb.toggle()\n# # Set brightness (1-100)\n# bulb.set_brightness(100)",
+        "detail": "bulb_control",
+        "documentation": {}
+    },
+    {
+        "label": "get_local_subnet",
+        "kind": 2,
+        "importPath": "find_device",
+        "description": "find_device",
+        "peekOfCode": "def get_local_subnet() -> tuple[str, str]:\n    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\n    try:\n        s.connect((\"8.8.8.8\", 80))\n        local_ip = s.getsockname()[0]\n    finally:\n        s.close()\n    prefix = \".\".join(local_ip.split(\".\")[:3])\n    return local_ip, prefix\ndef parse_arp_table() -> dict[str, str]:",
+        "detail": "find_device",
+        "documentation": {}
+    },
+    {
+        "label": "parse_arp_table",
+        "kind": 2,
+        "importPath": "find_device",
+        "description": "find_device",
+        "peekOfCode": "def parse_arp_table() -> dict[str, str]:\n    \"\"\"Return {normalized_mac: ip} for every entry in the OS ARP cache.\"\"\"\n    result = {}\n    try:\n        output = subprocess.check_output([\"arp\", \"-a\"], text=True)\n        for line in output.splitlines():\n            ip_match = re.search(r\"(\\d+\\.\\d+\\.\\d+\\.\\d+)\", line)\n            mac_match = re.search(r\"([\\da-fA-F]{2}[:-]){5}[\\da-fA-F]{2}\", line)\n            if ip_match and mac_match:\n                mac = mac_match.group(0).lower().replace(\"-\", \":\")",
+        "detail": "find_device",
+        "documentation": {}
+    },
+    {
+        "label": "ping_sweep",
+        "kind": 2,
+        "importPath": "find_device",
+        "description": "find_device",
+        "peekOfCode": "def ping_sweep(prefix: str):\n    print(f\"Ping sweep {prefix}.1-254 ...\")\n    procs = []\n    for i in range(1, 255):\n        proc = subprocess.Popen(\n            [\"ping\", \"-n\", \"1\", \"-w\", \"300\", f\"{prefix}.{i}\"],\n            stdout=subprocess.DEVNULL,\n            stderr=subprocess.DEVNULL,\n        )\n        procs.append(proc)",
+        "detail": "find_device",
+        "documentation": {}
+    },
+    {
+        "label": "find_devices",
+        "kind": 2,
+        "importPath": "find_device",
+        "description": "find_device",
+        "peekOfCode": "def find_devices(force_sweep: bool = False) -> dict[str, dict]:\n    local_ip, prefix = get_local_subnet()\n    print(f\"Local IP : {local_ip}\")\n    print(f\"Subnet   : {prefix}.0/24\\n\")\n    if force_sweep:\n        ping_sweep(prefix)\n    arp = parse_arp_table()\n    found_any = False\n    results = {}\n    for mac, name in DEVICES.items():",
+        "detail": "find_device",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "find_device",
+        "description": "find_device",
+        "peekOfCode": "def main():\n    parser = argparse.ArgumentParser(description=\"Find known devices by MAC\")\n    parser.add_argument(\"--sweep\", action=\"store_true\",\n                        help=\"Force a ping sweep before checking\")\n    args = parser.parse_args()\n    results = find_devices(force_sweep=args.sweep)\n    name_width = max(len(r[\"name\"]) for r in results.values())\n    print(f\"{'Device':<{name_width}}   {'MAC':<19}  {'IP'}\")\n    print(\"-\" * (name_width + 40))\n    online = 0",
+        "detail": "find_device",
+        "documentation": {}
+    },
+    {
+        "label": "DEVICES",
+        "kind": 5,
+        "importPath": "find_device",
+        "description": "find_device",
+        "peekOfCode": "DEVICES = {\n    \"88:13:bf:6c:60:94\": \"Camera\",\n    \"9c:9c:1f:e9:96:f4\": \"Speaker\",\n    \"ac:15:a2:7f:aa:f6\": \"Router\",\n    \"8c:b8:7e:90:65:50\": \"PC\",\n    \"c4:93:bb:20:3a:29\": \"Lamp\",\n}\ndef get_local_subnet() -> tuple[str, str]:\n    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\n    try:",
+        "detail": "find_device",
+        "documentation": {}
+    },
+    {
+        "label": "script_dir",
+        "kind": 5,
+        "importPath": "run_server",
+        "description": "run_server",
+        "peekOfCode": "script_dir = os.path.dirname(os.path.abspath(__file__))\nwebsite_dir = os.path.join(script_dir, \"ARIA website\")\nsys.path.insert(0, website_dir)\nos.chdir(website_dir)\nfrom app import app, socketio\nsocketio.run(app, host=\"0.0.0.0\", port=5000, debug=True, use_reloader=False)",
+        "detail": "run_server",
+        "documentation": {}
+    },
+    {
+        "label": "website_dir",
+        "kind": 5,
+        "importPath": "run_server",
+        "description": "run_server",
+        "peekOfCode": "website_dir = os.path.join(script_dir, \"ARIA website\")\nsys.path.insert(0, website_dir)\nos.chdir(website_dir)\nfrom app import app, socketio\nsocketio.run(app, host=\"0.0.0.0\", port=5000, debug=True, use_reloader=False)",
+        "detail": "run_server",
+        "documentation": {}
+    },
+    {
+        "label": "API_KEY",
+        "kind": 5,
+        "importPath": "test_api",
+        "description": "test_api",
+        "peekOfCode": "API_KEY = \"sk-sTgiqoqr21XjLEGlcah65fT8LuamSvlalhy1ykfPwefgju4n\"\nAPI_BASE = \"https://api.chatanywhere.tech/v1\"\nprint(\"Testing ChatAnywhere API...\")\nprint(f\"API Base: {API_BASE}\")\nprint(f\"Key: {API_KEY[:8]}...{API_KEY[-4:]}\")\nprint()\nurl = f\"{API_BASE}/chat/completions\"\nheaders = {\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": f\"Bearer {API_KEY}\"",
+        "detail": "test_api",
+        "documentation": {}
+    },
+    {
+        "label": "API_BASE",
+        "kind": 5,
+        "importPath": "test_api",
+        "description": "test_api",
+        "peekOfCode": "API_BASE = \"https://api.chatanywhere.tech/v1\"\nprint(\"Testing ChatAnywhere API...\")\nprint(f\"API Base: {API_BASE}\")\nprint(f\"Key: {API_KEY[:8]}...{API_KEY[-4:]}\")\nprint()\nurl = f\"{API_BASE}/chat/completions\"\nheaders = {\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": f\"Bearer {API_KEY}\"\n}",
+        "detail": "test_api",
+        "documentation": {}
+    },
+    {
+        "label": "url",
+        "kind": 5,
+        "importPath": "test_api",
+        "description": "test_api",
+        "peekOfCode": "url = f\"{API_BASE}/chat/completions\"\nheaders = {\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": f\"Bearer {API_KEY}\"\n}\npayload = {\n    \"model\": \"gpt-4o\",\n    \"messages\": [\n        {\"role\": \"system\", \"content\": \"You are ARIA, a smart AI assistant. Reply briefly.\"},\n        {\"role\": \"user\", \"content\": \"Hello! Who are you? Reply in 1-2 sentences.\"}",
+        "detail": "test_api",
+        "documentation": {}
+    },
+    {
+        "label": "headers",
+        "kind": 5,
+        "importPath": "test_api",
+        "description": "test_api",
+        "peekOfCode": "headers = {\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": f\"Bearer {API_KEY}\"\n}\npayload = {\n    \"model\": \"gpt-4o\",\n    \"messages\": [\n        {\"role\": \"system\", \"content\": \"You are ARIA, a smart AI assistant. Reply briefly.\"},\n        {\"role\": \"user\", \"content\": \"Hello! Who are you? Reply in 1-2 sentences.\"}\n    ],",
+        "detail": "test_api",
+        "documentation": {}
+    },
+    {
+        "label": "payload",
+        "kind": 5,
+        "importPath": "test_api",
+        "description": "test_api",
+        "peekOfCode": "payload = {\n    \"model\": \"gpt-4o\",\n    \"messages\": [\n        {\"role\": \"system\", \"content\": \"You are ARIA, a smart AI assistant. Reply briefly.\"},\n        {\"role\": \"user\", \"content\": \"Hello! Who are you? Reply in 1-2 sentences.\"}\n    ],\n    \"max_tokens\": 100,\n    \"temperature\": 0.7\n}\ntry:",
+        "detail": "test_api",
         "documentation": {}
     }
 ]
