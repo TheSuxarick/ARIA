@@ -291,6 +291,51 @@
         "documentation": {}
     },
     {
+        "label": "struct",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "struct",
+        "description": "struct",
+        "detail": "struct",
+        "documentation": {}
+    },
+    {
+        "label": "wave",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "wave",
+        "description": "wave",
+        "detail": "wave",
+        "documentation": {}
+    },
+    {
+        "label": "math",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "math",
+        "description": "math",
+        "detail": "math",
+        "documentation": {}
+    },
+    {
+        "label": "asyncio",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "asyncio",
+        "description": "asyncio",
+        "detail": "asyncio",
+        "documentation": {}
+    },
+    {
+        "label": "numpy",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "numpy",
+        "description": "numpy",
+        "detail": "numpy",
+        "documentation": {}
+    },
+    {
         "label": "base64",
         "kind": 6,
         "isExtraImport": true,
@@ -357,6 +402,47 @@
         "documentation": {}
     },
     {
+        "label": "Bulb",
+        "importPath": "yeelight",
+        "description": "yeelight",
+        "isExtraImport": true,
+        "detail": "yeelight",
+        "documentation": {}
+    },
+    {
+        "label": "random_loop",
+        "importPath": "yeelight.flows",
+        "description": "yeelight.flows",
+        "isExtraImport": true,
+        "detail": "yeelight.flows",
+        "documentation": {}
+    },
+    {
+        "label": "disco",
+        "importPath": "yeelight.flows",
+        "description": "yeelight.flows",
+        "isExtraImport": true,
+        "detail": "yeelight.flows",
+        "documentation": {}
+    },
+    {
+        "label": "lsd",
+        "importPath": "yeelight.flows",
+        "description": "yeelight.flows",
+        "isExtraImport": true,
+        "detail": "yeelight.flows",
+        "documentation": {}
+    },
+    {
+        "label": "argparse",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "argparse",
+        "description": "argparse",
+        "detail": "argparse",
+        "documentation": {}
+    },
+    {
         "label": "time",
         "kind": 6,
         "isExtraImport": true,
@@ -366,21 +452,21 @@
         "documentation": {}
     },
     {
+        "label": "pyaudio",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "pyaudio",
+        "description": "pyaudio",
+        "detail": "pyaudio",
+        "documentation": {}
+    },
+    {
         "label": "sounddevice",
         "kind": 6,
         "isExtraImport": true,
         "importPath": "sounddevice",
         "description": "sounddevice",
         "detail": "sounddevice",
-        "documentation": {}
-    },
-    {
-        "label": "numpy",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "numpy",
-        "description": "numpy",
-        "detail": "numpy",
         "documentation": {}
     },
     {
@@ -769,15 +855,6 @@
         "documentation": {}
     },
     {
-        "label": "argparse",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "argparse",
-        "description": "argparse",
-        "detail": "argparse",
-        "documentation": {}
-    },
-    {
         "label": "QdrantClient",
         "importPath": "qdrant_client",
         "description": "qdrant_client",
@@ -816,15 +893,6 @@
         "importPath": "tempfile",
         "description": "tempfile",
         "detail": "tempfile",
-        "documentation": {}
-    },
-    {
-        "label": "asyncio",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "asyncio",
-        "description": "asyncio",
-        "detail": "asyncio",
         "documentation": {}
     },
     {
@@ -922,38 +990,6 @@
         "description": "flask_cors",
         "isExtraImport": true,
         "detail": "flask_cors",
-        "documentation": {}
-    },
-    {
-        "label": "Bulb",
-        "importPath": "yeelight",
-        "description": "yeelight",
-        "isExtraImport": true,
-        "detail": "yeelight",
-        "documentation": {}
-    },
-    {
-        "label": "random_loop",
-        "importPath": "yeelight.flows",
-        "description": "yeelight.flows",
-        "isExtraImport": true,
-        "detail": "yeelight.flows",
-        "documentation": {}
-    },
-    {
-        "label": "disco",
-        "importPath": "yeelight.flows",
-        "description": "yeelight.flows",
-        "isExtraImport": true,
-        "detail": "yeelight.flows",
-        "documentation": {}
-    },
-    {
-        "label": "lsd",
-        "importPath": "yeelight.flows",
-        "description": "yeelight.flows",
-        "isExtraImport": true,
-        "detail": "yeelight.flows",
         "documentation": {}
     },
     {
@@ -1283,7 +1319,7 @@
         "kind": 2,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "def audio_status():\n    return jsonify({\n        \"bridge\": _audio_bridge_ok,\n        \"esp32_ip\": _esp32_audio_ip,\n        \"listeners\": _audio_listeners,\n    })\n# ═══════════════════════ CAMERA / DEVICE CONTROL ═══════════════════════\nKNOWN_DEVICES = {\n    \"88:13:bf:6c:60:94\": \"Camera\",\n    \"9c:9c:1f:e9:96:f4\": \"Speaker\",",
+        "peekOfCode": "def audio_status():\n    return jsonify({\n        \"bridge\": _audio_bridge_ok,\n        \"esp32_ip\": _esp32_audio_ip,\n        \"listeners\": _audio_listeners,\n        \"recv_count\": _audio_recv_count,\n        \"emit_count\": _audio_emit_count,\n    })\n# ═══════════════════════ ROBOT VOICE PIPELINE ═══════════════════════\nimport struct as _struct",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1526,7 +1562,7 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "AUDIO_MIC_PORT = 12345\nAUDIO_SPK_PORT = 12346\n_esp32_audio_ip = None\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:",
+        "peekOfCode": "AUDIO_MIC_PORT = 12345\nAUDIO_SPK_PORT = 12346\n_esp32_audio_ip = None\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\n_audio_recv_count = 0\n_audio_emit_count = 0\n_robot_recording = False",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1535,7 +1571,7 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "AUDIO_SPK_PORT = 12346\n_esp32_audio_ip = None\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:\n        _udp_recv = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)",
+        "peekOfCode": "AUDIO_SPK_PORT = 12346\n_esp32_audio_ip = None\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\n_audio_recv_count = 0\n_audio_emit_count = 0\n_robot_recording = False\n_robot_buffer = []",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1544,7 +1580,7 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "_esp32_audio_ip = None\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:\n        _udp_recv = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        _udp_recv.setsockopt(_socket.SOL_SOCKET, _socket.SO_RCVBUF, 65536)",
+        "peekOfCode": "_esp32_audio_ip = None\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\n_audio_recv_count = 0\n_audio_emit_count = 0\n_robot_recording = False\n_robot_buffer = []\ndef _init_audio_bridge():",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1553,7 +1589,7 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:\n        _udp_recv = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        _udp_recv.setsockopt(_socket.SOL_SOCKET, _socket.SO_RCVBUF, 65536)\n        _udp_recv.bind((\"0.0.0.0\", AUDIO_MIC_PORT))",
+        "peekOfCode": "_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\n_audio_recv_count = 0\n_audio_emit_count = 0\n_robot_recording = False\n_robot_buffer = []\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1562,7 +1598,7 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:\n        _udp_recv = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        _udp_recv.setsockopt(_socket.SOL_SOCKET, _socket.SO_RCVBUF, 65536)\n        _udp_recv.bind((\"0.0.0.0\", AUDIO_MIC_PORT))\n        _udp_send = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)",
+        "peekOfCode": "_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\n_audio_recv_count = 0\n_audio_emit_count = 0\n_robot_recording = False\n_robot_buffer = []\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1571,7 +1607,7 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "_udp_recv = None\n_udp_send = None\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:\n        _udp_recv = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        _udp_recv.setsockopt(_socket.SOL_SOCKET, _socket.SO_RCVBUF, 65536)\n        _udp_recv.bind((\"0.0.0.0\", AUDIO_MIC_PORT))\n        _udp_send = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        def _recv_loop():",
+        "peekOfCode": "_udp_recv = None\n_udp_send = None\n_audio_recv_count = 0\n_audio_emit_count = 0\n_robot_recording = False\n_robot_buffer = []\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:\n        _udp_recv = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1580,7 +1616,88 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "_udp_send = None\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:\n        _udp_recv = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        _udp_recv.setsockopt(_socket.SOL_SOCKET, _socket.SO_RCVBUF, 65536)\n        _udp_recv.bind((\"0.0.0.0\", AUDIO_MIC_PORT))\n        _udp_send = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        def _recv_loop():\n            global _esp32_audio_ip",
+        "peekOfCode": "_udp_send = None\n_audio_recv_count = 0\n_audio_emit_count = 0\n_robot_recording = False\n_robot_buffer = []\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:\n        _udp_recv = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        _udp_recv.setsockopt(_socket.SOL_SOCKET, _socket.SO_RCVBUF, 65536)",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "_audio_recv_count",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "_audio_recv_count = 0\n_audio_emit_count = 0\n_robot_recording = False\n_robot_buffer = []\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:\n        _udp_recv = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        _udp_recv.setsockopt(_socket.SOL_SOCKET, _socket.SO_RCVBUF, 65536)\n        _udp_recv.bind((\"0.0.0.0\", AUDIO_MIC_PORT))",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "_audio_emit_count",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "_audio_emit_count = 0\n_robot_recording = False\n_robot_buffer = []\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:\n        _udp_recv = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        _udp_recv.setsockopt(_socket.SOL_SOCKET, _socket.SO_RCVBUF, 65536)\n        _udp_recv.bind((\"0.0.0.0\", AUDIO_MIC_PORT))\n        _udp_send = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "_robot_recording",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "_robot_recording = False\n_robot_buffer = []\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:\n        _udp_recv = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        _udp_recv.setsockopt(_socket.SOL_SOCKET, _socket.SO_RCVBUF, 65536)\n        _udp_recv.bind((\"0.0.0.0\", AUDIO_MIC_PORT))\n        _udp_send = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        def _recv_loop():",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "_robot_buffer",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "_robot_buffer = []\ndef _init_audio_bridge():\n    global _audio_bridge_ok, _udp_recv, _udp_send\n    try:\n        _udp_recv = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        _udp_recv.setsockopt(_socket.SOL_SOCKET, _socket.SO_RCVBUF, 65536)\n        _udp_recv.bind((\"0.0.0.0\", AUDIO_MIC_PORT))\n        _udp_send = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)\n        def _recv_loop():\n            global _esp32_audio_ip, _audio_recv_count, _audio_emit_count",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "_whisper_models",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "_whisper_models = {}\ndef _get_whisper(size=\"tiny\"):\n    if size not in _whisper_models:\n        from faster_whisper import WhisperModel\n        try:\n            print(f\"[ROBOT] Loading Whisper model ({size})...\", flush=True)\n            _whisper_models[size] = WhisperModel(size, device=\"cpu\", compute_type=\"int8\")\n            print(f\"[ROBOT] Whisper model ({size}) loaded.\", flush=True)\n        except Exception as e:\n            print(f\"[ROBOT] Failed to load Whisper ({size}): {e}\", flush=True)",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "_WHISPER_MODEL_FOR_LANG",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "_WHISPER_MODEL_FOR_LANG = {\"en\": \"tiny\", \"ru\": \"tiny\", \"kk\": \"base\"}\ndef _preload_whisper():\n    _get_whisper(\"tiny\")\n    _get_whisper(\"base\")\n_threading.Thread(target=_preload_whisper, daemon=True).start()\ndef _generate_beep(freq=800, duration_ms=300, sample_rate=16000):\n    n_samples = int(sample_rate * duration_ms / 1000)\n    pcm = bytearray(n_samples * 2)\n    for i in range(n_samples):\n        t = i / sample_rate",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "_LANG_SETTING_TO_WHISPER",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "_LANG_SETTING_TO_WHISPER = {\"EN\": \"en\", \"RU\": \"ru\", \"KZ\": \"kk\"}\ndef _stt(wav_buf):\n    import time\n    ui_lang = settings.get(\"language\", \"EN\")\n    whisper_lang = _LANG_SETTING_TO_WHISPER.get(ui_lang, \"en\")\n    model_size = _WHISPER_MODEL_FOR_LANG.get(whisper_lang, \"tiny\")\n    t0 = time.time()\n    model = _get_whisper(model_size)\n    t_load = time.time() - t0\n    t1 = time.time()",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "_TTS_VOICES",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "_TTS_VOICES = {\n    \"en\": \"en-US-AriaNeural\",\n    \"ru\": \"ru-RU-SvetlanaNeural\",\n    \"kk\": \"kk-KZ-AigulNeural\",\n}\n_TTS_VOICE_FALLBACKS = {\n    \"ru\": [\"ru-RU-SvetlanaNeural\", \"ru-RU-DmitryNeural\"],\n    \"kk\": [\"kk-KZ-AigulNeural\", \"kk-KZ-DauletNeural\"],\n    \"en\": [\"en-US-AriaNeural\"],\n}",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "_TTS_VOICE_FALLBACKS",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "_TTS_VOICE_FALLBACKS = {\n    \"ru\": [\"ru-RU-SvetlanaNeural\", \"ru-RU-DmitryNeural\"],\n    \"kk\": [\"kk-KZ-AigulNeural\", \"kk-KZ-DauletNeural\"],\n    \"en\": [\"en-US-AriaNeural\"],\n}\ndef _tts_stream_to_esp32(text, lang=\"en\"):\n    \"\"\"Stream Edge TTS audio to ESP32: async producer + threaded sender.\"\"\"\n    import edge_tts\n    from pydub import AudioSegment\n    import time",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1663,6 +1780,204 @@
         "description": "ARIA website.models",
         "peekOfCode": "db = SQLAlchemy()\nclass User(db.Model):\n    \"\"\"User account model for local email authentication.\"\"\"\n    __tablename__ = 'users'\n    id = db.Column(db.Integer, primary_key=True)\n    email = db.Column(db.String(255), unique=True, nullable=False, index=True)\n    password_hash = db.Column(db.String(255), nullable=False)\n    created_at = db.Column(db.DateTime, default=datetime.utcnow)\n    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)\n    def __repr__(self):",
         "detail": "ARIA website.models",
+        "documentation": {}
+    },
+    {
+        "label": "bulb",
+        "kind": 5,
+        "importPath": "helpful_utils.bulb_control",
+        "description": "helpful_utils.bulb_control",
+        "peekOfCode": "bulb = Bulb(\"10.72.61.149\")\n# bulb = Bulb(\"10.72.61.149\")\n# # Turn on\n# bulb.turn_on()\n# # Turn off\n# bulb.turn_off()\n# Toggle\nbulb.toggle()\n# # Set brightness (1-100)\n# bulb.set_brightness(100)",
+        "detail": "helpful_utils.bulb_control",
+        "documentation": {}
+    },
+    {
+        "label": "flow",
+        "kind": 5,
+        "importPath": "helpful_utils.bulb_control",
+        "description": "helpful_utils.bulb_control",
+        "peekOfCode": "flow = random_loop(duration=750, brightness=100, count=9)\nbulb.start_flow(flow)",
+        "detail": "helpful_utils.bulb_control",
+        "documentation": {}
+    },
+    {
+        "label": "get_local_subnet",
+        "kind": 2,
+        "importPath": "helpful_utils.find_device",
+        "description": "helpful_utils.find_device",
+        "peekOfCode": "def get_local_subnet() -> tuple[str, str]:\n    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\n    try:\n        s.connect((\"8.8.8.8\", 80))\n        local_ip = s.getsockname()[0]\n    finally:\n        s.close()\n    prefix = \".\".join(local_ip.split(\".\")[:3])\n    return local_ip, prefix\ndef parse_arp_table() -> dict[str, str]:",
+        "detail": "helpful_utils.find_device",
+        "documentation": {}
+    },
+    {
+        "label": "parse_arp_table",
+        "kind": 2,
+        "importPath": "helpful_utils.find_device",
+        "description": "helpful_utils.find_device",
+        "peekOfCode": "def parse_arp_table() -> dict[str, str]:\n    \"\"\"Return {normalized_mac: ip} for every entry in the OS ARP cache.\"\"\"\n    result = {}\n    try:\n        output = subprocess.check_output([\"arp\", \"-a\"], text=True)\n        for line in output.splitlines():\n            ip_match = re.search(r\"(\\d+\\.\\d+\\.\\d+\\.\\d+)\", line)\n            mac_match = re.search(r\"([\\da-fA-F]{2}[:-]){5}[\\da-fA-F]{2}\", line)\n            if ip_match and mac_match:\n                mac = mac_match.group(0).lower().replace(\"-\", \":\")",
+        "detail": "helpful_utils.find_device",
+        "documentation": {}
+    },
+    {
+        "label": "ping_sweep",
+        "kind": 2,
+        "importPath": "helpful_utils.find_device",
+        "description": "helpful_utils.find_device",
+        "peekOfCode": "def ping_sweep(prefix: str):\n    print(f\"Ping sweep {prefix}.1-254 ...\")\n    procs = []\n    for i in range(1, 255):\n        proc = subprocess.Popen(\n            [\"ping\", \"-n\", \"1\", \"-w\", \"300\", f\"{prefix}.{i}\"],\n            stdout=subprocess.DEVNULL,\n            stderr=subprocess.DEVNULL,\n        )\n        procs.append(proc)",
+        "detail": "helpful_utils.find_device",
+        "documentation": {}
+    },
+    {
+        "label": "find_devices",
+        "kind": 2,
+        "importPath": "helpful_utils.find_device",
+        "description": "helpful_utils.find_device",
+        "peekOfCode": "def find_devices(force_sweep: bool = False) -> dict[str, dict]:\n    local_ip, prefix = get_local_subnet()\n    print(f\"Local IP : {local_ip}\")\n    print(f\"Subnet   : {prefix}.0/24\\n\")\n    if force_sweep:\n        ping_sweep(prefix)\n    arp = parse_arp_table()\n    found_any = False\n    results = {}\n    for mac, name in DEVICES.items():",
+        "detail": "helpful_utils.find_device",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "helpful_utils.find_device",
+        "description": "helpful_utils.find_device",
+        "peekOfCode": "def main():\n    parser = argparse.ArgumentParser(description=\"Find known devices by MAC\")\n    parser.add_argument(\"--sweep\", action=\"store_true\",\n                        help=\"Force a ping sweep before checking\")\n    args = parser.parse_args()\n    results = find_devices(force_sweep=args.sweep)\n    name_width = max(len(r[\"name\"]) for r in results.values())\n    print(f\"{'Device':<{name_width}}   {'MAC':<19}  {'IP'}\")\n    print(\"-\" * (name_width + 40))\n    online = 0",
+        "detail": "helpful_utils.find_device",
+        "documentation": {}
+    },
+    {
+        "label": "DEVICES",
+        "kind": 5,
+        "importPath": "helpful_utils.find_device",
+        "description": "helpful_utils.find_device",
+        "peekOfCode": "DEVICES = {\n    \"88:13:bf:6c:60:94\": \"Camera\",\n    \"9c:9c:1f:e9:96:f4\": \"Speaker\",\n    \"ac:15:a2:7f:aa:f6\": \"Router\",\n    \"8c:b8:7e:90:65:50\": \"PC\",\n    \"c4:93:bb:20:3a:29\": \"Lamp\",\n}\ndef get_local_subnet() -> tuple[str, str]:\n    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\n    try:",
+        "detail": "helpful_utils.find_device",
+        "documentation": {}
+    },
+    {
+        "label": "receive_esp32_mic",
+        "kind": 2,
+        "importPath": "helpful_utils.test_device",
+        "description": "helpful_utils.test_device",
+        "peekOfCode": "def receive_esp32_mic():\n    \"\"\"ESP32 mic → PC speakers\"\"\"\n    global esp32_ip\n    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\n    sock.bind((\"0.0.0.0\", ESP32_PORT_RECV))\n    sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)\n    p = pyaudio.PyAudio()\n    stream = p.open(format=pyaudio.paInt16, channels=1, rate=SAMPLE_RATE,\n                    output=True, frames_per_buffer=CHUNK)\n    print(f\"[ESP32 → PC] Listening on port {ESP32_PORT_RECV}...\")",
+        "detail": "helpful_utils.test_device",
+        "documentation": {}
+    },
+    {
+        "label": "send_pc_mic",
+        "kind": 2,
+        "importPath": "helpful_utils.test_device",
+        "description": "helpful_utils.test_device",
+        "peekOfCode": "def send_pc_mic():\n    \"\"\"PC mic → ESP32 speaker\"\"\"\n    global esp32_ip\n    print(\"[PC → ESP32] Waiting for ESP32 IP...\")\n    if not esp32_ip_event.wait(timeout=30):\n        print(\"[PC → ESP32] Timed out. Use --esp32-ip.\")\n        return\n    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\n    p = pyaudio.PyAudio()\n    stream = p.open(format=pyaudio.paInt16, channels=1, rate=SAMPLE_RATE,",
+        "detail": "helpful_utils.test_device",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "helpful_utils.test_device",
+        "description": "helpful_utils.test_device",
+        "peekOfCode": "def main():\n    global esp32_ip\n    parser = argparse.ArgumentParser(description=\"Two-way audio test with ESP32\")\n    parser.add_argument(\"--esp32-ip\", type=str, default=None,\n                        help=\"ESP32 IP address (auto-detected if not set)\")\n    args = parser.parse_args()\n    if args.esp32_ip:\n        esp32_ip = args.esp32_ip\n        esp32_ip_event.set()\n    print(\"=\" * 50)",
+        "detail": "helpful_utils.test_device",
+        "documentation": {}
+    },
+    {
+        "label": "esp32_ip",
+        "kind": 5,
+        "importPath": "helpful_utils.test_device",
+        "description": "helpful_utils.test_device",
+        "peekOfCode": "esp32_ip = None\nesp32_ip_event = threading.Event()\ndef receive_esp32_mic():\n    \"\"\"ESP32 mic → PC speakers\"\"\"\n    global esp32_ip\n    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\n    sock.bind((\"0.0.0.0\", ESP32_PORT_RECV))\n    sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)\n    p = pyaudio.PyAudio()\n    stream = p.open(format=pyaudio.paInt16, channels=1, rate=SAMPLE_RATE,",
+        "detail": "helpful_utils.test_device",
+        "documentation": {}
+    },
+    {
+        "label": "esp32_ip_event",
+        "kind": 5,
+        "importPath": "helpful_utils.test_device",
+        "description": "helpful_utils.test_device",
+        "peekOfCode": "esp32_ip_event = threading.Event()\ndef receive_esp32_mic():\n    \"\"\"ESP32 mic → PC speakers\"\"\"\n    global esp32_ip\n    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\n    sock.bind((\"0.0.0.0\", ESP32_PORT_RECV))\n    sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)\n    p = pyaudio.PyAudio()\n    stream = p.open(format=pyaudio.paInt16, channels=1, rate=SAMPLE_RATE,\n                    output=True, frames_per_buffer=CHUNK)",
+        "detail": "helpful_utils.test_device",
+        "documentation": {}
+    },
+    {
+        "label": "UDP_PORT",
+        "kind": 5,
+        "importPath": "helpful_utils.test_esp32_audio",
+        "description": "helpful_utils.test_esp32_audio",
+        "peekOfCode": "UDP_PORT = 12345\nRATE = 16000\nDURATION = 10  # seconds to test\nsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\nsock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)\nsock.settimeout(5.0)\nsock.bind((\"0.0.0.0\", UDP_PORT))\nprint(f\"Listening on UDP port {UDP_PORT} for {DURATION}s ...\")\nprint(f\"Waiting for ESP32 packets...\\n\")\nstart = time.time()",
+        "detail": "helpful_utils.test_esp32_audio",
+        "documentation": {}
+    },
+    {
+        "label": "RATE",
+        "kind": 5,
+        "importPath": "helpful_utils.test_esp32_audio",
+        "description": "helpful_utils.test_esp32_audio",
+        "peekOfCode": "RATE = 16000\nDURATION = 10  # seconds to test\nsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\nsock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)\nsock.settimeout(5.0)\nsock.bind((\"0.0.0.0\", UDP_PORT))\nprint(f\"Listening on UDP port {UDP_PORT} for {DURATION}s ...\")\nprint(f\"Waiting for ESP32 packets...\\n\")\nstart = time.time()\ntotal_packets = 0",
+        "detail": "helpful_utils.test_esp32_audio",
+        "documentation": {}
+    },
+    {
+        "label": "DURATION",
+        "kind": 5,
+        "importPath": "helpful_utils.test_esp32_audio",
+        "description": "helpful_utils.test_esp32_audio",
+        "peekOfCode": "DURATION = 10  # seconds to test\nsock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\nsock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)\nsock.settimeout(5.0)\nsock.bind((\"0.0.0.0\", UDP_PORT))\nprint(f\"Listening on UDP port {UDP_PORT} for {DURATION}s ...\")\nprint(f\"Waiting for ESP32 packets...\\n\")\nstart = time.time()\ntotal_packets = 0\ntotal_samples = 0",
+        "detail": "helpful_utils.test_esp32_audio",
+        "documentation": {}
+    },
+    {
+        "label": "sock",
+        "kind": 5,
+        "importPath": "helpful_utils.test_esp32_audio",
+        "description": "helpful_utils.test_esp32_audio",
+        "peekOfCode": "sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\nsock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)\nsock.settimeout(5.0)\nsock.bind((\"0.0.0.0\", UDP_PORT))\nprint(f\"Listening on UDP port {UDP_PORT} for {DURATION}s ...\")\nprint(f\"Waiting for ESP32 packets...\\n\")\nstart = time.time()\ntotal_packets = 0\ntotal_samples = 0\nglobal_peak = 0",
+        "detail": "helpful_utils.test_esp32_audio",
+        "documentation": {}
+    },
+    {
+        "label": "start",
+        "kind": 5,
+        "importPath": "helpful_utils.test_esp32_audio",
+        "description": "helpful_utils.test_esp32_audio",
+        "peekOfCode": "start = time.time()\ntotal_packets = 0\ntotal_samples = 0\nglobal_peak = 0\nlast_print = 0\ntry:\n    while time.time() - start < DURATION:\n        try:\n            data, addr = sock.recvfrom(4096)\n        except socket.timeout:",
+        "detail": "helpful_utils.test_esp32_audio",
+        "documentation": {}
+    },
+    {
+        "label": "total_packets",
+        "kind": 5,
+        "importPath": "helpful_utils.test_esp32_audio",
+        "description": "helpful_utils.test_esp32_audio",
+        "peekOfCode": "total_packets = 0\ntotal_samples = 0\nglobal_peak = 0\nlast_print = 0\ntry:\n    while time.time() - start < DURATION:\n        try:\n            data, addr = sock.recvfrom(4096)\n        except socket.timeout:\n            print(\"  [!] No packet received for 5s — is ESP32 powered on and on the same network?\")",
+        "detail": "helpful_utils.test_esp32_audio",
+        "documentation": {}
+    },
+    {
+        "label": "total_samples",
+        "kind": 5,
+        "importPath": "helpful_utils.test_esp32_audio",
+        "description": "helpful_utils.test_esp32_audio",
+        "peekOfCode": "total_samples = 0\nglobal_peak = 0\nlast_print = 0\ntry:\n    while time.time() - start < DURATION:\n        try:\n            data, addr = sock.recvfrom(4096)\n        except socket.timeout:\n            print(\"  [!] No packet received for 5s — is ESP32 powered on and on the same network?\")\n            continue",
+        "detail": "helpful_utils.test_esp32_audio",
+        "documentation": {}
+    },
+    {
+        "label": "global_peak",
+        "kind": 5,
+        "importPath": "helpful_utils.test_esp32_audio",
+        "description": "helpful_utils.test_esp32_audio",
+        "peekOfCode": "global_peak = 0\nlast_print = 0\ntry:\n    while time.time() - start < DURATION:\n        try:\n            data, addr = sock.recvfrom(4096)\n        except socket.timeout:\n            print(\"  [!] No packet received for 5s — is ESP32 powered on and on the same network?\")\n            continue\n        total_packets += 1",
+        "detail": "helpful_utils.test_esp32_audio",
+        "documentation": {}
+    },
+    {
+        "label": "last_print",
+        "kind": 5,
+        "importPath": "helpful_utils.test_esp32_audio",
+        "description": "helpful_utils.test_esp32_audio",
+        "peekOfCode": "last_print = 0\ntry:\n    while time.time() - start < DURATION:\n        try:\n            data, addr = sock.recvfrom(4096)\n        except socket.timeout:\n            print(\"  [!] No packet received for 5s — is ESP32 powered on and on the same network?\")\n            continue\n        total_packets += 1\n        n_samples = len(data) // 2",
+        "detail": "helpful_utils.test_esp32_audio",
         "documentation": {}
     },
     {
@@ -2827,66 +3142,48 @@
         "documentation": {}
     },
     {
-        "label": "bulb",
+        "label": "API_KEY",
         "kind": 5,
-        "importPath": "bulb_control",
-        "description": "bulb_control",
-        "peekOfCode": "bulb = Bulb(\"172.16.255.94\")\n# bulb = Bulb(\"10.72.61.149\")\n# # Turn on\n# bulb.turn_on()\n# # Turn off\n# bulb.turn_off()\n# Toggle\nbulb.toggle()\n# # Set brightness (1-100)\n# bulb.set_brightness(100)",
-        "detail": "bulb_control",
+        "importPath": "To_Delete_Later.test_api",
+        "description": "To_Delete_Later.test_api",
+        "peekOfCode": "API_KEY = \"sk-sTgiqoqr21XjLEGlcah65fT8LuamSvlalhy1ykfPwefgju4n\"\nAPI_BASE = \"https://api.chatanywhere.tech/v1\"\nprint(\"Testing ChatAnywhere API...\")\nprint(f\"API Base: {API_BASE}\")\nprint(f\"Key: {API_KEY[:8]}...{API_KEY[-4:]}\")\nprint()\nurl = f\"{API_BASE}/chat/completions\"\nheaders = {\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": f\"Bearer {API_KEY}\"",
+        "detail": "To_Delete_Later.test_api",
         "documentation": {}
     },
     {
-        "label": "get_local_subnet",
-        "kind": 2,
-        "importPath": "find_device",
-        "description": "find_device",
-        "peekOfCode": "def get_local_subnet() -> tuple[str, str]:\n    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\n    try:\n        s.connect((\"8.8.8.8\", 80))\n        local_ip = s.getsockname()[0]\n    finally:\n        s.close()\n    prefix = \".\".join(local_ip.split(\".\")[:3])\n    return local_ip, prefix\ndef parse_arp_table() -> dict[str, str]:",
-        "detail": "find_device",
-        "documentation": {}
-    },
-    {
-        "label": "parse_arp_table",
-        "kind": 2,
-        "importPath": "find_device",
-        "description": "find_device",
-        "peekOfCode": "def parse_arp_table() -> dict[str, str]:\n    \"\"\"Return {normalized_mac: ip} for every entry in the OS ARP cache.\"\"\"\n    result = {}\n    try:\n        output = subprocess.check_output([\"arp\", \"-a\"], text=True)\n        for line in output.splitlines():\n            ip_match = re.search(r\"(\\d+\\.\\d+\\.\\d+\\.\\d+)\", line)\n            mac_match = re.search(r\"([\\da-fA-F]{2}[:-]){5}[\\da-fA-F]{2}\", line)\n            if ip_match and mac_match:\n                mac = mac_match.group(0).lower().replace(\"-\", \":\")",
-        "detail": "find_device",
-        "documentation": {}
-    },
-    {
-        "label": "ping_sweep",
-        "kind": 2,
-        "importPath": "find_device",
-        "description": "find_device",
-        "peekOfCode": "def ping_sweep(prefix: str):\n    print(f\"Ping sweep {prefix}.1-254 ...\")\n    procs = []\n    for i in range(1, 255):\n        proc = subprocess.Popen(\n            [\"ping\", \"-n\", \"1\", \"-w\", \"300\", f\"{prefix}.{i}\"],\n            stdout=subprocess.DEVNULL,\n            stderr=subprocess.DEVNULL,\n        )\n        procs.append(proc)",
-        "detail": "find_device",
-        "documentation": {}
-    },
-    {
-        "label": "find_devices",
-        "kind": 2,
-        "importPath": "find_device",
-        "description": "find_device",
-        "peekOfCode": "def find_devices(force_sweep: bool = False) -> dict[str, dict]:\n    local_ip, prefix = get_local_subnet()\n    print(f\"Local IP : {local_ip}\")\n    print(f\"Subnet   : {prefix}.0/24\\n\")\n    if force_sweep:\n        ping_sweep(prefix)\n    arp = parse_arp_table()\n    found_any = False\n    results = {}\n    for mac, name in DEVICES.items():",
-        "detail": "find_device",
-        "documentation": {}
-    },
-    {
-        "label": "main",
-        "kind": 2,
-        "importPath": "find_device",
-        "description": "find_device",
-        "peekOfCode": "def main():\n    parser = argparse.ArgumentParser(description=\"Find known devices by MAC\")\n    parser.add_argument(\"--sweep\", action=\"store_true\",\n                        help=\"Force a ping sweep before checking\")\n    args = parser.parse_args()\n    results = find_devices(force_sweep=args.sweep)\n    name_width = max(len(r[\"name\"]) for r in results.values())\n    print(f\"{'Device':<{name_width}}   {'MAC':<19}  {'IP'}\")\n    print(\"-\" * (name_width + 40))\n    online = 0",
-        "detail": "find_device",
-        "documentation": {}
-    },
-    {
-        "label": "DEVICES",
+        "label": "API_BASE",
         "kind": 5,
-        "importPath": "find_device",
-        "description": "find_device",
-        "peekOfCode": "DEVICES = {\n    \"88:13:bf:6c:60:94\": \"Camera\",\n    \"9c:9c:1f:e9:96:f4\": \"Speaker\",\n    \"ac:15:a2:7f:aa:f6\": \"Router\",\n    \"8c:b8:7e:90:65:50\": \"PC\",\n    \"c4:93:bb:20:3a:29\": \"Lamp\",\n}\ndef get_local_subnet() -> tuple[str, str]:\n    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\n    try:",
-        "detail": "find_device",
+        "importPath": "To_Delete_Later.test_api",
+        "description": "To_Delete_Later.test_api",
+        "peekOfCode": "API_BASE = \"https://api.chatanywhere.tech/v1\"\nprint(\"Testing ChatAnywhere API...\")\nprint(f\"API Base: {API_BASE}\")\nprint(f\"Key: {API_KEY[:8]}...{API_KEY[-4:]}\")\nprint()\nurl = f\"{API_BASE}/chat/completions\"\nheaders = {\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": f\"Bearer {API_KEY}\"\n}",
+        "detail": "To_Delete_Later.test_api",
+        "documentation": {}
+    },
+    {
+        "label": "url",
+        "kind": 5,
+        "importPath": "To_Delete_Later.test_api",
+        "description": "To_Delete_Later.test_api",
+        "peekOfCode": "url = f\"{API_BASE}/chat/completions\"\nheaders = {\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": f\"Bearer {API_KEY}\"\n}\npayload = {\n    \"model\": \"gpt-4o\",\n    \"messages\": [\n        {\"role\": \"system\", \"content\": \"You are ARIA, a smart AI assistant. Reply briefly.\"},\n        {\"role\": \"user\", \"content\": \"Hello! Who are you? Reply in 1-2 sentences.\"}",
+        "detail": "To_Delete_Later.test_api",
+        "documentation": {}
+    },
+    {
+        "label": "headers",
+        "kind": 5,
+        "importPath": "To_Delete_Later.test_api",
+        "description": "To_Delete_Later.test_api",
+        "peekOfCode": "headers = {\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": f\"Bearer {API_KEY}\"\n}\npayload = {\n    \"model\": \"gpt-4o\",\n    \"messages\": [\n        {\"role\": \"system\", \"content\": \"You are ARIA, a smart AI assistant. Reply briefly.\"},\n        {\"role\": \"user\", \"content\": \"Hello! Who are you? Reply in 1-2 sentences.\"}\n    ],",
+        "detail": "To_Delete_Later.test_api",
+        "documentation": {}
+    },
+    {
+        "label": "payload",
+        "kind": 5,
+        "importPath": "To_Delete_Later.test_api",
+        "description": "To_Delete_Later.test_api",
+        "peekOfCode": "payload = {\n    \"model\": \"gpt-4o\",\n    \"messages\": [\n        {\"role\": \"system\", \"content\": \"You are ARIA, a smart AI assistant. Reply briefly.\"},\n        {\"role\": \"user\", \"content\": \"Hello! Who are you? Reply in 1-2 sentences.\"}\n    ],\n    \"max_tokens\": 100,\n    \"temperature\": 0.7\n}\ntry:",
+        "detail": "To_Delete_Later.test_api",
         "documentation": {}
     },
     {
@@ -2894,7 +3191,7 @@
         "kind": 5,
         "importPath": "run_server",
         "description": "run_server",
-        "peekOfCode": "script_dir = os.path.dirname(os.path.abspath(__file__))\nwebsite_dir = os.path.join(script_dir, \"ARIA website\")\nsys.path.insert(0, website_dir)\nos.chdir(website_dir)\nfrom app import app, socketio\nsocketio.run(app, host=\"0.0.0.0\", port=5000, debug=True, use_reloader=False)",
+        "peekOfCode": "script_dir = os.path.dirname(os.path.abspath(__file__))\nwebsite_dir = os.path.join(script_dir, \"ARIA website\")\nsys.path.insert(0, website_dir)\nos.chdir(website_dir)\nfrom app import app, socketio\nsocketio.run(app, host=\"0.0.0.0\", port=5000, debug=True, use_reloader=False, allow_unsafe_werkzeug=True)",
         "detail": "run_server",
         "documentation": {}
     },
@@ -2903,53 +3200,8 @@
         "kind": 5,
         "importPath": "run_server",
         "description": "run_server",
-        "peekOfCode": "website_dir = os.path.join(script_dir, \"ARIA website\")\nsys.path.insert(0, website_dir)\nos.chdir(website_dir)\nfrom app import app, socketio\nsocketio.run(app, host=\"0.0.0.0\", port=5000, debug=True, use_reloader=False)",
+        "peekOfCode": "website_dir = os.path.join(script_dir, \"ARIA website\")\nsys.path.insert(0, website_dir)\nos.chdir(website_dir)\nfrom app import app, socketio\nsocketio.run(app, host=\"0.0.0.0\", port=5000, debug=True, use_reloader=False, allow_unsafe_werkzeug=True)",
         "detail": "run_server",
-        "documentation": {}
-    },
-    {
-        "label": "API_KEY",
-        "kind": 5,
-        "importPath": "test_api",
-        "description": "test_api",
-        "peekOfCode": "API_KEY = \"sk-sTgiqoqr21XjLEGlcah65fT8LuamSvlalhy1ykfPwefgju4n\"\nAPI_BASE = \"https://api.chatanywhere.tech/v1\"\nprint(\"Testing ChatAnywhere API...\")\nprint(f\"API Base: {API_BASE}\")\nprint(f\"Key: {API_KEY[:8]}...{API_KEY[-4:]}\")\nprint()\nurl = f\"{API_BASE}/chat/completions\"\nheaders = {\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": f\"Bearer {API_KEY}\"",
-        "detail": "test_api",
-        "documentation": {}
-    },
-    {
-        "label": "API_BASE",
-        "kind": 5,
-        "importPath": "test_api",
-        "description": "test_api",
-        "peekOfCode": "API_BASE = \"https://api.chatanywhere.tech/v1\"\nprint(\"Testing ChatAnywhere API...\")\nprint(f\"API Base: {API_BASE}\")\nprint(f\"Key: {API_KEY[:8]}...{API_KEY[-4:]}\")\nprint()\nurl = f\"{API_BASE}/chat/completions\"\nheaders = {\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": f\"Bearer {API_KEY}\"\n}",
-        "detail": "test_api",
-        "documentation": {}
-    },
-    {
-        "label": "url",
-        "kind": 5,
-        "importPath": "test_api",
-        "description": "test_api",
-        "peekOfCode": "url = f\"{API_BASE}/chat/completions\"\nheaders = {\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": f\"Bearer {API_KEY}\"\n}\npayload = {\n    \"model\": \"gpt-4o\",\n    \"messages\": [\n        {\"role\": \"system\", \"content\": \"You are ARIA, a smart AI assistant. Reply briefly.\"},\n        {\"role\": \"user\", \"content\": \"Hello! Who are you? Reply in 1-2 sentences.\"}",
-        "detail": "test_api",
-        "documentation": {}
-    },
-    {
-        "label": "headers",
-        "kind": 5,
-        "importPath": "test_api",
-        "description": "test_api",
-        "peekOfCode": "headers = {\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": f\"Bearer {API_KEY}\"\n}\npayload = {\n    \"model\": \"gpt-4o\",\n    \"messages\": [\n        {\"role\": \"system\", \"content\": \"You are ARIA, a smart AI assistant. Reply briefly.\"},\n        {\"role\": \"user\", \"content\": \"Hello! Who are you? Reply in 1-2 sentences.\"}\n    ],",
-        "detail": "test_api",
-        "documentation": {}
-    },
-    {
-        "label": "payload",
-        "kind": 5,
-        "importPath": "test_api",
-        "description": "test_api",
-        "peekOfCode": "payload = {\n    \"model\": \"gpt-4o\",\n    \"messages\": [\n        {\"role\": \"system\", \"content\": \"You are ARIA, a smart AI assistant. Reply briefly.\"},\n        {\"role\": \"user\", \"content\": \"Hello! Who are you? Reply in 1-2 sentences.\"}\n    ],\n    \"max_tokens\": 100,\n    \"temperature\": 0.7\n}\ntry:",
-        "detail": "test_api",
         "documentation": {}
     }
 ]

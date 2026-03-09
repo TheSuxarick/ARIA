@@ -589,12 +589,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ─── Quick Actions ───
     document.querySelectorAll(".action-btn").forEach(btn => {
+        if (btn.dataset.action === "robot") return;
         btn.addEventListener("click", async () => {
             const action = btn.dataset.action;
             const status = btn.querySelector(".action-status");
             status.textContent = t("status_processing");
             status.style.color = "var(--warning)";
-            // Remove the i18n key while processing
             status.dataset.i18n = "status_processing";
             try {
                 const resp = await fetch("/api/quick-action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) });
@@ -605,8 +605,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     status.textContent = isActive ? t("status_active") : t("status_ready");
                     status.dataset.i18n = isActive ? "status_active" : "status_ready";
                     status.style.color = isActive ? "var(--success)" : "var(--text-muted)";
-                    const toastKey = action === "light" ? "toast_lights_toggled" : "toast_robot_called";
-                    showToast(t(toastKey), "success");
+                    showToast(t("toast_lights_toggled"), "success");
                 }
             } catch {
                 status.textContent = t("status_error");
@@ -1034,22 +1033,49 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // ─── Audio Intercom (browser <-> ESP32) ───
-    const micToggleBtn = document.getElementById("micToggleBtn");
-    let micActive = false;
+    // ─── Audio: shared socket ───
     let _aSocket = null;
-    let _aMicCtx = null, _aMicStream = null, _aMicProc = null;
+    function _ensureAudioSocket() {
+        if (_aSocket && _aSocket.connected) return _aSocket;
+        if (_aSocket) { _aSocket.disconnect(); _aSocket = null; }
+        _aSocket = io("/audio");
+        _aSocket.on("connect", () => console.log("[AUDIO] Socket connected to /audio"));
+        _aSocket.on("connect_error", (err) => console.error("[AUDIO] Connection error:", err.message));
+        return _aSocket;
+    }
+    let _robotActive = false;
+    function _maybeCloseSocket() {
+        if (!listenActive && !micActive && !_robotActive && _aSocket) {
+            _aSocket.disconnect();
+            _aSocket = null;
+        }
+    }
+
+    // ─── Listen: ESP32 mic → browser speaker ───
+    const listenToggleBtn = document.getElementById("listenToggleBtn");
+    let listenActive = false;
     let _aPlayCtx = null, _aNextTime = 0;
 
-    async function startIntercom() {
-        _aSocket = io("/audio");
-
+    async function startListening() {
+        const sock = _ensureAudioSocket();
         _aPlayCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+        await _aPlayCtx.resume();
         _aNextTime = 0;
+        let rxCount = 0;
 
-        _aSocket.on("esp_audio", (raw) => {
-            if (!_aPlayCtx) return;
-            const pcm = new Int16Array(raw);
+        sock.on("esp_audio", (raw) => {
+            if (!_aPlayCtx || _aPlayCtx.state === "closed") return;
+            if (_aPlayCtx.state === "suspended") _aPlayCtx.resume();
+
+            let ab;
+            if (raw instanceof ArrayBuffer) ab = raw;
+            else if (raw instanceof Blob) return;
+            else if (raw.buffer instanceof ArrayBuffer) ab = raw.buffer;
+            else return;
+
+            const pcm = new Int16Array(ab);
+            if (pcm.length === 0) return;
+
             const f32 = new Float32Array(pcm.length);
             for (let i = 0; i < pcm.length; i++) f32[i] = pcm[i] / 32768.0;
             const buf = _aPlayCtx.createBuffer(1, f32.length, 16000);
@@ -1058,59 +1084,95 @@ document.addEventListener("DOMContentLoaded", () => {
             src.buffer = buf;
             src.connect(_aPlayCtx.destination);
             const now = _aPlayCtx.currentTime;
-            if (_aNextTime < now) _aNextTime = now + 0.05;
+            if (_aNextTime < now) _aNextTime = now + 0.02;
             src.start(_aNextTime);
             _aNextTime += buf.duration;
+
+            rxCount++;
+            if (rxCount === 1) showToast("Receiving device audio", "success");
         });
-
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            try {
-                _aMicCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-                const rate = _aMicCtx.sampleRate;
-                _aMicStream = await navigator.mediaDevices.getUserMedia({
-                    audio: { echoCancellation: true, noiseSuppression: true }
-                });
-                const source = _aMicCtx.createMediaStreamSource(_aMicStream);
-                const bufSz = rate <= 16000 ? 512 : 2048;
-                _aMicProc = _aMicCtx.createScriptProcessor(bufSz, 1, 1);
-
-                _aMicProc.onaudioprocess = (e) => {
-                    if (!_aSocket) return;
-                    let f = e.inputBuffer.getChannelData(0);
-                    if (rate !== 16000) {
-                        const ratio = rate / 16000;
-                        const newLen = Math.round(f.length / ratio);
-                        const rs = new Float32Array(newLen);
-                        for (let i = 0; i < newLen; i++) rs[i] = f[Math.round(i * ratio)];
-                        f = rs;
-                    }
-                    const pcm = new Int16Array(f.length);
-                    for (let i = 0; i < f.length; i++) {
-                        const s = Math.max(-1, Math.min(1, f[i]));
-                        pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-                    }
-                    _aSocket.emit("browser_audio", pcm.buffer);
-                };
-
-                const mute = _aMicCtx.createGain();
-                mute.gain.value = 0;
-                source.connect(_aMicProc);
-                _aMicProc.connect(mute);
-                mute.connect(_aMicCtx.destination);
-            } catch (err) {
-                showToast("Mic blocked (HTTPS required) — listen only", "error");
-            }
-        } else {
-            showToast("No mic on HTTP — listen only mode", "error");
-        }
     }
 
-    function stopIntercom() {
+    function stopListening() {
+        if (_aSocket) _aSocket.off("esp_audio");
+        if (_aPlayCtx) { _aPlayCtx.close(); _aPlayCtx = null; }
+        _maybeCloseSocket();
+    }
+
+    if (listenToggleBtn) {
+        listenToggleBtn.addEventListener("click", async () => {
+            listenActive = !listenActive;
+            const icon = listenToggleBtn.querySelector(".material-icons-round");
+            const label = listenToggleBtn.querySelector(".listen-label");
+            if (listenActive) {
+                try {
+                    await startListening();
+                    icon.textContent = "volume_up";
+                    label.textContent = "Listening";
+                    listenToggleBtn.classList.add("listen-active");
+                } catch (e) {
+                    listenActive = false;
+                    showToast("Listen failed: " + e.message, "error");
+                }
+            } else {
+                stopListening();
+                icon.textContent = "volume_off";
+                label.textContent = "Listen";
+                listenToggleBtn.classList.remove("listen-active");
+                showToast("Listen off", "info");
+            }
+        });
+    }
+
+    // ─── Mic: browser mic → ESP32 speaker ───
+    const micToggleBtn = document.getElementById("micToggleBtn");
+    let micActive = false;
+    let _aMicCtx = null, _aMicStream = null, _aMicProc = null;
+
+    async function startMic() {
+        const sock = _ensureAudioSocket();
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error("Mic not available (HTTPS required)");
+        }
+        _aMicCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+        const rate = _aMicCtx.sampleRate;
+        _aMicStream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: true, noiseSuppression: true }
+        });
+        const source = _aMicCtx.createMediaStreamSource(_aMicStream);
+        const bufSz = rate <= 16000 ? 512 : 2048;
+        _aMicProc = _aMicCtx.createScriptProcessor(bufSz, 1, 1);
+
+        _aMicProc.onaudioprocess = (e) => {
+            if (!sock || !sock.connected) return;
+            let f = e.inputBuffer.getChannelData(0);
+            if (rate !== 16000) {
+                const ratio = rate / 16000;
+                const newLen = Math.round(f.length / ratio);
+                const rs = new Float32Array(newLen);
+                for (let i = 0; i < newLen; i++) rs[i] = f[Math.round(i * ratio)];
+                f = rs;
+            }
+            const pcm = new Int16Array(f.length);
+            for (let i = 0; i < f.length; i++) {
+                const s = Math.max(-1, Math.min(1, f[i]));
+                pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+            }
+            sock.emit("browser_audio", pcm.buffer);
+        };
+
+        const mute = _aMicCtx.createGain();
+        mute.gain.value = 0;
+        source.connect(_aMicProc);
+        _aMicProc.connect(mute);
+        mute.connect(_aMicCtx.destination);
+    }
+
+    function stopMic() {
         if (_aMicProc) { _aMicProc.disconnect(); _aMicProc = null; }
         if (_aMicStream) { _aMicStream.getTracks().forEach(t => t.stop()); _aMicStream = null; }
         if (_aMicCtx) { _aMicCtx.close(); _aMicCtx = null; }
-        if (_aPlayCtx) { _aPlayCtx.close(); _aPlayCtx = null; }
-        if (_aSocket) { _aSocket.disconnect(); _aSocket = null; }
+        _maybeCloseSocket();
     }
 
     if (micToggleBtn) {
@@ -1119,20 +1181,72 @@ document.addEventListener("DOMContentLoaded", () => {
             const icon = micToggleBtn.querySelector(".material-icons-round");
             if (micActive) {
                 try {
-                    await startIntercom();
+                    await startMic();
                     icon.textContent = "mic";
                     micToggleBtn.classList.add("mic-active");
-                    showToast("Intercom active", "success");
+                    showToast("Mic active", "success");
                 } catch (e) {
                     micActive = false;
-                    showToast("Failed: " + e.message, "error");
+                    showToast("Mic failed: " + e.message, "error");
                 }
             } else {
-                stopIntercom();
+                stopMic();
                 icon.textContent = "mic_off";
                 micToggleBtn.classList.remove("mic-active");
-                showToast("Intercom off", "info");
+                showToast("Mic off", "info");
             }
+        });
+    }
+
+    // ─── Call Robot: voice AI pipeline ───
+    const btnRobot = document.getElementById("btnRobot");
+    if (btnRobot) {
+        const robotStatus = btnRobot.querySelector(".action-status");
+
+        function setRobotState(state, detail) {
+            const states = {
+                idle:       { text: "Ready",         color: "var(--text-muted)" },
+                listening:  { text: "Listening...",   color: "var(--success)" },
+                processing: { text: "Thinking...",    color: "var(--warning)" },
+                speaking:   { text: "Speaking...",    color: "var(--accent)" },
+                busy:       { text: "Busy",           color: "var(--warning)" },
+            };
+            const s = states[state] || states.idle;
+            if (robotStatus) {
+                robotStatus.textContent = detail || s.text;
+                robotStatus.style.color = s.color;
+            }
+            _robotActive = (state !== "idle");
+            if (state === "idle") btnRobot.classList.remove("active-state");
+            else btnRobot.classList.add("active-state");
+        }
+
+        btnRobot.addEventListener("click", () => {
+            if (_robotActive) return;
+            const sock = _ensureAudioSocket();
+
+            sock.off("robot_status");
+            sock.off("robot_transcription");
+            sock.off("robot_response");
+
+            sock.on("robot_status", (data) => {
+                setRobotState(data.state, data.error);
+                if (data.error) showToast(data.error, "error");
+                if (data.state === "idle") _maybeCloseSocket();
+            });
+
+            sock.on("robot_transcription", (data) => {
+                addChatBubble("user", data.text);
+                navigateTo("dashboard");
+            });
+
+            sock.on("robot_response", (data) => {
+                addChatBubble("assistant", data.text);
+            });
+
+            sock.emit("robot_start");
+            setRobotState("listening");
+            showToast("Robot listening...", "success");
         });
     }
 

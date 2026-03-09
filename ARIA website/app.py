@@ -1063,6 +1063,11 @@ _audio_listeners = 0
 _audio_bridge_ok = False
 _udp_recv = None
 _udp_send = None
+_audio_recv_count = 0
+_audio_emit_count = 0
+
+_robot_recording = False
+_robot_buffer = []
 
 
 def _init_audio_bridge():
@@ -1076,21 +1081,31 @@ def _init_audio_bridge():
         _udp_send = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)
 
         def _recv_loop():
-            global _esp32_audio_ip
+            global _esp32_audio_ip, _audio_recv_count, _audio_emit_count
+            import time as _time
+            _last_log = _time.time()
             while True:
                 try:
                     data, addr = _udp_recv.recvfrom(4096)
                     _esp32_audio_ip = addr[0]
-                    if _audio_listeners > 0:
-                        socketio.emit("esp_audio", data, namespace="/audio")
-                except Exception:
+                    _audio_recv_count += 1
+                    if _robot_recording:
+                        _robot_buffer.append(data)
+                    socketio.emit("esp_audio", data, namespace="/audio")
+                    _audio_emit_count += 1
+                    now = _time.time()
+                    if now - _last_log >= 5.0:
+                        print(f"[AUDIO] recv={_audio_recv_count} emit={_audio_emit_count} listeners={_audio_listeners} from={addr[0]}", flush=True)
+                        _last_log = now
+                except Exception as e:
+                    print(f"[AUDIO] recv error: {e}", flush=True)
                     continue
 
         _threading.Thread(target=_recv_loop, daemon=True).start()
         _audio_bridge_ok = True
-        print("[AUDIO] Bridge active on UDP port", AUDIO_MIC_PORT)
-    except OSError:
-        print("[AUDIO] Port 12345 in use -- audio bridge disabled")
+        print("[AUDIO] Bridge active on UDP port", AUDIO_MIC_PORT, flush=True)
+    except OSError as e:
+        print(f"[AUDIO] Port 12345 in use -- audio bridge disabled: {e}", flush=True)
 
 
 _init_audio_bridge()
@@ -1100,14 +1115,14 @@ _init_audio_bridge()
 def _on_audio_connect():
     global _audio_listeners
     _audio_listeners += 1
-    print(f"[AUDIO] Client connected ({_audio_listeners} listeners)")
+    print(f"[AUDIO] Client connected ({_audio_listeners} listeners)", flush=True)
 
 
 @socketio.on("disconnect", namespace="/audio")
 def _on_audio_disconnect():
     global _audio_listeners
     _audio_listeners = max(0, _audio_listeners - 1)
-    print(f"[AUDIO] Client disconnected ({_audio_listeners} listeners)")
+    print(f"[AUDIO] Client disconnected ({_audio_listeners} listeners)", flush=True)
 
 
 @socketio.on("browser_audio", namespace="/audio")
@@ -1125,7 +1140,364 @@ def audio_status():
         "bridge": _audio_bridge_ok,
         "esp32_ip": _esp32_audio_ip,
         "listeners": _audio_listeners,
+        "recv_count": _audio_recv_count,
+        "emit_count": _audio_emit_count,
     })
+
+
+# ═══════════════════════ ROBOT VOICE PIPELINE ═══════════════════════
+
+import struct as _struct
+import wave as _wave
+import math as _math
+import asyncio as _asyncio
+import numpy as _np
+
+_whisper_models = {}
+
+def _get_whisper(size="tiny"):
+    if size not in _whisper_models:
+        from faster_whisper import WhisperModel
+        try:
+            print(f"[ROBOT] Loading Whisper model ({size})...", flush=True)
+            _whisper_models[size] = WhisperModel(size, device="cpu", compute_type="int8")
+            print(f"[ROBOT] Whisper model ({size}) loaded.", flush=True)
+        except Exception as e:
+            print(f"[ROBOT] Failed to load Whisper ({size}): {e}", flush=True)
+            if size != "tiny":
+                print(f"[ROBOT] Falling back to tiny model", flush=True)
+                return _get_whisper("tiny")
+            raise
+    return _whisper_models[size]
+
+_WHISPER_MODEL_FOR_LANG = {"en": "tiny", "ru": "tiny", "kk": "base"}
+
+def _preload_whisper():
+    _get_whisper("tiny")
+    _get_whisper("base")
+
+_threading.Thread(target=_preload_whisper, daemon=True).start()
+
+
+def _generate_beep(freq=800, duration_ms=300, sample_rate=16000):
+    n_samples = int(sample_rate * duration_ms / 1000)
+    pcm = bytearray(n_samples * 2)
+    for i in range(n_samples):
+        t = i / sample_rate
+        fade = min(i, n_samples - i, 200) / 200.0
+        val = int(12000 * fade * _math.sin(2 * _math.pi * freq * t))
+        _struct.pack_into("<h", pcm, i * 2, max(-32768, min(32767, val)))
+    return bytes(pcm)
+
+
+def _send_pcm_to_esp32(pcm_bytes, sample_rate=16000):
+    if not _esp32_audio_ip or not _udp_send:
+        return
+    import time
+    chunk_size = 1024
+    bytes_per_sec = sample_rate * 2
+    for offset in range(0, len(pcm_bytes), chunk_size):
+        chunk = pcm_bytes[offset:offset + chunk_size]
+        try:
+            _udp_send.sendto(chunk, (_esp32_audio_ip, AUDIO_SPK_PORT))
+        except Exception:
+            pass
+        time.sleep(chunk_size / bytes_per_sec * 0.9)
+
+
+def _pcm_buffer_to_wav(pcm_bytes, sample_rate=16000):
+    buf = io.BytesIO()
+    with _wave.open(buf, "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(sample_rate)
+        wf.writeframes(pcm_bytes)
+    buf.seek(0)
+    return buf
+
+
+_LANG_SETTING_TO_WHISPER = {"EN": "en", "RU": "ru", "KZ": "kk"}
+
+def _stt(wav_buf):
+    import time
+
+    ui_lang = settings.get("language", "EN")
+    whisper_lang = _LANG_SETTING_TO_WHISPER.get(ui_lang, "en")
+    model_size = _WHISPER_MODEL_FOR_LANG.get(whisper_lang, "tiny")
+
+    t0 = time.time()
+    model = _get_whisper(model_size)
+    t_load = time.time() - t0
+
+    t1 = time.time()
+    segments, info = model.transcribe(
+        wav_buf, beam_size=5,
+        language=whisper_lang,
+        vad_filter=True,
+    )
+    text = " ".join(seg.text for seg in segments).strip()
+    t_transcribe = time.time() - t1
+
+    lang = whisper_lang or info.language or "en"
+    print(f"[ROBOT] STT: '{text}' (lang={lang}, model={model_size}) | load={t_load:.2f}s transcribe={t_transcribe:.2f}s", flush=True)
+    return text, lang
+
+
+_TTS_VOICES = {
+    "en": "en-US-AriaNeural",
+    "ru": "ru-RU-SvetlanaNeural",
+    "kk": "kk-KZ-AigulNeural",
+}
+
+_TTS_VOICE_FALLBACKS = {
+    "ru": ["ru-RU-SvetlanaNeural", "ru-RU-DmitryNeural"],
+    "kk": ["kk-KZ-AigulNeural", "kk-KZ-DauletNeural"],
+    "en": ["en-US-AriaNeural"],
+}
+
+
+def _tts_stream_to_esp32(text, lang="en"):
+    """Stream Edge TTS audio to ESP32: async producer + threaded sender."""
+    import edge_tts
+    from pydub import AudioSegment
+    import time
+    import queue
+
+    voices_to_try = _TTS_VOICE_FALLBACKS.get(lang, _TTS_VOICE_FALLBACKS["en"])
+    voice = voices_to_try[0]
+
+    if not _esp32_audio_ip or not _udp_send:
+        print("[ROBOT] TTS: no ESP32 IP or UDP socket, skipping", flush=True)
+        return
+
+    t0 = time.time()
+    sample_rate = 16000
+    bytes_per_sec = sample_rate * 2
+    total_mp3_bytes = 0
+    total_pcm_bytes = 0
+    chunks_sent = 0
+    first_audio_at = None
+    pcm_sent_so_far = 0
+    send_q = queue.Queue()
+
+    def _sender():
+        nonlocal total_pcm_bytes, chunks_sent, first_audio_at, pcm_sent_so_far
+        while True:
+            item = send_q.get()
+            if item is None:
+                break
+            try:
+                seg = AudioSegment.from_mp3(io.BytesIO(item))
+                seg = seg.set_frame_rate(16000).set_channels(1).set_sample_width(2)
+                pcm = seg.raw_data
+            except Exception:
+                continue
+            new_pcm = pcm[pcm_sent_so_far:]
+            if not new_pcm:
+                continue
+            if first_audio_at is None:
+                first_audio_at = time.time()
+            pcm_sent_so_far = len(pcm)
+            total_pcm_bytes += len(new_pcm)
+            chunk_size = 1024
+            for off in range(0, len(new_pcm), chunk_size):
+                c = new_pcm[off:off + chunk_size]
+                try:
+                    _udp_send.sendto(c, (_esp32_audio_ip, AUDIO_SPK_PORT))
+                except Exception:
+                    pass
+                chunks_sent += 1
+                time.sleep(chunk_size / bytes_per_sec * 0.9)
+
+    sender_thread = _threading.Thread(target=_sender, daemon=True)
+    sender_thread.start()
+
+    mp3_accum = io.BytesIO()
+    mp3_pending_size = 0
+    MIN_MP3_CHUNK = 12000
+
+    loop = _asyncio.new_event_loop()
+    try:
+        async def _stream():
+            nonlocal total_mp3_bytes, mp3_pending_size
+            comm = edge_tts.Communicate(text, voice)
+            async for chunk in comm.stream():
+                if chunk["type"] == "audio":
+                    data = chunk["data"]
+                    total_mp3_bytes += len(data)
+                    mp3_accum.write(data)
+                    mp3_pending_size += len(data)
+                    if mp3_pending_size >= MIN_MP3_CHUNK:
+                        send_q.put(mp3_accum.getvalue())
+                        mp3_pending_size = 0
+        loop.run_until_complete(_stream())
+    except Exception as e:
+        print(f"[ROBOT] TTS stream error ({voice}): {e}", flush=True)
+    finally:
+        loop.close()
+
+    if mp3_accum.tell() > 0:
+        send_q.put(mp3_accum.getvalue())
+    send_q.put(None)
+    sender_thread.join()
+
+    t_total = time.time() - t0
+    latency = (first_audio_at - t0) if first_audio_at else t_total
+    audio_secs = total_pcm_bytes / bytes_per_sec
+    print(f"[ROBOT] TTS stream: voice={voice} | first_audio={latency:.2f}s | total={t_total:.2f}s | "
+          f"{total_mp3_bytes}B mp3 -> {total_pcm_bytes}B pcm ({audio_secs:.1f}s audio) | {chunks_sent} UDP chunks", flush=True)
+
+
+def _robot_pipeline():
+    global _robot_recording
+    import time
+
+    try:
+        pipeline_start = time.time()
+        print(f"[ROBOT] Pipeline started. esp32_ip={_esp32_audio_ip} udp_send={'OK' if _udp_send else 'NONE'} bridge={_audio_bridge_ok}", flush=True)
+        socketio.emit("robot_status", {"state": "listening"}, namespace="/audio")
+
+        beep = _generate_beep(800, 300)
+        print(f"[ROBOT] Sending beep ({len(beep)}B) to {_esp32_audio_ip}:{AUDIO_SPK_PORT}", flush=True)
+        _send_pcm_to_esp32(beep)
+
+        _robot_buffer.clear()
+        _robot_recording = True
+
+        SILENCE_THRESHOLD = 500
+        SILENCE_DURATION = 1.0
+        MAX_RECORD_TIME = 15.0
+        CHECK_INTERVAL = 0.1
+
+        speech_started = False
+        silence_start = None
+        record_start = time.time()
+
+        while True:
+            time.sleep(CHECK_INTERVAL)
+            elapsed = time.time() - record_start
+
+            if elapsed > MAX_RECORD_TIME:
+                print(f"[ROBOT] Max recording time reached ({MAX_RECORD_TIME}s)", flush=True)
+                break
+
+            if not _robot_buffer:
+                continue
+
+            last_chunk = _robot_buffer[-1]
+            n_samples = len(last_chunk) // 2
+            if n_samples == 0:
+                continue
+            samples = _struct.unpack(f"<{n_samples}h", last_chunk)
+            peak = max(abs(s) for s in samples)
+
+            if not speech_started:
+                if peak > SILENCE_THRESHOLD:
+                    speech_started = True
+                    silence_start = None
+                    print(f"[ROBOT] Speech detected (peak={peak})", flush=True)
+            else:
+                if peak < SILENCE_THRESHOLD:
+                    if silence_start is None:
+                        silence_start = time.time()
+                    elif time.time() - silence_start >= SILENCE_DURATION:
+                        print(f"[ROBOT] Silence detected, stopping recording", flush=True)
+                        break
+                else:
+                    silence_start = None
+
+        _robot_recording = False
+        t_record = time.time() - record_start
+
+        end_beep = _generate_beep(600, 200)
+        _send_pcm_to_esp32(end_beep)
+
+        all_pcm = b"".join(_robot_buffer)
+        _robot_buffer.clear()
+        audio_duration = len(all_pcm) / 32000.0
+        print(f"[ROBOT] === Recording done: {t_record:.2f}s wall, {audio_duration:.1f}s audio, {len(all_pcm)}B ===", flush=True)
+
+        if len(all_pcm) < 3200:
+            socketio.emit("robot_status", {"state": "idle", "error": "No speech detected"}, namespace="/audio")
+            return
+
+        socketio.emit("robot_status", {"state": "processing"}, namespace="/audio")
+
+        t0 = time.time()
+        wav_buf = _pcm_buffer_to_wav(all_pcm)
+        user_text, detected_lang = _stt(wav_buf)
+        t_stt = time.time() - t0
+
+        if not user_text or len(user_text.strip()) < 2:
+            socketio.emit("robot_status", {"state": "idle", "error": "Could not understand speech"}, namespace="/audio")
+            return
+
+        print(f"[ROBOT] === STT total: {t_stt:.2f}s ===", flush=True)
+        socketio.emit("robot_transcription", {"text": user_text}, namespace="/audio")
+
+        t0 = time.time()
+        chat_history.append({"role": "user", "text": user_text})
+        model = settings.get("model", "gemini-2.0-flash")
+        personality = settings.get("personality", "default")
+        system_text = PERSONALITY_PROMPTS.get(personality, PERSONALITY_PROMPTS["default"])
+        if context_memory:
+            memory_text = "\n".join(f"- {m['text']}" for m in context_memory)
+            system_text += f"\n\nContext memory:\n{memory_text}"
+
+        system_text += "\n\nYou are responding to a voice command. Keep your answer short and conversational (1-3 sentences). Do not use markdown, bullet points, or special formatting."
+
+        contents = []
+        for msg in chat_history[-20:]:
+            role = "user" if msg["role"] == "user" else "model"
+            contents.append({"role": role, "parts": [{"text": msg["text"]}]})
+
+        # ── DEBUG: set to True to skip real API call ──
+        _ROBOT_DEBUG = True
+        # _ROBOT_DEBUG_TEXT = "Привет, это тестовое сообщение. Всё работает отлично!"
+        _ROBOT_DEBUG_TEXT = "Сәлеметсіз бе, бұл сынақ хабарлама. Бәрі жақсы жұмыс істейді!"
+        # _ROBOT_DEBUG_TEXT = "Hello, this is a test message. Everything works great!"
+        if _ROBOT_DEBUG:
+            ai_text = _ROBOT_DEBUG_TEXT
+            t_llm = 0.0
+        else:
+            ai_text, err = _gemini_call(model, system_text, contents)
+            t_llm = time.time() - t0
+            if err:
+                ai_text = f"Sorry, I had a problem: {err}"
+        # ── END DEBUG ──
+        chat_history.append({"role": "assistant", "text": ai_text})
+
+        print(f"[ROBOT] === LLM: {t_llm:.2f}s | reply: '{ai_text[:100]}' ===", flush=True)
+        socketio.emit("robot_response", {"text": ai_text}, namespace="/audio")
+
+        socketio.emit("robot_status", {"state": "speaking"}, namespace="/audio")
+        t0 = time.time()
+        try:
+            _tts_stream_to_esp32(ai_text, lang=detected_lang)
+            t_speak = time.time() - t0
+            print(f"[ROBOT] === TTS+play: {t_speak:.2f}s ===", flush=True)
+        except Exception as e:
+            print(f"[ROBOT] TTS error: {e}", flush=True)
+
+        total = time.time() - pipeline_start
+        print(f"[ROBOT] === PIPELINE TOTAL: {total:.2f}s (record={t_record:.1f}s stt={t_stt:.1f}s llm={t_llm:.1f}s) ===", flush=True)
+        socketio.emit("robot_status", {"state": "idle"}, namespace="/audio")
+
+    except Exception as e:
+        _robot_recording = False
+        _robot_buffer.clear()
+        print(f"[ROBOT] Pipeline error: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+        socketio.emit("robot_status", {"state": "idle", "error": str(e)}, namespace="/audio")
+
+
+@socketio.on("robot_start", namespace="/audio")
+def _on_robot_start():
+    if _robot_recording:
+        socketio.emit("robot_status", {"state": "busy"}, namespace="/audio")
+        return
+    _threading.Thread(target=_robot_pipeline, daemon=True).start()
 
 
 # ═══════════════════════ CAMERA / DEVICE CONTROL ═══════════════════════

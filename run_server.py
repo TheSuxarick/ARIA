@@ -7,4 +7,4 @@ sys.path.insert(0, website_dir)
 os.chdir(website_dir)
 
 from app import app, socketio
-socketio.run(app, host="0.0.0.0", port=5000, debug=True, use_reloader=False)
+socketio.run(app, host="0.0.0.0", port=5000, debug=True, use_reloader=False, allow_unsafe_werkzeug=True)
