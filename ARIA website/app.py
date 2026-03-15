@@ -1261,96 +1261,96 @@ _TTS_VOICE_FALLBACKS = {
 }
 
 
+TTS_RATE = os.environ.get("TTS_RATE", "+18%")
+
 def _tts_stream_to_esp32(text, lang="en"):
-    """Stream Edge TTS audio to ESP32: async producer + threaded sender."""
+    """Stream Edge TTS -> ffmpeg (mp3->pcm) -> UDP to ESP32, true streaming."""
     import edge_tts
-    from pydub import AudioSegment
+    import subprocess
     import time
-    import queue
 
     voices_to_try = _TTS_VOICE_FALLBACKS.get(lang, _TTS_VOICE_FALLBACKS["en"])
     voice = voices_to_try[0]
+    send_ip = _esp32_send_ip()
 
-    if not _esp32_send_ip() or not _udp_send:
+    if not send_ip or not _udp_send:
         print("[ROBOT] TTS: no ESP32 IP or UDP socket, skipping", flush=True)
         return
 
     t0 = time.time()
     sample_rate = 16000
     bytes_per_sec = sample_rate * 2
-    total_mp3_bytes = 0
-    total_pcm_bytes = 0
+    chunk_size = 1024
+    total_mp3 = 0
+    total_pcm = 0
     chunks_sent = 0
     first_audio_at = None
-    pcm_sent_so_far = 0
-    send_q = queue.Queue()
 
-    def _sender():
-        nonlocal total_pcm_bytes, chunks_sent, first_audio_at, pcm_sent_so_far
+    ffmpeg_proc = subprocess.Popen(
+        ["ffmpeg", "-hide_banner", "-loglevel", "error",
+         "-i", "pipe:0",
+         "-f", "s16le", "-ar", str(sample_rate), "-ac", "1",
+         "pipe:1"],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        bufsize=8192,
+    )
+
+    def _pcm_sender():
+        nonlocal total_pcm, chunks_sent, first_audio_at
         while True:
-            item = send_q.get()
-            if item is None:
+            pcm = ffmpeg_proc.stdout.read(chunk_size)
+            if not pcm:
                 break
-            try:
-                seg = AudioSegment.from_mp3(io.BytesIO(item))
-                seg = seg.set_frame_rate(16000).set_channels(1).set_sample_width(2)
-                pcm = seg.raw_data
-            except Exception:
-                continue
-            new_pcm = pcm[pcm_sent_so_far:]
-            if not new_pcm:
-                continue
             if first_audio_at is None:
                 first_audio_at = time.time()
-            pcm_sent_so_far = len(pcm)
-            total_pcm_bytes += len(new_pcm)
-            chunk_size = 1024
-            for off in range(0, len(new_pcm), chunk_size):
-                c = new_pcm[off:off + chunk_size]
-                try:
-                    _udp_send.sendto(c, (_esp32_send_ip(), AUDIO_SPK_PORT))
-                except Exception:
-                    pass
-                chunks_sent += 1
-                time.sleep(chunk_size / bytes_per_sec * 0.9)
+            total_pcm += len(pcm)
+            try:
+                _udp_send.sendto(pcm, (send_ip, AUDIO_SPK_PORT))
+            except Exception:
+                pass
+            chunks_sent += 1
+            time.sleep(chunk_size / bytes_per_sec * 0.85)
 
-    sender_thread = _threading.Thread(target=_sender, daemon=True)
+    sender_thread = _threading.Thread(target=_pcm_sender, daemon=True)
     sender_thread.start()
-
-    mp3_accum = io.BytesIO()
-    mp3_pending_size = 0
-    MIN_MP3_CHUNK = 12000
 
     loop = _asyncio.new_event_loop()
     try:
         async def _stream():
-            nonlocal total_mp3_bytes, mp3_pending_size
-            comm = edge_tts.Communicate(text, voice)
+            nonlocal total_mp3
+            comm = edge_tts.Communicate(text, voice, rate=TTS_RATE)
             async for chunk in comm.stream():
                 if chunk["type"] == "audio":
                     data = chunk["data"]
-                    total_mp3_bytes += len(data)
-                    mp3_accum.write(data)
-                    mp3_pending_size += len(data)
-                    if mp3_pending_size >= MIN_MP3_CHUNK:
-                        send_q.put(mp3_accum.getvalue())
-                        mp3_pending_size = 0
+                    total_mp3 += len(data)
+                    try:
+                        ffmpeg_proc.stdin.write(data)
+                        ffmpeg_proc.stdin.flush()
+                    except BrokenPipeError:
+                        break
         loop.run_until_complete(_stream())
     except Exception as e:
         print(f"[ROBOT] TTS stream error ({voice}): {e}", flush=True)
     finally:
         loop.close()
 
-    if mp3_accum.tell() > 0:
-        send_q.put(mp3_accum.getvalue())
-    send_q.put(None)
-    sender_thread.join()
+    try:
+        ffmpeg_proc.stdin.close()
+    except Exception:
+        pass
+    sender_thread.join(timeout=30)
+    ffmpeg_proc.wait(timeout=10)
 
     t_total = time.time() - t0
-    latency = (first_audio_at - t0) if first_audio_at else t_total
-    audio_secs = total_pcm_bytes / bytes_per_sec
-    print(f"[ROBOT] TTS stream: voice={voice} | first_audio={latency:.2f}s | total={t_total:.2f}s | "
-          f"{total_mp3_bytes}B mp3 -> {total_pcm_bytes}B pcm ({audio_secs:.1f}s audio) | {chunks_sent} UDP chunks", flush=True)
+    tts_latency = (first_audio_at - t0) if first_audio_at else t_total
+    audio_secs = total_pcm / bytes_per_sec
+    playback_time = t_total - tts_latency if first_audio_at else 0
+
+    print(f"[ROBOT] TTS: {voice} rate={TTS_RATE} | "
+          f"gen={tts_latency:.2f}s | play={playback_time:.2f}s ({audio_secs:.1f}s audio) | "
+          f"{total_mp3}B mp3 -> {total_pcm}B pcm | {chunks_sent} chunks",
+          flush=True)
+    return tts_latency
 
 
 def _robot_pipeline():
@@ -1376,6 +1376,7 @@ def _robot_pipeline():
 
         speech_started = False
         silence_start = None
+        first_audio_pkt_at = None
         record_start = time.time()
 
         while True:
@@ -1388,6 +1389,9 @@ def _robot_pipeline():
 
             if not _robot_buffer:
                 continue
+
+            if first_audio_pkt_at is None:
+                first_audio_pkt_at = time.time()
 
             last_chunk = _robot_buffer[-1]
             n_samples = len(last_chunk) // 2
@@ -1412,7 +1416,8 @@ def _robot_pipeline():
                     silence_start = None
 
         _robot_recording = False
-        t_record = time.time() - record_start
+        silence_detected_at = time.time()
+        t_record = silence_detected_at - record_start
 
         end_beep = _generate_beep(600, 200)
         _send_pcm_to_esp32(end_beep)
@@ -1420,7 +1425,7 @@ def _robot_pipeline():
         all_pcm = b"".join(_robot_buffer)
         _robot_buffer.clear()
         audio_duration = len(all_pcm) / 32000.0
-        print(f"[ROBOT] === Recording done: {t_record:.2f}s wall, {audio_duration:.1f}s audio, {len(all_pcm)}B ===", flush=True)
+        print(f"[ROBOT] Recording: {audio_duration:.1f}s audio | {len(all_pcm)}B", flush=True)
 
         if len(all_pcm) < 3200:
             socketio.emit("robot_status", {"state": "idle", "error": "No speech detected"}, namespace="/audio")
@@ -1437,7 +1442,7 @@ def _robot_pipeline():
             socketio.emit("robot_status", {"state": "idle", "error": "Could not understand speech"}, namespace="/audio")
             return
 
-        print(f"[ROBOT] === STT total: {t_stt:.2f}s ===", flush=True)
+        print(f"[ROBOT] STT: {t_stt:.2f}s | '{user_text}'", flush=True)
         socketio.emit("robot_transcription", {"text": user_text}, namespace="/audio")
 
         t0 = time.time()
@@ -1458,8 +1463,8 @@ def _robot_pipeline():
 
         # ── DEBUG: set to True to skip real API call ──
         _ROBOT_DEBUG = True
-        # _ROBOT_DEBUG_TEXT = "Привет, это тестовое сообщение. Всё работает отлично!"
-        _ROBOT_DEBUG_TEXT = "Сәлеметсіз бе, бұл сынақ хабарлама. Бәрі жақсы жұмыс істейді!"
+        _ROBOT_DEBUG_TEXT = "Привет, это тестовое сообщение. Всё работает отлично!"
+        # _ROBOT_DEBUG_TEXT = "Сәлеметсіз бе, бұл сынақ хабарлама. Бәрі жақсы жұмыс істейді!"
         # _ROBOT_DEBUG_TEXT = "Hello, this is a test message. Everything works great!"
         if _ROBOT_DEBUG:
             ai_text = _ROBOT_DEBUG_TEXT
@@ -1472,20 +1477,32 @@ def _robot_pipeline():
         # ── END DEBUG ──
         chat_history.append({"role": "assistant", "text": ai_text})
 
-        print(f"[ROBOT] === LLM: {t_llm:.2f}s | reply: '{ai_text[:100]}' ===", flush=True)
+        print(f"[ROBOT] LLM: {t_llm:.2f}s | '{ai_text[:80]}'", flush=True)
         socketio.emit("robot_response", {"text": ai_text}, namespace="/audio")
 
         socketio.emit("robot_status", {"state": "speaking"}, namespace="/audio")
-        t0 = time.time()
+        t_tts_start = time.time()
+        tts_latency = 0
         try:
-            _tts_stream_to_esp32(ai_text, lang=detected_lang)
-            t_speak = time.time() - t0
-            print(f"[ROBOT] === TTS+play: {t_speak:.2f}s ===", flush=True)
+            tts_latency = _tts_stream_to_esp32(ai_text, lang=detected_lang) or 0
+            t_speak = time.time() - t_tts_start
         except Exception as e:
+            t_speak = time.time() - t_tts_start
             print(f"[ROBOT] TTS error: {e}", flush=True)
 
-        total = time.time() - pipeline_start
-        print(f"[ROBOT] === PIPELINE TOTAL: {total:.2f}s (record={t_record:.1f}s stt={t_stt:.1f}s llm={t_llm:.1f}s) ===", flush=True)
+        processing_time = t_stt + t_llm + tts_latency
+        first_pkt_to_reply = (silence_detected_at - first_audio_pkt_at) + processing_time if first_audio_pkt_at else 0
+
+        print(f"[ROBOT]", flush=True)
+        print(f"[ROBOT] ======== PIPELINE SUMMARY ========", flush=True)
+        print(f"[ROBOT]  STT          : {t_stt:.2f}s", flush=True)
+        print(f"[ROBOT]  LLM          : {t_llm:.2f}s", flush=True)
+        print(f"[ROBOT]  TTS gen      : {tts_latency:.2f}s  (time to first audio out)", flush=True)
+        print(f"[ROBOT]  TTS playback : {t_speak - tts_latency:.2f}s  (streaming to ESP32)", flush=True)
+        print(f"[ROBOT]  --------------------------------", flush=True)
+        print(f"[ROBOT]  PROCESSING   : {processing_time:.2f}s  = STT + LLM + TTS gen", flush=True)
+        print(f"[ROBOT]  TOTAL WALL   : {time.time() - pipeline_start:.2f}s", flush=True)
+        print(f"[ROBOT] ================================", flush=True)
         socketio.emit("robot_status", {"state": "idle"}, namespace="/audio")
 
     except Exception as e:

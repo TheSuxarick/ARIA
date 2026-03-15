@@ -1706,7 +1706,16 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "_TTS_VOICE_FALLBACKS = {\n    \"ru\": [\"ru-RU-SvetlanaNeural\", \"ru-RU-DmitryNeural\"],\n    \"kk\": [\"kk-KZ-AigulNeural\", \"kk-KZ-DauletNeural\"],\n    \"en\": [\"en-US-AriaNeural\"],\n}\ndef _tts_stream_to_esp32(text, lang=\"en\"):\n    \"\"\"Stream Edge TTS audio to ESP32: async producer + threaded sender.\"\"\"\n    import edge_tts\n    from pydub import AudioSegment\n    import time",
+        "peekOfCode": "_TTS_VOICE_FALLBACKS = {\n    \"ru\": [\"ru-RU-SvetlanaNeural\", \"ru-RU-DmitryNeural\"],\n    \"kk\": [\"kk-KZ-AigulNeural\", \"kk-KZ-DauletNeural\"],\n    \"en\": [\"en-US-AriaNeural\"],\n}\nTTS_RATE = os.environ.get(\"TTS_RATE\", \"+18%\")\ndef _tts_stream_to_esp32(text, lang=\"en\"):\n    \"\"\"Stream Edge TTS -> ffmpeg (mp3->pcm) -> UDP to ESP32, true streaming.\"\"\"\n    import edge_tts\n    import subprocess",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "TTS_RATE",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "TTS_RATE = os.environ.get(\"TTS_RATE\", \"+18%\")\ndef _tts_stream_to_esp32(text, lang=\"en\"):\n    \"\"\"Stream Edge TTS -> ffmpeg (mp3->pcm) -> UDP to ESP32, true streaming.\"\"\"\n    import edge_tts\n    import subprocess\n    import time\n    voices_to_try = _TTS_VOICE_FALLBACKS.get(lang, _TTS_VOICE_FALLBACKS[\"en\"])\n    voice = voices_to_try[0]\n    send_ip = _esp32_send_ip()\n    if not send_ip or not _udp_send:",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -2023,15 +2032,6 @@
         "description": "helpful_utils.test_esp32_audio",
         "peekOfCode": "last_print = 0\ntry:\n    while time.time() - start < DURATION:\n        try:\n            data, addr = sock.recvfrom(4096)\n        except socket.timeout:\n            print(\"  [!] No packet received for 5s — is ESP32 powered on and on the same network?\")\n            continue\n        total_packets += 1\n        n_samples = len(data) // 2",
         "detail": "helpful_utils.test_esp32_audio",
-        "documentation": {}
-    },
-    {
-        "label": "p",
-        "kind": 5,
-        "importPath": "helpful_utils._check_audio",
-        "description": "helpful_utils._check_audio",
-        "peekOfCode": "p = pyaudio.PyAudio()\nprint(\"Devices:\", p.get_device_count())\nfor i in range(p.get_device_count()):\n    d = p.get_device_info_by_index(i)\n    io = \"\"\n    if d[\"maxInputChannels\"] > 0:\n        io += \"IN\"\n    if d[\"maxOutputChannels\"] > 0:\n        io += \" OUT\"\n    print(f\"  [{i}] {io.strip():6s} {d['name']}\")",
-        "detail": "helpful_utils._check_audio",
         "documentation": {}
     },
     {
