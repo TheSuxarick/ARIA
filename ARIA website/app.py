@@ -1058,7 +1058,12 @@ def sync_emails():
 
 AUDIO_MIC_PORT = 12345
 AUDIO_SPK_PORT = 12346
+ESP32_IP_OVERRIDE = os.environ.get("ESP32_IP", "192.168.137.248")
 _esp32_audio_ip = None
+
+def _esp32_send_ip():
+    """Return the IP to send audio TO the ESP32. Prefers override (for NAT scenarios)."""
+    return ESP32_IP_OVERRIDE or _esp32_audio_ip
 _audio_listeners = 0
 _audio_bridge_ok = False
 _udp_recv = None
@@ -1103,7 +1108,7 @@ def _init_audio_bridge():
 
         _threading.Thread(target=_recv_loop, daemon=True).start()
         _audio_bridge_ok = True
-        print("[AUDIO] Bridge active on UDP port", AUDIO_MIC_PORT, flush=True)
+        print(f"[AUDIO] Bridge active on UDP port {AUDIO_MIC_PORT} | send_ip={ESP32_IP_OVERRIDE or 'auto-detect'}", flush=True)
     except OSError as e:
         print(f"[AUDIO] Port 12345 in use -- audio bridge disabled: {e}", flush=True)
 
@@ -1127,9 +1132,9 @@ def _on_audio_disconnect():
 
 @socketio.on("browser_audio", namespace="/audio")
 def _on_browser_audio(data):
-    if _esp32_audio_ip and _udp_send:
+    if _esp32_send_ip() and _udp_send:
         try:
-            _udp_send.sendto(data, (_esp32_audio_ip, AUDIO_SPK_PORT))
+            _udp_send.sendto(data, (_esp32_send_ip(), AUDIO_SPK_PORT))
         except Exception:
             pass
 
@@ -1191,7 +1196,7 @@ def _generate_beep(freq=800, duration_ms=300, sample_rate=16000):
 
 
 def _send_pcm_to_esp32(pcm_bytes, sample_rate=16000):
-    if not _esp32_audio_ip or not _udp_send:
+    if not _esp32_send_ip() or not _udp_send:
         return
     import time
     chunk_size = 1024
@@ -1199,7 +1204,7 @@ def _send_pcm_to_esp32(pcm_bytes, sample_rate=16000):
     for offset in range(0, len(pcm_bytes), chunk_size):
         chunk = pcm_bytes[offset:offset + chunk_size]
         try:
-            _udp_send.sendto(chunk, (_esp32_audio_ip, AUDIO_SPK_PORT))
+            _udp_send.sendto(chunk, (_esp32_send_ip(), AUDIO_SPK_PORT))
         except Exception:
             pass
         time.sleep(chunk_size / bytes_per_sec * 0.9)
@@ -1266,7 +1271,7 @@ def _tts_stream_to_esp32(text, lang="en"):
     voices_to_try = _TTS_VOICE_FALLBACKS.get(lang, _TTS_VOICE_FALLBACKS["en"])
     voice = voices_to_try[0]
 
-    if not _esp32_audio_ip or not _udp_send:
+    if not _esp32_send_ip() or not _udp_send:
         print("[ROBOT] TTS: no ESP32 IP or UDP socket, skipping", flush=True)
         return
 
@@ -1303,7 +1308,7 @@ def _tts_stream_to_esp32(text, lang="en"):
             for off in range(0, len(new_pcm), chunk_size):
                 c = new_pcm[off:off + chunk_size]
                 try:
-                    _udp_send.sendto(c, (_esp32_audio_ip, AUDIO_SPK_PORT))
+                    _udp_send.sendto(c, (_esp32_send_ip(), AUDIO_SPK_PORT))
                 except Exception:
                     pass
                 chunks_sent += 1
@@ -1354,11 +1359,11 @@ def _robot_pipeline():
 
     try:
         pipeline_start = time.time()
-        print(f"[ROBOT] Pipeline started. esp32_ip={_esp32_audio_ip} udp_send={'OK' if _udp_send else 'NONE'} bridge={_audio_bridge_ok}", flush=True)
+        print(f"[ROBOT] Pipeline started. esp32_send_ip={_esp32_send_ip()} (recv_from={_esp32_audio_ip}) udp_send={'OK' if _udp_send else 'NONE'} bridge={_audio_bridge_ok}", flush=True)
         socketio.emit("robot_status", {"state": "listening"}, namespace="/audio")
 
         beep = _generate_beep(800, 300)
-        print(f"[ROBOT] Sending beep ({len(beep)}B) to {_esp32_audio_ip}:{AUDIO_SPK_PORT}", flush=True)
+        print(f"[ROBOT] Sending beep ({len(beep)}B) to {_esp32_send_ip()}:{AUDIO_SPK_PORT}", flush=True)
         _send_pcm_to_esp32(beep)
 
         _robot_buffer.clear()

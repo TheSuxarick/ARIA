@@ -1562,7 +1562,7 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "AUDIO_MIC_PORT = 12345\nAUDIO_SPK_PORT = 12346\n_esp32_audio_ip = None\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\n_audio_recv_count = 0\n_audio_emit_count = 0\n_robot_recording = False",
+        "peekOfCode": "AUDIO_MIC_PORT = 12345\nAUDIO_SPK_PORT = 12346\nESP32_IP_OVERRIDE = os.environ.get(\"ESP32_IP\", \"192.168.137.248\")\n_esp32_audio_ip = None\ndef _esp32_send_ip():\n    \"\"\"Return the IP to send audio TO the ESP32. Prefers override (for NAT scenarios).\"\"\"\n    return ESP32_IP_OVERRIDE or _esp32_audio_ip\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1571,7 +1571,16 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "AUDIO_SPK_PORT = 12346\n_esp32_audio_ip = None\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\n_audio_recv_count = 0\n_audio_emit_count = 0\n_robot_recording = False\n_robot_buffer = []",
+        "peekOfCode": "AUDIO_SPK_PORT = 12346\nESP32_IP_OVERRIDE = os.environ.get(\"ESP32_IP\", \"192.168.137.248\")\n_esp32_audio_ip = None\ndef _esp32_send_ip():\n    \"\"\"Return the IP to send audio TO the ESP32. Prefers override (for NAT scenarios).\"\"\"\n    return ESP32_IP_OVERRIDE or _esp32_audio_ip\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "ESP32_IP_OVERRIDE",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "ESP32_IP_OVERRIDE = os.environ.get(\"ESP32_IP\", \"192.168.137.248\")\n_esp32_audio_ip = None\ndef _esp32_send_ip():\n    \"\"\"Return the IP to send audio TO the ESP32. Prefers override (for NAT scenarios).\"\"\"\n    return ESP32_IP_OVERRIDE or _esp32_audio_ip\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\n_audio_recv_count = 0",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1580,7 +1589,7 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "_esp32_audio_ip = None\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\n_audio_recv_count = 0\n_audio_emit_count = 0\n_robot_recording = False\n_robot_buffer = []\ndef _init_audio_bridge():",
+        "peekOfCode": "_esp32_audio_ip = None\ndef _esp32_send_ip():\n    \"\"\"Return the IP to send audio TO the ESP32. Prefers override (for NAT scenarios).\"\"\"\n    return ESP32_IP_OVERRIDE or _esp32_audio_ip\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\n_audio_recv_count = 0\n_audio_emit_count = 0",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1855,11 +1864,20 @@
         "documentation": {}
     },
     {
+        "label": "get_local_ips",
+        "kind": 2,
+        "importPath": "helpful_utils.test_device",
+        "description": "helpful_utils.test_device",
+        "peekOfCode": "def get_local_ips():\n    ips = []\n    try:\n        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):\n            ip = info[4][0]\n            if not ip.startswith(\"127.\"):\n                ips.append(ip)\n    except socket.gaierror:\n        pass\n    return sorted(set(ips))",
+        "detail": "helpful_utils.test_device",
+        "documentation": {}
+    },
+    {
         "label": "receive_esp32_mic",
         "kind": 2,
         "importPath": "helpful_utils.test_device",
         "description": "helpful_utils.test_device",
-        "peekOfCode": "def receive_esp32_mic():\n    \"\"\"ESP32 mic → PC speakers\"\"\"\n    global esp32_ip\n    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\n    sock.bind((\"0.0.0.0\", ESP32_PORT_RECV))\n    sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)\n    p = pyaudio.PyAudio()\n    stream = p.open(format=pyaudio.paInt16, channels=1, rate=SAMPLE_RATE,\n                    output=True, frames_per_buffer=CHUNK)\n    print(f\"[ESP32 → PC] Listening on port {ESP32_PORT_RECV}...\")",
+        "peekOfCode": "def receive_esp32_mic(out_stream):\n    \"\"\"ESP32 mic -> PC speakers\"\"\"\n    global esp32_ip\n    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\n    try:\n        sock.bind((\"0.0.0.0\", ESP32_PORT_RECV))\n    except OSError:\n        print(f\"[ESP32 -> PC] ERROR: Port {ESP32_PORT_RECV} in use! Stop Flask server first.\")\n        return\n    sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)",
         "detail": "helpful_utils.test_device",
         "documentation": {}
     },
@@ -1868,7 +1886,7 @@
         "kind": 2,
         "importPath": "helpful_utils.test_device",
         "description": "helpful_utils.test_device",
-        "peekOfCode": "def send_pc_mic():\n    \"\"\"PC mic → ESP32 speaker\"\"\"\n    global esp32_ip\n    print(\"[PC → ESP32] Waiting for ESP32 IP...\")\n    if not esp32_ip_event.wait(timeout=30):\n        print(\"[PC → ESP32] Timed out. Use --esp32-ip.\")\n        return\n    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\n    p = pyaudio.PyAudio()\n    stream = p.open(format=pyaudio.paInt16, channels=1, rate=SAMPLE_RATE,",
+        "peekOfCode": "def send_pc_mic(in_stream):\n    \"\"\"PC mic -> ESP32 speaker\"\"\"\n    global esp32_ip\n    print(\"[PC -> ESP32] Waiting for ESP32 IP...\")\n    if not esp32_ip_event.wait(timeout=60):\n        print(\"[PC -> ESP32] Timed out. Use --esp32-ip.\")\n        return\n    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\n    print(f\"[PC -> ESP32] Streaming to {esp32_ip}:{ESP32_PORT_SEND}\")\n    while not stop_event.is_set():",
         "detail": "helpful_utils.test_device",
         "documentation": {}
     },
@@ -1877,7 +1895,25 @@
         "kind": 2,
         "importPath": "helpful_utils.test_device",
         "description": "helpful_utils.test_device",
-        "peekOfCode": "def main():\n    global esp32_ip\n    parser = argparse.ArgumentParser(description=\"Two-way audio test with ESP32\")\n    parser.add_argument(\"--esp32-ip\", type=str, default=None,\n                        help=\"ESP32 IP address (auto-detected if not set)\")\n    args = parser.parse_args()\n    if args.esp32_ip:\n        esp32_ip = args.esp32_ip\n        esp32_ip_event.set()\n    print(\"=\" * 50)",
+        "peekOfCode": "def main():\n    global esp32_ip\n    parser = argparse.ArgumentParser(description=\"Two-way audio test with ESP32\")\n    parser.add_argument(\"--esp32-ip\", type=str, default=None)\n    args = parser.parse_args()\n    if args.esp32_ip:\n        esp32_ip = args.esp32_ip\n        esp32_ip_event.set()\n    local_ips = get_local_ips()\n    print(\"=\" * 55)",
+        "detail": "helpful_utils.test_device",
+        "documentation": {}
+    },
+    {
+        "label": "ESP32_PORT_RECV",
+        "kind": 5,
+        "importPath": "helpful_utils.test_device",
+        "description": "helpful_utils.test_device",
+        "peekOfCode": "ESP32_PORT_RECV = 12345\nESP32_PORT_SEND = 12346\nSAMPLE_RATE     = 16000\nCHUNK           = 512\nesp32_ip = None\nesp32_ip_event = threading.Event()\nstop_event = threading.Event()\ndef get_local_ips():\n    ips = []\n    try:",
+        "detail": "helpful_utils.test_device",
+        "documentation": {}
+    },
+    {
+        "label": "ESP32_PORT_SEND",
+        "kind": 5,
+        "importPath": "helpful_utils.test_device",
+        "description": "helpful_utils.test_device",
+        "peekOfCode": "ESP32_PORT_SEND = 12346\nSAMPLE_RATE     = 16000\nCHUNK           = 512\nesp32_ip = None\nesp32_ip_event = threading.Event()\nstop_event = threading.Event()\ndef get_local_ips():\n    ips = []\n    try:\n        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):",
         "detail": "helpful_utils.test_device",
         "documentation": {}
     },
@@ -1886,7 +1922,7 @@
         "kind": 5,
         "importPath": "helpful_utils.test_device",
         "description": "helpful_utils.test_device",
-        "peekOfCode": "esp32_ip = None\nesp32_ip_event = threading.Event()\ndef receive_esp32_mic():\n    \"\"\"ESP32 mic → PC speakers\"\"\"\n    global esp32_ip\n    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\n    sock.bind((\"0.0.0.0\", ESP32_PORT_RECV))\n    sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)\n    p = pyaudio.PyAudio()\n    stream = p.open(format=pyaudio.paInt16, channels=1, rate=SAMPLE_RATE,",
+        "peekOfCode": "esp32_ip = None\nesp32_ip_event = threading.Event()\nstop_event = threading.Event()\ndef get_local_ips():\n    ips = []\n    try:\n        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):\n            ip = info[4][0]\n            if not ip.startswith(\"127.\"):\n                ips.append(ip)",
         "detail": "helpful_utils.test_device",
         "documentation": {}
     },
@@ -1895,7 +1931,16 @@
         "kind": 5,
         "importPath": "helpful_utils.test_device",
         "description": "helpful_utils.test_device",
-        "peekOfCode": "esp32_ip_event = threading.Event()\ndef receive_esp32_mic():\n    \"\"\"ESP32 mic → PC speakers\"\"\"\n    global esp32_ip\n    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)\n    sock.bind((\"0.0.0.0\", ESP32_PORT_RECV))\n    sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)\n    p = pyaudio.PyAudio()\n    stream = p.open(format=pyaudio.paInt16, channels=1, rate=SAMPLE_RATE,\n                    output=True, frames_per_buffer=CHUNK)",
+        "peekOfCode": "esp32_ip_event = threading.Event()\nstop_event = threading.Event()\ndef get_local_ips():\n    ips = []\n    try:\n        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):\n            ip = info[4][0]\n            if not ip.startswith(\"127.\"):\n                ips.append(ip)\n    except socket.gaierror:",
+        "detail": "helpful_utils.test_device",
+        "documentation": {}
+    },
+    {
+        "label": "stop_event",
+        "kind": 5,
+        "importPath": "helpful_utils.test_device",
+        "description": "helpful_utils.test_device",
+        "peekOfCode": "stop_event = threading.Event()\ndef get_local_ips():\n    ips = []\n    try:\n        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):\n            ip = info[4][0]\n            if not ip.startswith(\"127.\"):\n                ips.append(ip)\n    except socket.gaierror:\n        pass",
         "detail": "helpful_utils.test_device",
         "documentation": {}
     },
@@ -1978,6 +2023,15 @@
         "description": "helpful_utils.test_esp32_audio",
         "peekOfCode": "last_print = 0\ntry:\n    while time.time() - start < DURATION:\n        try:\n            data, addr = sock.recvfrom(4096)\n        except socket.timeout:\n            print(\"  [!] No packet received for 5s — is ESP32 powered on and on the same network?\")\n            continue\n        total_packets += 1\n        n_samples = len(data) // 2",
         "detail": "helpful_utils.test_esp32_audio",
+        "documentation": {}
+    },
+    {
+        "label": "p",
+        "kind": 5,
+        "importPath": "helpful_utils._check_audio",
+        "description": "helpful_utils._check_audio",
+        "peekOfCode": "p = pyaudio.PyAudio()\nprint(\"Devices:\", p.get_device_count())\nfor i in range(p.get_device_count()):\n    d = p.get_device_info_by_index(i)\n    io = \"\"\n    if d[\"maxInputChannels\"] > 0:\n        io += \"IN\"\n    if d[\"maxOutputChannels\"] > 0:\n        io += \" OUT\"\n    print(f\"  [{i}] {io.strip():6s} {d['name']}\")",
+        "detail": "helpful_utils._check_audio",
         "documentation": {}
     },
     {
