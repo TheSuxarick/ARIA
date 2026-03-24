@@ -579,7 +579,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const resp = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
             removeTyping();
-            if (resp.ok) { const data = await resp.json(); addChatBubble("assistant", data.reply); }
+            if (resp.ok) { const data = await resp.json(); addChatBubble("assistant", data.reply); if (data.lamp) updateLampUI(data.lamp); }
             else addChatBubble("assistant", t("chat_error"));
         } catch { removeTyping(); addChatBubble("assistant", t("chat_no_server")); }
     }
@@ -587,34 +587,130 @@ document.addEventListener("DOMContentLoaded", () => {
     chatSend.addEventListener("click", sendMessage);
     chatInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); sendMessage(); } });
 
-    // ─── Quick Actions ───
-    document.querySelectorAll(".action-btn").forEach(btn => {
-        if (btn.dataset.action === "robot") return;
-        btn.addEventListener("click", async () => {
-            const action = btn.dataset.action;
-            const status = btn.querySelector(".action-status");
-            status.textContent = t("status_processing");
-            status.style.color = "var(--warning)";
-            status.dataset.i18n = "status_processing";
-            try {
-                const resp = await fetch("/api/quick-action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) });
-                if (resp.ok) {
-                    const data = await resp.json();
-                    btn.classList.toggle("active-state");
-                    const isActive = btn.classList.contains("active-state");
-                    status.textContent = isActive ? t("status_active") : t("status_ready");
-                    status.dataset.i18n = isActive ? "status_active" : "status_ready";
-                    status.style.color = isActive ? "var(--success)" : "var(--text-muted)";
-                    showToast(t("toast_lights_toggled"), "success");
-                }
-            } catch {
-                status.textContent = t("status_error");
-                status.dataset.i18n = "status_error";
-                status.style.color = "var(--danger)";
-                showToast(t("toast_action_failed"), "error");
+    // ─── Lamp Control ────────────────────────────────────────────────────────
+    const btnLight        = document.getElementById("btnLight");
+    const lightStatus     = document.getElementById("lightStatus");
+    const lampBadge       = document.getElementById("lampBadge");
+    const brightnessSlider = document.getElementById("brightnessSlider");
+    const brightnessVal   = document.getElementById("brightnessVal");
+    const btnRgb          = document.getElementById("btnRgb");
+    const rgbBtnLabel     = document.getElementById("rgbBtnLabel");
+
+    function updateLampUI(state) {
+        if (!state) return;
+        const on = state.power === "on";
+        const rgb = state.rgb_running;
+
+        // Badge
+        if (lampBadge) {
+            lampBadge.textContent = rgb ? "RGB" : (on ? "ON" : "OFF");
+            lampBadge.className = "lamp-badge" + (rgb ? " rgb" : (on ? " on" : ""));
+        }
+
+        // Power button
+        if (btnLight) {
+            btnLight.classList.toggle("active-state", on);
+        }
+        if (lightStatus) {
+            lightStatus.textContent = on ? t("status_active") : t("status_ready");
+            lightStatus.style.color = on ? "var(--success)" : "var(--text-muted)";
+        }
+
+        // Brightness
+        if (brightnessSlider && state.brightness != null) {
+            brightnessSlider.value = state.brightness;
+        }
+        if (brightnessVal && state.brightness != null) {
+            brightnessVal.textContent = state.brightness + "%";
+        }
+
+        // White presets
+        document.querySelectorAll(".lamp-preset-btn").forEach(btn => {
+            const presetTemps = { light_warm: 2700, light_daylight: 4000, light_cool: 6500 };
+            const match = presetTemps[btn.dataset.action];
+            btn.classList.toggle("active-preset",
+                on && state.mode === "white" && match && state.color_temp === match);
+        });
+
+        // Color swatches
+        document.querySelectorAll(".lamp-color-btn").forEach(btn => {
+            btn.classList.toggle("active-color",
+                on && state.mode === "color" && state.color === btn.dataset.color);
+        });
+
+        // RGB button
+        if (btnRgb) btnRgb.classList.toggle("rgb-active", rgb);
+        if (rgbBtnLabel) rgbBtnLabel.textContent = rgb ? "Stop RGB" : "RGB Cycle";
+    }
+
+    async function lampAction(action, extra = {}) {
+        try {
+            const brightness = parseInt(brightnessSlider ? brightnessSlider.value : 80);
+            const body = { action, brightness, ...extra };
+            const resp = await fetch("/api/quick-action", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+            const data = await resp.json();
+            if (data.lamp) updateLampUI(data.lamp);
+            if (!resp.ok) {
+                showToast(data.message || t("toast_action_failed"), "error");
+            }
+            return data;
+        } catch (err) {
+            showToast(t("toast_action_failed"), "error");
+        }
+    }
+
+    // Power toggle
+    if (btnLight) {
+        btnLight.addEventListener("click", () => lampAction("light"));
+    }
+
+    // Brightness slider (debounced)
+    let brightnessTimer = null;
+    if (brightnessSlider) {
+        brightnessSlider.addEventListener("input", () => {
+            const val = brightnessSlider.value;
+            if (brightnessVal) brightnessVal.textContent = val + "%";
+            clearTimeout(brightnessTimer);
+            brightnessTimer = setTimeout(() => lampAction("light_brightness", { brightness: val }), 300);
+        });
+    }
+
+    // White presets
+    document.querySelectorAll(".lamp-preset-btn").forEach(btn => {
+        btn.addEventListener("click", () => lampAction(btn.dataset.action));
+    });
+
+    // Color swatches
+    document.querySelectorAll(".lamp-color-btn").forEach(btn => {
+        btn.addEventListener("click", () => lampAction("light_color", { color: btn.dataset.color }));
+    });
+
+    // RGB cycle toggle
+    if (btnRgb) {
+        btnRgb.addEventListener("click", async () => {
+            const state = await fetch("/api/lamp-state").then(r => r.json()).catch(() => ({}));
+            if (state.rgb_running) {
+                await lampAction("light_rgb_stop");
+            } else {
+                await lampAction("light_rgb", { interval: 2 });
             }
         });
-    });
+    }
+
+    // Poll lamp state every 5s to stay in sync
+    async function pollLampState() {
+        try {
+            const state = await fetch("/api/lamp-state").then(r => r.json());
+            updateLampUI(state);
+        } catch { /* offline – ignore */ }
+    }
+    pollLampState();
+    setInterval(pollLampState, 5000);
+    // ─────────────────────────────────────────────────────────────────────
 
     // ─── Context Memory ───
     const memoryList = document.getElementById("memoryList");
@@ -773,27 +869,27 @@ document.addEventListener("DOMContentLoaded", () => {
     let wxClockInterval = null;
     let wxLastData = null;
 
-    function startWxClock(localtimeStr) {
+    function startWxClock(localtimeStr, tzId) {
         if (wxClockInterval) clearInterval(wxClockInterval);
-        const parts = localtimeStr.split(" ");
-        if (parts.length < 2) return;
-        const [datePart, timePart] = parts;
-        const [y, m, d] = datePart.split("-").map(Number);
-        const [h, mi] = timePart.split(":").map(Number);
-        let cityTime = new Date(y, m - 1, d, h, mi, 0);
-        const fetchedAt = Date.now();
+
+        // Parse UTC offset from tz_id (e.g. "UTC+5", "UTC-3", "UTC+5:30", "UTC+5:45")
+        const offsetMatch = (tzId || "UTC+0").match(/UTC([+-]?)(\d+)(?::(\d+))?/);
+        const sign = offsetMatch && offsetMatch[1] === '-' ? -1 : 1;
+        const offsetHours = offsetMatch ? parseInt(offsetMatch[2]) : 0;
+        const offsetMinutes = offsetMatch && offsetMatch[3] ? parseInt(offsetMatch[3]) : 0;
+        const offsetMs = sign * (offsetHours * 3600 + offsetMinutes * 60) * 1000;
 
         function updateClockDisplay() {
-            const elapsed = Date.now() - fetchedAt;
-            const now = new Date(cityTime.getTime() + elapsed);
-            const hh = now.getHours().toString().padStart(2, "0");
-            const mm = now.getMinutes().toString().padStart(2, "0");
-            const ss = now.getSeconds().toString().padStart(2, "0");
+            // Use real current UTC time shifted to the city's local timezone
+            const nowLocal = new Date(Date.now() + offsetMs);
+            const hh = nowLocal.getUTCHours().toString().padStart(2, "0");
+            const mm = nowLocal.getUTCMinutes().toString().padStart(2, "0");
+            const ss = nowLocal.getUTCSeconds().toString().padStart(2, "0");
             const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
             const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            const dayName = dayNames[now.getDay()];
-            const monthName = monthNames[now.getMonth()];
-            const dateNum = now.getDate();
+            const dayName = dayNames[nowLocal.getUTCDay()];
+            const monthName = monthNames[nowLocal.getUTCMonth()];
+            const dateNum = nowLocal.getUTCDate();
             const el = document.getElementById("wxLocalClock");
             if (el) el.textContent = `${dayName}, ${monthName} ${dateNum}  ${hh}:${mm}:${ss}`;
         }
@@ -903,7 +999,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="wx-updated-bar">Updated: ${escapeHtml(w.last_updated || w.localtime || "just now")}</div>
             `;
 
-            if (w.localtime) startWxClock(w.localtime);
+            if (w.localtime) startWxClock(w.localtime, w.tz_id);
             loadForecast(city);
         } catch {
             weatherBody.innerHTML = `<div class="weather-placeholder-state error"><span class="material-icons-round">cloud_off</span><p>Cannot connect</p></div>`;
@@ -1321,15 +1417,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const resp = await fetch('/api/gmail/status');
             const data = await resp.json();
 
-            if (data.authenticated && data.email) {
-                localStorage.setItem(GMAIL_AUTH_KEY, JSON.stringify({
-                    authenticated: true,
-                    email: data.email
-                }));
-                if (gmailSection) {
-                    gmailSection.style.display = 'block';
-                }
-                // Load emails when Gmail is authenticated
+            if (data.authenticated) {
+                const email = data.email || (JSON.parse(localStorage.getItem(GMAIL_AUTH_KEY) || '{}').email) || '';
+                localStorage.setItem(GMAIL_AUTH_KEY, JSON.stringify({ authenticated: true, email }));
+                if (email) setCurrentAccount(email);
+                if (gmailSection) gmailSection.style.display = 'block';
                 loadEmails();
             }
         } catch (e) {
@@ -1337,21 +1429,42 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Load and display emails
-    async function loadEmails() {
+    // Background sync — updates cache without blocking the UI
+    async function syncEmailsBackground(mode = 'fast') {
         try {
-            // First sync emails from Gmail
             const syncResp = await fetch('/api/emails/sync', {
-                method: 'POST'
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode }),
             });
-
-            if (!syncResp.ok) {
-                console.warn('Email sync failed:', await syncResp.json());
+            if (syncResp.ok) {
+                // Refresh the list silently after sync
+                const resp = await fetch('/api/emails/inbox?max_results=500');
+                const data = await resp.json();
+                if (data.emails && data.emails.length > 0) {
+                    window._ariaEmails = data.emails;
+                    renderEmailList(window._ariaActiveFilter || 'all');
+                    updateUnreadBadge();
+                }
             }
+        } catch (e) {
+            console.error('Background sync error:', e);
+        }
+    }
 
-            // Then fetch cached emails
-            const resp = await fetch('/api/emails/inbox?max_results=50');
-            const data = await resp.json();
+    // Load and display emails (mode: 'fast' or 'full')
+    async function loadEmails(mode = 'fast') {
+        try {
+            // Step 1: show cached emails INSTANTLY (no API calls)
+            const cached = await fetch('/api/emails/inbox?max_results=500');
+            const cachedData = await cached.json();
+
+            // Step 2: sync Gmail in background (non-blocking)
+            syncEmailsBackground(mode);
+
+            // Use cached data for immediate render
+            const resp = cached;
+            const data = cachedData;
 
             // Ищем правильный контейнер из твоего HTML!
             const emailsList = document.getElementById('emails-list');
@@ -1500,20 +1613,29 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById('emailOlderBtn').style.opacity = currentPageIndex >= totalPages - 1 ? '0.5' : '1';
 
                 listEl.innerHTML = pagedEmails.map((email) => {
+                    // ── Date: always use browser's local timezone ──────────────
+                    // Backend sends UTC ISO strings ending in 'Z'; new Date() parses
+                    // them as UTC, and toLocale* display in the browser's local TZ.
                     const date = new Date(email.date);
-                    const diffH = (Date.now() - date) / 3600000;
+                    const now  = new Date();
+                    const diffH = (now - date) / 3600000;
+                    const sameDay = date.toDateString() === now.toDateString();
 
-                    // Format date like on screenshot: "06:32" or "4 Mar"
                     let dateStr;
                     if (diffH < 1) {
                         dateStr = 'Just now';
-                    } else if (diffH < 24) {
-                        dateStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    } else if (sameDay) {
+                        dateStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    } else if (diffH < 24 * 7) {
+                        dateStr = date.toLocaleDateString([], { weekday: 'short' }) + ' ' +
+                                  date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     } else {
-                        dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
                     }
 
-                    const safeFrom = escapeHtml(email.from || '');
+                    const unread = email.is_read === false;
+
+                    const safeFrom    = escapeHtml(email.from || '');
                     const safeSubject = escapeHtml(email.subject || '(No subject)');
                     const rawBodyForPreview = (email.body || '')
                         .replace(/<head[\s\S]*?<\/head>/gi, '')
@@ -1524,30 +1646,39 @@ document.addEventListener("DOMContentLoaded", () => {
                         .replace(/\s+/g, ' ').trim();
                     const safeBody = escapeHtml(rawBodyForPreview.substring(0, 100));
 
-                    // Extract name from email
-                    const nameMatch = safeFrom.match(/^([^<]*)</);
+                    // Extract display name
+                    const nameMatch = safeFrom.match(/^([^<]+)</);
                     const displayName = nameMatch ? nameMatch[1].trim() : safeFrom.split('@')[0];
                     const initial = displayName.charAt(0).toUpperCase() || '?';
 
-                    // Generate color based on initial
-                    const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#fee140', '#30b0fe'];
-                    const colorIndex = initial.charCodeAt(0) % colors.length;
-                    const avatarColor = colors[colorIndex];
+                    const colors = ['#10b981', '#059669', '#0891b2', '#0d9488', '#34d399', '#14b8a6', '#22c55e', '#06b6d4'];
+                    const avatarColor = colors[initial.charCodeAt(0) % colors.length];
+
+                    const boldStyle   = unread ? 'font-weight:700;' : 'font-weight:600;';
+                    const nameColor   = unread ? 'color:var(--text-primary);' : 'color:var(--text-primary);';
+                    const dateColor   = unread ? 'color:var(--accent-light); font-weight:600;' : 'color:var(--text-secondary);';
+                    const unreadDot   = unread
+                        ? `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:4px;"></span>`
+                        : `<span style="display:inline-block;width:7px;height:7px;flex-shrink:0;"></span>`;
 
                     return `
-                        <div class="email-row" style="display: flex; padding: 12px 14px; border-bottom: 1px solid var(--border-color); cursor: pointer; gap: 10px; align-items: flex-start; transition: background 0.2s;"
-                            onmouseenter="this.style.background='var(--accent-bg)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)';"
-                            onmouseleave="this.style.background=''; this.style.boxShadow='';"
+                        <div class="email-row" data-id="${escapeHtml(email.id || '')}" data-unread="${unread}"
+                            style="display:flex; padding:12px 14px; border-bottom:1px solid var(--border-color); cursor:pointer; gap:8px; align-items:flex-start; transition:background 0.2s; ${unread ? 'background:rgba(99,102,241,0.04);' : ''}"
+                            onmouseenter="this.style.background='var(--accent-bg)';"
+                            onmouseleave="this.style.background='${unread ? 'rgba(99,102,241,0.04)' : ''}';"
                         >
-                            <div style="flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background: ${avatarColor}; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; color: white; flex: 0 0 40px;">
+                            ${unreadDot}
+                            <div style="flex-shrink:0;width:38px;height:38px;border-radius:50%;background:${avatarColor};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:white;flex:0 0 38px;">
                                 ${initial}
                             </div>
-                            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
-                                <p style="margin: 0; font-weight: 600; font-size: 13px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${displayName}</p>
-                                <p style="margin: 0; font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${safeSubject}</p>
-                                <p style="margin: 0; font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${safeBody}</p>
+                            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;">
+                                <p style="margin:0;${boldStyle}${nameColor}font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${displayName}</p>
+                                <p style="margin:0;${unread ? 'font-weight:600;color:var(--text-primary);' : ''}font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${safeSubject}</p>
+                                <p style="margin:0;font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${safeBody}</p>
                             </div>
-                            <span style="font-size: 11px; color: var(--text-secondary); flex-shrink: 0; white-space: nowrap;">${dateStr}</span>
+                            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+                                <span style="font-size:11px;${dateColor}white-space:nowrap;">${dateStr}</span>
+                            </div>
                         </div>
                     `;
                 }).join('');
@@ -1621,10 +1752,43 @@ document.addEventListener("DOMContentLoaded", () => {
                 renderEmailList(window._ariaActiveFilter);
             }
 
+            // Mark email as read (local state + server)
+            async function markEmailRead(emailId) {
+                if (!emailId) return;
+                try {
+                    await fetch(`/api/emails/${emailId}/read`, { method: 'POST' });
+                    // Update in-memory state
+                    const emailObj = window._ariaEmails && window._ariaEmails.find(e => e.id === emailId);
+                    if (emailObj) emailObj.is_read = true;
+                    // Update unread badge
+                    updateUnreadBadge();
+                } catch (e) { /* ignore */ }
+            }
+
+            // Update unread count badge on email card header
+            async function updateUnreadBadge() {
+                try {
+                    const r = await fetch('/api/emails/unread-count');
+                    const d = await r.json();
+                    const badge = document.getElementById('emailUnreadBadge');
+                    if (badge) {
+                        const count = d.count || 0;
+                        badge.textContent = count > 0 ? count : '';
+                        badge.style.display = count > 0 ? 'inline-flex' : 'none';
+                    }
+                } catch (e) { /* ignore */ }
+            }
+
             // Opening email detail in in-place view
             function openEmailDetail(email) {
                 const listEl = document.getElementById('emails-list');
                 if (!listEl) return;
+
+                // Mark as read immediately
+                if (email.is_read === false || email.is_read === undefined) {
+                    email.is_read = true;
+                    markEmailRead(email.id);
+                }
 
                 // Hide pagination controls
                 const paginationContainer = document.getElementById('emailPaginationContainer');
@@ -1758,7 +1922,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     line-height: 1.6;
                                 }
                                 * { color: ${textColor} !important; }
-                                a { color: #6366f1; }
+                                a { color: #10b981; }
                                 img { max-width: 100%; height: auto; }
                                 table { width: 100%; border-collapse: collapse; }
                                 td, th { padding: 8px; }
@@ -1823,6 +1987,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Initial render
             initializePagination();
             renderEmailList(window._ariaActiveFilter);
+            updateUnreadBadge();
         } catch (e) {
             console.error('Load emails error:', e);
             const emailsList = document.getElementById('emails-list');
@@ -2024,47 +2189,51 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Gmail login handler
+    // Listen for postMessage from OAuth popup
+    window.addEventListener('message', (event) => {
+        if (event.origin !== window.location.origin) return;
+        if (event.data && event.data.gmailAuth) {
+            const email = event.data.email;
+            localStorage.setItem(GMAIL_AUTH_KEY, JSON.stringify({ authenticated: true, email }));
+            localStorage.removeItem('lastFullEmailSync'); // force full sync on next load
+            setCurrentAccount(email);
+            updateAccountDisplay();
+            showToast(`Gmail connected: ${email}`, 'success');
+            closeModal();
+            // Full sync after login to get 2 months of history
+            setTimeout(() => loadEmails('full'), 800);
+        }
+        if (event.data && event.data.gmailError) {
+            showToast('Gmail error: ' + event.data.gmailError, 'error');
+        }
+    });
+
     gmailLoginBtn.addEventListener('click', async () => {
         try {
+            gmailLoginBtn.disabled = true;
+            gmailLoginBtn.textContent = 'Opening…';
             const resp = await fetch('/api/gmail/login');
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({ error: 'Server error' }));
+                showToast(err.error || 'Gmail login failed', 'error');
+                return;
+            }
             const data = await resp.json();
 
             if (data.auth_url) {
-                // Redirect to Gmail OAuth
-                window.open(data.auth_url, 'gmailAuth', 'width=500,height=600');
-
-                // Check status every second
-                const checkInterval = setInterval(async () => {
-                    const statusResp = await fetch('/api/gmail/status');
-                    const statusData = await statusResp.json();
-
-                    if (statusData.authenticated && statusData.email) {
-                        clearInterval(checkInterval);
-                        localStorage.setItem(GMAIL_AUTH_KEY, JSON.stringify({
-                            authenticated: true,
-                            email: statusData.email
-                        }));
-                        setCurrentAccount(statusData.email);
-                        updateAccountDisplay();
-                        showToast(`Logged in with Gmail: ${statusData.email}`, 'success');
-
-                        // Load emails after successful Gmail login
-                        setTimeout(() => {
-                            loadEmails();
-                        }, 1000);
-
-                        closeModal();
-                    }
-                }, 1000);
-
-                // Stop checking after 5 minutes
-                setTimeout(() => clearInterval(checkInterval), 300000);
+                const popup = window.open(data.auth_url, 'gmailAuth', 'width=520,height=640,left=200,top=100');
+                if (!popup) {
+                    showToast('Popup blocked — please allow popups for this site', 'error');
+                }
             } else {
                 showToast(data.error || 'Gmail login failed', 'error');
             }
         } catch (e) {
             showToast('Gmail login error: ' + e.message, 'error');
             console.error('Gmail login error:', e);
+        } finally {
+            gmailLoginBtn.disabled = false;
+            gmailLoginBtn.textContent = ' Login with Gmail';
         }
     });
 
@@ -2093,9 +2262,32 @@ document.addEventListener("DOMContentLoaded", () => {
         refreshEmailBtn.addEventListener('click', async () => {
             refreshEmailBtn.disabled = true;
             refreshEmailBtn.style.opacity = '0.5';
-            await loadEmails();
+            await loadEmails('fast');
             refreshEmailBtn.disabled = false;
             refreshEmailBtn.style.opacity = '1';
+        });
+    }
+
+    // "Sync All" — clears cache and re-fetches 2 months of emails
+    const syncAllEmailBtn = document.getElementById('syncAllEmailBtn');
+    const syncAllEmailLabel = document.getElementById('syncAllEmailLabel');
+    if (syncAllEmailBtn) {
+        syncAllEmailBtn.addEventListener('click', async () => {
+            syncAllEmailBtn.disabled = true;
+            if (syncAllEmailLabel) syncAllEmailLabel.textContent = 'Syncing…';
+            try {
+                // 1. Wipe local cache so stale data disappears
+                await fetch('/api/emails/clear-cache', { method: 'POST' });
+                // 2. Reset full-sync timestamp so maybeFullSync() won't skip
+                localStorage.removeItem('lastFullEmailSync');
+                // 3. Run full 2-month sync (fast with batch requests)
+                await syncEmailsBackground('full');
+            } catch (e) {
+                console.error('Sync All error:', e);
+            } finally {
+                syncAllEmailBtn.disabled = false;
+                if (syncAllEmailLabel) syncAllEmailLabel.textContent = 'Sync All';
+            }
         });
     }
 
@@ -2143,13 +2335,45 @@ document.addEventListener("DOMContentLoaded", () => {
     // Initialize on page load
     initEmailService();
 
-    // Auto-refresh emails every 3 minutes
+    // Fast sync every 30 seconds for near-instant new mail
     setInterval(() => {
-        const gmailAuth = localStorage.getItem(GMAIL_AUTH_KEY);
-        if (gmailAuth) {
-            loadEmails().catch(e => console.error('Auto-refresh error:', e));
+        if (localStorage.getItem(GMAIL_AUTH_KEY)) {
+            loadEmails('fast').catch(e => console.error('Auto-refresh error:', e));
         }
-    }, 180000); // 3 minutes
+    }, 30000);
+
+    // Full sync on startup (if never run) and every 6 hours thereafter
+    const FULL_SYNC_KEY = 'lastFullEmailSync';
+    async function maybeFullSync() {
+        if (!localStorage.getItem(GMAIL_AUTH_KEY)) return;
+        const last = parseInt(localStorage.getItem(FULL_SYNC_KEY) || '0', 10);
+        if (Date.now() - last > 6 * 3600 * 1000) {
+            localStorage.setItem(FULL_SYNC_KEY, Date.now().toString());
+            await loadEmails('full').catch(() => {});
+        }
+    }
+    // After showing cached emails, check if history is incomplete (< 3 weeks old)
+    async function checkCacheCompleteness() {
+        if (!localStorage.getItem(GMAIL_AUTH_KEY)) return;
+        try {
+            const r = await fetch('/api/emails/inbox?max_results=500');
+            const d = await r.json();
+            if (!d.emails || d.emails.length === 0) return;
+            const oldest = new Date(d.emails[d.emails.length - 1].date);
+            const threeWeeksAgo = new Date(Date.now() - 21 * 24 * 3600 * 1000);
+            if (oldest > threeWeeksAgo) {
+                // Cache is incomplete — clear it and do a full 2-month sync
+                console.log('[Email] Cache looks incomplete (oldest:', oldest.toDateString(), ') — triggering full sync');
+                await fetch('/api/emails/clear-cache', { method: 'POST' });
+                localStorage.removeItem(FULL_SYNC_KEY);
+                await loadEmails('full').catch(() => {});
+                localStorage.setItem(FULL_SYNC_KEY, Date.now().toString());
+            }
+        } catch (e) { /* silent */ }
+    }
+    maybeFullSync();
+    setTimeout(checkCacheCompleteness, 3000); // run 3s after page load
+    setInterval(maybeFullSync, 3600000); // recheck hourly
 
     // ─── Helpers ───
     function escapeHtml(text) { const d = document.createElement("div"); d.textContent = text; return d.innerHTML; }

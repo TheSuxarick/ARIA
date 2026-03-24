@@ -3,12 +3,62 @@
 import os
 import base64
 import json
+import re
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime as _email_parsedate
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google.auth.exceptions import RefreshError
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from pathlib import Path
+
+
+def _safe_parse_date(date_str: str) -> datetime:
+    """Parse RFC 2822 Date header → UTC naive datetime."""
+    if not date_str:
+        return datetime.utcnow()
+    try:
+        dt = _email_parsedate(date_str.strip())
+        if dt.tzinfo is not None:
+            dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+        return dt
+    except Exception:
+        for fmt in ('%a, %d %b %Y %H:%M:%S', '%d %b %Y %H:%M:%S'):
+            try:
+                clean = re.sub(r'\s+[+-]\d{4}.*$', '', date_str.strip())
+                clean = re.sub(r'\s+\([A-Z]+\)$', '', clean).strip()
+                return datetime.strptime(clean, fmt)
+            except Exception:
+                continue
+        return datetime.utcnow()
+
+
+def _extract_body(payload: dict) -> str:
+    """Recursively extract best body (prefer text/html, fallback text/plain)."""
+    mime = payload.get('mimeType', '')
+    parts = payload.get('parts', [])
+
+    if parts:
+        html_body = plain_body = ''
+        for part in parts:
+            result = _extract_body(part)
+            part_mime = part.get('mimeType', '')
+            if 'html' in part_mime and not html_body:
+                html_body = result
+            elif 'plain' in part_mime and not plain_body:
+                plain_body = result
+            elif result and not html_body and not plain_body:
+                html_body = result
+        return html_body or plain_body
+
+    data = payload.get('body', {}).get('data', '')
+    if data:
+        try:
+            return base64.urlsafe_b64decode(data).decode('utf-8', errors='replace')
+        except Exception:
+            pass
+    return payload.get('snippet', '')
 
 
 class GmailService:
@@ -24,26 +74,28 @@ class GmailService:
         ]
         self.service = None
     
+    def _load_client_config(self):
+        """Read and parse credentials.json with explicit UTF-8 encoding."""
+        if not self.credentials_file.exists():
+            raise FileNotFoundError(f"credentials.json not found at {self.credentials_file}")
+        with open(str(self.credentials_file), 'r', encoding='utf-8') as f:
+            raw = f.read().strip()
+        if not raw:
+            raise ValueError("credentials.json is empty")
+        return json.loads(raw)
+
     def get_auth_url(self):
         """Get the authorization URL for Gmail OAuth."""
-        if not self.credentials_file.exists():
-            print(f"[Gmail] ❌ ERROR: Credentials file not found at {self.credentials_file}")
-            return {"error": "Credentials file not found"}
-        
         try:
             print(f"[Gmail] 🔑 Генерирую ссылку авторизации...")
-            print(f"[Gmail] Credentials file: {self.credentials_file}")
-            print(f"[Gmail] Scopes: {self.scopes}")
-            
-            flow = Flow.from_client_secrets_file(
-                self.credentials_file,
+            client_config = self._load_client_config()
+            flow = Flow.from_client_config(
+                client_config,
                 scopes=self.scopes,
-                redirect_uri='http://localhost:5000/callback'
+                redirect_uri='http://localhost:5000/api/gmail/callback'
             )
-            
-            auth_url, state = flow.authorization_url(prompt='consent')
-            print(f"[Gmail] ✅ Ссылка сгенерирована успешно")
-            print(f"[Gmail] Auth URL: {auth_url[:80]}...")
+            auth_url, state = flow.authorization_url(prompt='consent', access_type='offline')
+            print(f"[Gmail] ✅ Auth URL сгенерирован")
             return {"auth_url": auth_url, "state": state}
         except Exception as e:
             print(f"[Gmail] ❌ Ошибка при генерации URL: {e}")
@@ -61,12 +113,13 @@ class GmailService:
             print(f"[Gmail] 🔄 Обмен кода на токен...")
             print(f"[Gmail] Code: {auth_code[:20]}...")
             
-            flow = Flow.from_client_secrets_file(
-                self.credentials_file,
+            client_config = self._load_client_config()
+            flow = Flow.from_client_config(
+                client_config,
                 scopes=self.scopes,
-                redirect_uri='http://localhost:5000/callback'
+                redirect_uri='http://localhost:5000/api/gmail/callback'
             )
-            
+
             print(f"[Gmail] Запрос к Google для получения токена...")
             flow.fetch_token(code=auth_code)
             credentials = flow.credentials
@@ -99,10 +152,10 @@ class GmailService:
             'token_uri': credentials.token_uri,
             'client_id': credentials.client_id,
             'client_secret': credentials.client_secret,
-            'scopes': credentials.scopes
+            'scopes': list(credentials.scopes) if credentials.scopes else []
         }
         
-        with open(self.token_file, 'w') as f:
+        with open(str(self.token_file), 'w') as f:
             json.dump(token_data, f)
     
     def _load_credentials(self):
@@ -185,60 +238,153 @@ class GmailService:
             traceback.print_exc()
             return {"error": str(e)}
     
-    def _get_message_details(self, service, message_id):
-        """Get details of a specific email message."""
+    def _get_message_metadata(self, service, message_id):
+        """Fetch only headers + labels — no body download (very fast)."""
         try:
             message = service.users().messages().get(
-                userId='me',
-                id=message_id,
-                format='full'
+                userId='me', id=message_id, format='metadata',
+                metadataHeaders=['Subject', 'From', 'To', 'Date']
             ).execute()
-            
-            headers = message['payload'].get('headers', [])
-            subject = next((h['value'] for h in headers if h['name'] == 'Subject'), 'No Subject')
-            from_addr = next((h['value'] for h in headers if h['name'] == 'From'), 'Unknown')
-            date = next((h['value'] for h in headers if h['name'] == 'Date'), '')
-            
-            # Get body
-            html_body = ''
-            plain_body = ''
-            
-            # Если письмо состоит из нескольких частей (multipart)
-            if 'parts' in message['payload']:
-                for part in message['payload']['parts']:
-                    if part['mimeType'] == 'text/plain':
-                        data = part.get('body', {}).get('data', '')
-                        if data:
-                            plain_body = base64.urlsafe_b64decode(data).decode('utf-8')
-                    elif part['mimeType'] == 'text/html':
-                        data = part.get('body', {}).get('data', '')
-                        if data:
-                            html_body = base64.urlsafe_b64decode(data).decode('utf-8')
-            
-            # Если письмо состоит только из одной части
-            else:
-                mime_type = message['payload'].get('mimeType', '')
-                data = message['payload'].get('body', {}).get('data', '')
-                if data:
-                    decoded = base64.urlsafe_b64decode(data).decode('utf-8')
-                    if mime_type == 'text/html':
-                        html_body = decoded
-                    else:
-                        plain_body = decoded
-            
-            # Отдаем предпочтение HTML, если его нет - берем простой текст
-            final_body = html_body if html_body else plain_body
-            
+
+            headers = {h['name'].lower(): h['value']
+                       for h in message['payload'].get('headers', [])}
+
+            date_str = headers.get('date', '')
             return {
-                'id': message_id,
-                'subject': subject,
-                'from': from_addr,
-                'date': date,
-                'body': final_body  # <--- Больше никакой обрезки в 200 символов!
+                'id':       message_id,
+                'subject':  headers.get('subject', '(No Subject)'),
+                'from':     headers.get('from', 'Unknown'),
+                'to':       headers.get('to', ''),
+                'date':     date_str,
+                'date_dt':  _safe_parse_date(date_str),
+                'snippet':  message.get('snippet', ''),
+                'body':     '',          # fetched on demand
+                'is_read':  'UNREAD' not in message.get('labelIds', []),
             }
         except Exception as e:
-            print(f"Error getting message details: {e}")
+            print(f"[Gmail] Error getting metadata {message_id}: {e}")
             return None
+
+    def _batch_get_metadata(self, service, message_ids: list) -> list:
+        """Fetch metadata for many emails using Gmail batch HTTP requests.
+
+        Sends up to 100 API calls per HTTP request — ~50× faster than one-by-one.
+        """
+        results = {}
+
+        def _cb(request_id, response, exception):
+            if exception:
+                print(f"[Gmail] Batch metadata error {request_id}: {exception}")
+                return
+            if not response:
+                return
+            headers = {h['name'].lower(): h['value']
+                       for h in response.get('payload', {}).get('headers', [])}
+            date_str = headers.get('date', '')
+            results[request_id] = {
+                'id':       request_id,
+                'subject':  headers.get('subject', '(No Subject)'),
+                'from':     headers.get('from', 'Unknown'),
+                'to':       headers.get('to', ''),
+                'date':     date_str,
+                'date_dt':  _safe_parse_date(date_str),
+                'snippet':  response.get('snippet', ''),
+                'body':     '',
+                'is_read':  'UNREAD' not in response.get('labelIds', []),
+            }
+
+        BATCH_SIZE = 100
+        for i in range(0, len(message_ids), BATCH_SIZE):
+            chunk = message_ids[i:i + BATCH_SIZE]
+            batch = service.new_batch_http_request(callback=_cb)
+            for mid in chunk:
+                batch.add(
+                    service.users().messages().get(
+                        userId='me', id=mid, format='metadata',
+                        metadataHeaders=['Subject', 'From', 'To', 'Date']
+                    ),
+                    request_id=mid,
+                )
+            try:
+                batch.execute()
+            except Exception as e:
+                print(f"[Gmail] Batch execute error (chunk {i}): {e}")
+
+        # Preserve original ordering
+        ordered = []
+        for mid in message_ids:
+            if mid in results:
+                ordered.append(results[mid])
+        return ordered
+
+    def _get_message_details(self, service, message_id):
+        """Fetch full message including body (used for on-demand body loading)."""
+        try:
+            message = service.users().messages().get(
+                userId='me', id=message_id, format='full'
+            ).execute()
+
+            headers = {h['name'].lower(): h['value']
+                       for h in message['payload'].get('headers', [])}
+
+            date_str = headers.get('date', '')
+            body = _extract_body(message['payload']) or message.get('snippet', '')
+
+            return {
+                'id':       message_id,
+                'subject':  headers.get('subject', '(No Subject)'),
+                'from':     headers.get('from', 'Unknown'),
+                'to':       headers.get('to', ''),
+                'date':     date_str,
+                'date_dt':  _safe_parse_date(date_str),
+                'body':     body,
+                'is_read':  'UNREAD' not in message.get('labelIds', []),
+            }
+        except Exception as e:
+            print(f"[Gmail] Error getting message {message_id}: {e}")
+            return None
+
+    def get_emails_for_sync(self, query: str = 'in:inbox newer_than:2m',
+                             max_results: int = 500):
+        """Fetch email metadata for sync (fast — no body download).
+
+        Returns dict with keys 'emails' (list) and 'message_ids' (set of gmail IDs).
+        """
+        service = self.get_service()
+        if service is None:
+            return {'error': 'Not authenticated with Gmail'}
+
+        try:
+            # Step 1: list all matching message IDs (paginated)
+            list_params = {'userId': 'me', 'q': query}
+            if max_results:
+                list_params['maxResults'] = min(max_results, 500)
+
+            page_token = None
+            all_messages = []
+            while True:
+                if page_token:
+                    list_params['pageToken'] = page_token
+                result = service.users().messages().list(**list_params).execute()
+                all_messages.extend(result.get('messages', []))
+                page_token = result.get('nextPageToken')
+                if not page_token or (max_results and len(all_messages) >= max_results):
+                    break
+
+            message_ids = {m['id'] for m in all_messages}
+
+            # Step 2: batch-fetch metadata (100 calls per HTTP request, ~50× faster)
+            ordered_ids = [m['id'] for m in all_messages]
+            emails = self._batch_get_metadata(service, ordered_ids)
+
+            print(f"[Gmail] Batch-fetched metadata for {len(emails)}/{len(ordered_ids)} emails")
+            return {'emails': emails, 'message_ids': message_ids}
+        except RefreshError:
+            self._clear_credentials()
+            return {'error': 'Authentication expired. Please log in again.'}
+        except Exception as e:
+            print(f'[Gmail] Sync error: {e}')
+            return {'error': str(e)}
     
     def send_email(self, to, subject, body):
         """Send an email through Gmail."""

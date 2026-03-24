@@ -13,6 +13,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 from flask_socketio import SocketIO
 import requests
 import re
+from email.utils import parsedate_to_datetime as _email_parsedate_raw
 import subprocess
 import socket as _socket
 import threading as _threading
@@ -56,6 +57,23 @@ db.init_app(app)
 
 # Initialize Gmail service
 gmail_service = GmailService()
+
+
+def _resolve_gmail_email() -> str:
+    """Return gmail email: from session first, then restore from DB if authenticated."""
+    email = session.get('gmail_email', '')
+    if not email and gmail_service.is_authenticated():
+        # Session lost (e.g. after OAuth popup) — restore from last GmailAccount in DB
+        try:
+            acct = GmailAccount.query.order_by(GmailAccount.id.desc()).first()
+            if acct:
+                email = acct.email
+                session['gmail_email'] = email          # restore for future requests
+                session['gmail_authenticated'] = True
+        except Exception:
+            pass
+    return email
+
 
 # ⚠️ ВАЖНО: Редирект 127.0.0.1 → localhost (для OAuth) 
 @app.before_request
@@ -156,6 +174,305 @@ PERSONALITY_PROMPTS = {
     ),
 }
 
+# ═══════════════════════════════════════════════════════════════════════════
+# LAMP CONTROL — Yeelight
+# ═══════════════════════════════════════════════════════════════════════════
+
+LAMP_IP = (
+    os.environ.get("LAMP_IP")
+    or os.environ.get("YEELIGHT_IP")
+    or os.environ.get("BULB_IP")
+    or "10.72.61.149"
+)
+
+LAMP_KEYWORDS  = ["lamp", "light", "bulb", "ламп", "свет", "шам", "жарық"]
+LAMP_ON_WORDS  = ["turn on", "включ", "қос", "жағ"]
+LAMP_OFF_WORDS = ["turn off", "выключ", "өшір", "сөндір"]
+LAMP_RGB_WORDS = ["rgb", "rainbow", "радуг", "кемпірқосақ"]
+LAMP_WARM_WORDS = ["warm", "тёпл", "жылы"]
+LAMP_COOL_WORDS = ["cool", "холодн", "салқын"]
+LAMP_COLOR_WORDS = {
+    "red":    ["red", "красн", "қызыл"],
+    "green":  ["green", "зелён", "жасыл"],
+    "blue":   ["blue", "синий", "голубой", "көк"],
+    "yellow": ["yellow", "жёлт", "сары"],
+    "orange": ["orange", "оранж"],
+    "purple": ["purple", "фиолет", "күлгін"],
+    "pink":   ["pink", "розов", "қызғылт"],
+    "cyan":   ["cyan", "бирюз"],
+}
+
+
+class AppBulbController:
+    """Controls a Yeelight bulb; auto-reconnects on connection loss."""
+
+    COLOR_MAP = {
+        "red":    (255,   0,   0),
+        "green":  (  0, 255,   0),
+        "blue":   (  0,   0, 255),
+        "yellow": (255, 255,   0),
+        "orange": (255, 128,   0),
+        "purple": (128,   0, 128),
+        "pink":   (255, 105, 180),
+        "cyan":   (  0, 255, 255),
+    }
+
+    def __init__(self, ip: str):
+        self.ip = ip
+        self._bulb = None
+        self._state = {
+            "ip": ip,
+            "power": "off",
+            "mode": "white",
+            "color": None,
+            "brightness": 80,
+            "color_temp": 4000,
+            "rgb_running": False,
+        }
+        self._rgb_thread = None
+        self._rgb_stop = _threading.Event()
+        self._lock = _threading.Lock()
+
+    def _ensure(self):
+        if self._bulb is None:
+            try:
+                from yeelight import Bulb
+                self._bulb = Bulb(self.ip, auto_on=False)
+            except Exception as exc:
+                raise RuntimeError(f"Cannot connect to lamp at {self.ip}: {exc}") from exc
+        return self._bulb
+
+    def turn_on_white(self, brightness: int = 80, color_temp: int = 4000):
+        with self._lock:
+            try:
+                b = self._ensure()
+                b.turn_on()
+                b.set_brightness(int(brightness))
+                b.set_color_temp(int(color_temp))
+                self._state.update(power="on", mode="white", color=None,
+                                   brightness=int(brightness), color_temp=int(color_temp))
+            except Exception:
+                self._bulb = None
+                raise
+
+    def turn_off(self):
+        self.stop_rgb_cycle()
+        with self._lock:
+            try:
+                b = self._ensure()
+                b.turn_off()
+                self._state.update(power="off", rgb_running=False)
+            except Exception:
+                self._bulb = None
+                raise
+
+    def toggle_white(self):
+        if self._state["power"] == "on":
+            self.turn_off()
+        else:
+            self.turn_on_white(self._state["brightness"], self._state["color_temp"])
+
+    def set_color(self, color_name: str, brightness: int = 80):
+        rgb = self.COLOR_MAP.get(color_name.lower())
+        if rgb is None:
+            raise ValueError(f"Unknown color: {color_name}")
+        with self._lock:
+            try:
+                b = self._ensure()
+                b.turn_on()
+                b.set_rgb(*rgb)
+                b.set_brightness(int(brightness))
+                self._state.update(power="on", mode="color", color=color_name,
+                                   brightness=int(brightness))
+            except Exception:
+                self._bulb = None
+                raise
+
+    def set_brightness(self, brightness: int):
+        state = self.get_state()
+        if state["mode"] == "color" and state.get("color"):
+            self.set_color(state["color"], brightness=brightness)
+        else:
+            self.turn_on_white(brightness=brightness,
+                               color_temp=state.get("color_temp", 4000))
+
+    def start_rgb_cycle(self, interval_seconds: float = 2.0, brightness: int = 80):
+        self.stop_rgb_cycle()
+        self._rgb_stop.clear()
+
+        def _cycle():
+            colors = list(self.COLOR_MAP.keys())
+            idx = 0
+            while not self._rgb_stop.is_set():
+                color = colors[idx % len(colors)]
+                try:
+                    with self._lock:
+                        b = self._ensure()
+                        b.turn_on()
+                        b.set_rgb(*self.COLOR_MAP[color])
+                        b.set_brightness(int(brightness))
+                        self._state.update(power="on", mode="rgb", color=color,
+                                           brightness=int(brightness), rgb_running=True)
+                except Exception:
+                    self._bulb = None
+                idx += 1
+                self._rgb_stop.wait(interval_seconds)
+            self._state["rgb_running"] = False
+
+        self._rgb_thread = _threading.Thread(target=_cycle, daemon=True, name="rgb-cycle")
+        self._rgb_thread.start()
+
+    def stop_rgb_cycle(self):
+        self._rgb_stop.set()
+        t = self._rgb_thread
+        if t and t.is_alive():
+            t.join(timeout=3)
+        self._state["rgb_running"] = False
+
+    def get_state(self) -> dict:
+        return dict(self._state)
+
+
+bulb_controller = AppBulbController(LAMP_IP)
+
+
+# ── Lamp helpers ─────────────────────────────────────────────────────────────
+
+def _detect_lang(msg: str) -> str:
+    """Detect RU / KZ / EN from message characters."""
+    kz_chars = set("әіңғүұқөһ")
+    if any(c in kz_chars for c in msg.lower()):
+        return "kz"
+    ru_chars = set("абвгдеёжзийклмнопрстуфхцчшщъыьэюя")
+    if sum(1 for c in msg.lower() if c in ru_chars) > 2:
+        return "ru"
+    return "en"
+
+
+def _extract_interval_seconds(msg: str) -> float:
+    """Parse 'every 3 seconds' / 'каждые 2 минуты' → float seconds."""
+    msg_l = msg.lower()
+    m = re.search(r'(\d+(?:\.\d+)?)\s*(?:minute|min|минут|мин)', msg_l)
+    if m:
+        return float(m.group(1)) * 60
+    m = re.search(r'(\d+(?:\.\d+)?)\s*(?:second|sec|секунд|сек)', msg_l)
+    if m:
+        return float(m.group(1))
+    return 2.0
+
+
+def _format_lamp_reply(state: dict, lang: str) -> str:
+    power = state.get("power", "off")
+    mode = state.get("mode", "white")
+    color = state.get("color") or ""
+    brightness = state.get("brightness", 80)
+    color_temp = state.get("color_temp", 4000)
+
+    COLOR_RU = {"red": "красный", "green": "зелёный", "blue": "синий",
+                "yellow": "жёлтый", "orange": "оранжевый", "purple": "фиолетовый",
+                "pink": "розовый", "cyan": "голубой"}
+    COLOR_KZ = {"red": "қызыл", "green": "жасыл", "blue": "көк",
+                "yellow": "сары", "orange": "қызғылт сары", "purple": "күлгін",
+                "pink": "қызғылт", "cyan": "күлгін-жасыл"}
+
+    if lang == "ru":
+        if power == "off":
+            return "Лампа выключена. 💡"
+        if mode == "rgb":
+            return f"RGB-цикл запущен! 🌈 Яркость: {brightness}%"
+        if mode == "color" and color:
+            return f"Цвет: {COLOR_RU.get(color, color)}, яркость {brightness}%. 🎨"
+        temp_str = f"{color_temp}K"
+        return f"Лампа включена. Яркость: {brightness}%, температура: {temp_str}. 💡"
+    if lang == "kz":
+        if power == "off":
+            return "Шам өшірілді. 💡"
+        if mode == "rgb":
+            return f"RGB-цикл іске қосылды! 🌈 Жарықтық: {brightness}%"
+        if mode == "color" and color:
+            return f"Түс: {COLOR_KZ.get(color, color)}, жарықтық {brightness}%. 🎨"
+        return f"Шам жағылды. Жарықтық: {brightness}%. 💡"
+    # EN
+    if power == "off":
+        return "Light turned off. 💡"
+    if mode == "rgb":
+        return f"RGB cycle started! 🌈 Brightness: {brightness}%"
+    if mode == "color" and color:
+        return f"Color set to {color}, brightness {brightness}%. 🎨"
+    return f"Light on. Brightness: {brightness}%, color temp: {color_temp}K. 💡"
+
+
+def _handle_lamp_command(message: str):
+    """
+    Parse a user message and execute lamp command if detected.
+    Returns (reply_str, lamp_state_dict) or (None, None).
+    """
+    msg_l = message.lower()
+    if not any(kw in msg_l for kw in LAMP_KEYWORDS):
+        return None, None
+
+    lang = _detect_lang(message)
+    try:
+        # Color first (most specific)
+        for color, keywords in LAMP_COLOR_WORDS.items():
+            if any(kw in msg_l for kw in keywords):
+                bulb_controller.set_color(color, brightness=80)
+                state = bulb_controller.get_state()
+                return _format_lamp_reply(state, lang), state
+
+        # RGB cycle
+        if any(kw in msg_l for kw in LAMP_RGB_WORDS):
+            interval = _extract_interval_seconds(message)
+            bulb_controller.start_rgb_cycle(interval_seconds=interval, brightness=80)
+            state = bulb_controller.get_state()
+            return _format_lamp_reply(state, lang), state
+
+        # Stop RGB
+        if any(kw in msg_l for kw in LAMP_OFF_WORDS) and bulb_controller.get_state()["rgb_running"]:
+            bulb_controller.stop_rgb_cycle()
+            state = bulb_controller.get_state()
+            return _format_lamp_reply(state, lang), state
+
+        # Warm white
+        if any(kw in msg_l for kw in LAMP_WARM_WORDS):
+            bulb_controller.turn_on_white(brightness=80, color_temp=2700)
+            state = bulb_controller.get_state()
+            return _format_lamp_reply(state, lang), state
+
+        # Cool white
+        if any(kw in msg_l for kw in LAMP_COOL_WORDS):
+            bulb_controller.turn_on_white(brightness=80, color_temp=6500)
+            state = bulb_controller.get_state()
+            return _format_lamp_reply(state, lang), state
+
+        # Turn off
+        if any(kw in msg_l for kw in LAMP_OFF_WORDS):
+            bulb_controller.turn_off()
+            state = bulb_controller.get_state()
+            return _format_lamp_reply(state, lang), state
+
+        # Turn on
+        if any(kw in msg_l for kw in LAMP_ON_WORDS):
+            bulb_controller.turn_on_white(brightness=80)
+            state = bulb_controller.get_state()
+            return _format_lamp_reply(state, lang), state
+
+        # Generic mention → toggle
+        bulb_controller.toggle_white()
+        state = bulb_controller.get_state()
+        return _format_lamp_reply(state, lang), state
+
+    except Exception as exc:
+        msgs = {
+            "ru": f"Не удалось управлять лампой: {exc}",
+            "kz": f"Шамды басқару мүмкін болмады: {exc}",
+            "en": f"Could not control the lamp: {exc}",
+        }
+        return msgs.get(lang, msgs["en"]), None
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+
 OWM_KEY = os.environ.get("OWM_KEY", "")
 OWM_BASE = "https://api.openweathermap.org/data/2.5"
 
@@ -190,6 +507,40 @@ def _epoch_to_localtime(epoch, tz_offset):
     return dt.strftime("%Y-%m-%d %H:%M")
 
 
+def _parse_email_date(date_str: str) -> datetime:
+    """Parse RFC 2822 email Date header → UTC naive datetime."""
+    if not date_str:
+        return datetime.utcnow()
+    try:
+        import datetime as _dt
+        dt = _email_parsedate_raw(date_str.strip())
+        if dt.tzinfo is not None:
+            dt = dt.astimezone(_dt.timezone.utc).replace(tzinfo=None)
+        return dt
+    except Exception:
+        for fmt in ('%a, %d %b %Y %H:%M:%S', '%d %b %Y %H:%M:%S'):
+            try:
+                import re as _re
+                clean = _re.sub(r'\s+[+-]\d{4}.*$', '', date_str.strip())
+                clean = _re.sub(r'\s+\([A-Z]+\)$', '', clean).strip()
+                return datetime.strptime(clean, fmt)
+            except Exception:
+                continue
+        return datetime.utcnow()
+
+
+def _tz_id_str(tz_seconds):
+    """Convert UTC offset in seconds to 'UTC+H' or 'UTC+H:MM' string.
+    Handles fractional offsets (India +5:30, Nepal +5:45, Iran +3:30, etc.)
+    and negative offsets correctly."""
+    sign = '+' if tz_seconds >= 0 else '-'
+    total_minutes = abs(tz_seconds) // 60
+    h, m = divmod(total_minutes, 60)
+    if m:
+        return f"UTC{sign}{h}:{m:02d}"
+    return f"UTC{sign}{h}"
+
+
 def fetch_weather(city):
     try:
         resp = requests.get(
@@ -210,7 +561,7 @@ def fetch_weather(city):
             "country": d.get("sys", {}).get("country", ""),
             "localtime": _epoch_to_localtime(d["dt"], tz),
             "localtime_epoch": d["dt"] + tz,
-            "tz_id": f"UTC{'+' if tz >= 0 else ''}{tz // 3600}",
+            "tz_id": _tz_id_str(tz),
             "last_updated": _epoch_to_localtime(d["dt"], tz),
             "temp": d["main"]["temp"],
             "feels_like": d["main"]["feels_like"],
@@ -368,6 +719,182 @@ def get_recent_emails(limit=5):
         return None
 
 
+def _detect_message_lang(message: str) -> str:
+    msg = (message or "").lower()
+    kz_markers = ["қ", "ғ", "ә", "ң", "ө", "ұ", "ү", "һ", "ауа райы", "кімнен", "қашан"]
+    ru_markers = ["погода", "почта", "письм", "когда", "кто", "от кого", "время", "суть"]
+    if any(m in msg for m in kz_markers):
+        return "kz"
+    if any(m in msg for m in ru_markers) or re.search(r"[а-яё]", msg):
+        return "ru"
+    return "en"
+
+
+def _is_email_query(message: str) -> bool:
+    msg = (message or "").lower()
+    email_words = [
+        "email", "mail", "inbox", "letter", "message",
+        "почта", "письмо", "письма", "емайл", "сообщение",
+        "хат", "пошта", "письм",
+    ]
+    return any(w in msg for w in email_words)
+
+
+def _extract_sender_hint(message: str) -> str:
+    msg = (message or "").strip()
+    patterns = [
+        r"from\s+([^\?\.,\n]+)",
+        r"от\s+([^\?\.,\n]+)",
+        r"кімнен\s+([^\?\.,\n]+)",
+    ]
+    for p in patterns:
+        m = re.search(p, msg, re.IGNORECASE)
+        if m:
+            return m.group(1).strip().strip('"\'')
+    return ""
+
+
+def _get_cached_emails_for_chat(limit: int = 50):
+    gmail_email = _resolve_gmail_email()
+    if not gmail_email:
+        return []
+    acct = GmailAccount.query.filter_by(email=gmail_email).first()
+    if not acct:
+        return []
+    return (EmailMessage.query
+            .filter_by(account_id=acct.id)
+            .order_by(EmailMessage.received_at.desc())
+            .limit(limit)
+            .all())
+
+
+def _format_email_direct_reply(message: str, email_data=None):
+    msg = (message or "").lower()
+    lang = _detect_message_lang(message)
+
+    ask_sender = any(x in msg for x in ["from who", "who sent", "от кого", "кто отправ", "кімнен"])
+    ask_time = any(x in msg for x in ["when", "time", "когда", "во сколько", "время", "қашан"])
+    ask_summary = any(x in msg for x in ["summary", "about", "what is it about", "суть", "о чем", "не туралы", "мазмұн"])
+    ask_last = any(x in msg for x in ["latest", "last", "recent", "послед", "соңғы"])
+
+    if email_data and (ask_sender or ask_time or ask_summary):
+        sender = email_data.get("from", "Unknown")
+        subject = email_data.get("subject", "(No subject)")
+        date_text = email_data.get("date", "Unknown time")
+        body = (email_data.get("body") or "").strip()
+        body_short = (body[:220] + "...") if len(body) > 220 else body
+        if lang == "ru":
+            if ask_sender and not (ask_time or ask_summary):
+                return f"Это письмо от: {sender}."
+            if ask_time and not (ask_sender or ask_summary):
+                return f"Письмо пришло: {date_text}."
+            if ask_summary and not (ask_sender or ask_time):
+                return f"Суть письма: {body_short or subject}"
+            return f"Письмо от {sender}. Тема: {subject}. Время: {date_text}. Суть: {body_short or subject}"
+        if lang == "kz":
+            return f"Хат жіберуші: {sender}. Тақырып: {subject}. Уақыты: {date_text}. Мазмұны: {body_short or subject}"
+        return f"The email is from {sender}. Subject: {subject}. Time: {date_text}. Summary: {body_short or subject}"
+
+    emails = _get_cached_emails_for_chat(limit=80)
+    if not emails:
+        if lang == "ru":
+            return "Я не вижу писем в локальном кэше. Сначала синхронизируйте Gmail (Sync All)."
+        if lang == "kz":
+            return "Жергілікті кэште хаттар жоқ. Алдымен Gmail синхрондаңыз (Sync All)."
+        return "I cannot see cached emails yet. Please sync Gmail first (Sync All)."
+
+    sender_hint = _extract_sender_hint(message).lower()
+    if sender_hint:
+        emails = [e for e in emails if sender_hint in (e.sender or "").lower() or sender_hint in (e.subject or "").lower()]
+        if not emails:
+            if lang == "ru":
+                return f"По фильтру '{sender_hint}' писем не найдено в кэше."
+            if lang == "kz":
+                return f"'{sender_hint}' бойынша хат табылмады."
+            return f"No cached emails matched '{sender_hint}'."
+
+    top = emails[:5]
+    first = top[0]
+    time_str = first.received_at.strftime("%Y-%m-%d %H:%M")
+    body_short = ((first.body or "")[:220] + "...") if len(first.body or "") > 220 else (first.body or "")
+
+    if ask_sender and (ask_last or not ask_time):
+        if lang == "ru":
+            return f"Последнее письмо от: {first.sender}. Тема: {first.subject}. Время: {time_str}."
+        if lang == "kz":
+            return f"Соңғы хат мына адамнан: {first.sender}. Тақырыбы: {first.subject}. Уақыты: {time_str}."
+        return f"Your latest email is from {first.sender}. Subject: {first.subject}. Time: {time_str}."
+
+    if ask_time and not ask_summary:
+        lines = [f"- {e.sender} | {e.subject} | {e.received_at.strftime('%Y-%m-%d %H:%M')}" for e in top]
+        if lang == "ru":
+            return "Время последних писем:\n" + "\n".join(lines)
+        if lang == "kz":
+            return "Соңғы хаттардың уақыты:\n" + "\n".join(lines)
+        return "Times of recent emails:\n" + "\n".join(lines)
+
+    if ask_summary:
+        if lang == "ru":
+            return f"Суть последнего письма:\nОт: {first.sender}\nТема: {first.subject}\nВремя: {time_str}\nКратко: {body_short or first.subject}"
+        if lang == "kz":
+            return f"Соңғы хаттың қысқаша мазмұны:\nКімнен: {first.sender}\nТақырып: {first.subject}\nУақыты: {time_str}\nМазмұны: {body_short or first.subject}"
+        return f"Latest email summary:\nFrom: {first.sender}\nSubject: {first.subject}\nTime: {time_str}\nSummary: {body_short or first.subject}"
+
+    lines = [f"- {e.sender} | {e.subject} | {e.received_at.strftime('%Y-%m-%d %H:%M')}" for e in top]
+    if lang == "ru":
+        return "Последние письма:\n" + "\n".join(lines)
+    if lang == "kz":
+        return "Соңғы хаттар:\n" + "\n".join(lines)
+    return "Recent emails:\n" + "\n".join(lines)
+
+
+def _format_weather_direct_reply(message: str, weather_data: dict) -> str:
+    lang = _detect_message_lang(message)
+    if not weather_data:
+        if lang == "ru":
+            return "Не удалось получить погоду для этого города."
+        if lang == "kz":
+            return "Бұл қала бойынша ауа райын алу мүмкін болмады."
+        return "I could not fetch weather for that city."
+
+    city = weather_data.get("city", "Unknown")
+    country = weather_data.get("country", "")
+    localtime = weather_data.get("localtime", "N/A")
+    temp = weather_data.get("temp", "N/A")
+    feels = weather_data.get("feels_like", "N/A")
+    cond = weather_data.get("description", "N/A")
+    humidity = weather_data.get("humidity", "N/A")
+    wind = weather_data.get("wind_kph", "N/A")
+    wind_dir = weather_data.get("wind_dir", "")
+
+    if lang == "ru":
+        return (
+            f"Погода в {city}, {country}:\n"
+            f"- Локальное время: {localtime}\n"
+            f"- Температура: {temp}°C (ощущается как {feels}°C)\n"
+            f"- Состояние: {cond}\n"
+            f"- Влажность: {humidity}%\n"
+            f"- Ветер: {wind} км/ч {wind_dir}"
+        )
+    if lang == "kz":
+        return (
+            f"{city}, {country} қаласындағы ауа райы:\n"
+            f"- Жергілікті уақыт: {localtime}\n"
+            f"- Температура: {temp}°C (сезіледі: {feels}°C)\n"
+            f"- Жағдайы: {cond}\n"
+            f"- Ылғалдылық: {humidity}%\n"
+            f"- Жел: {wind} км/сағ {wind_dir}"
+        )
+    return (
+        f"Weather in {city}, {country}:\n"
+        f"- Local time: {localtime}\n"
+        f"- Temperature: {temp}°C (feels like {feels}°C)\n"
+        f"- Condition: {cond}\n"
+        f"- Humidity: {humidity}%\n"
+        f"- Wind: {wind} km/h {wind_dir}"
+    )
+
+
 @app.route("/api/chat", methods=["POST"])
 def chat():
     data = request.get_json()
@@ -409,25 +936,31 @@ def chat():
             if recent_emails:
                 system_text += recent_emails
 
+        # ── Lamp command interception (no Gemini needed) ──────────────────
+        lamp_reply, lamp_st = _handle_lamp_command(user_message)
+        if lamp_reply:
+            chat_history.append({"role": "assistant", "text": lamp_reply})
+            resp_data = {"reply": lamp_reply}
+            if lamp_st:
+                resp_data["lamp"] = lamp_st
+            return jsonify(resp_data)
+        # ─────────────────────────────────────────────────────────────────
+
+        # ── Email query interception (deterministic, DB-backed) ──────────
+        if _is_email_query(user_message):
+            email_reply = _format_email_direct_reply(user_message, email_data=email_data)
+            chat_history.append({"role": "assistant", "text": email_reply})
+            return jsonify({"reply": email_reply})
+        # ─────────────────────────────────────────────────────────────────
+
+        # ── Weather query interception (deterministic, API-backed) ───────
         weather_city = detect_weather_query(user_message)
         if weather_city:
             w = fetch_weather(weather_city)
-            if w:
-                system_text += (
-                    f"\n\n[REAL-TIME WEATHER DATA for {w['city']}, {w['country']}]"
-                    f"\nLocal time: {w.get('localtime', 'N/A')}"
-                    f"\nTemperature: {w['temp']}°C (feels like {w['feels_like']}°C)"
-                    f"\nDay high: {w['temp_max']}°C, Day low: {w['temp_min']}°C"
-                    f"\nCondition: {w['description']}"
-                    f"\nHumidity: {w['humidity']}%"
-                    f"\nWind: {w['wind_kph']} km/h {w.get('wind_dir', '')}"
-                    f"\nPressure: {w['pressure']} hPa"
-                    f"\nCloudiness: {w['clouds']}%"
-                    f"\nVisibility: {w['vis_km']} km"
-                    f"\nSunrise: {w.get('sunrise', 'N/A')}, Sunset: {w.get('sunset', 'N/A')}"
-                    f"\n\nUse this real data to answer the user's weather question accurately. "
-                    f"Stay in your personality while presenting the data."
-                )
+            weather_reply = _format_weather_direct_reply(user_message, w)
+            chat_history.append({"role": "assistant", "text": weather_reply})
+            return jsonify({"reply": weather_reply})
+        # ─────────────────────────────────────────────────────────────────
 
         contents = []
         for msg in chat_history[-20:]:
@@ -464,13 +997,56 @@ def forecast():
 
 @app.route("/api/quick-action", methods=["POST"])
 def quick_action():
-    data = request.get_json()
+    data = request.get_json() or {}
     action = data.get("action", "")
-    responses = {
-        "light": {"status": "success", "message": "Lights toggled"},
-        "robot": {"status": "success", "message": "Robot called"},
-    }
-    return jsonify(responses.get(action, {"status": "error", "message": "Unknown action"}))
+
+    if action == "robot":
+        return jsonify({"status": "success", "message": "Robot called"})
+
+    if not action.startswith("light"):
+        return jsonify({"status": "error", "message": "Unknown action"}), 400
+
+    try:
+        brightness = int(data.get("brightness", bulb_controller.get_state()["brightness"]))
+
+        if action == "light":
+            bulb_controller.toggle_white()
+        elif action == "light_on":
+            bulb_controller.turn_on_white(brightness=brightness)
+        elif action == "light_off":
+            bulb_controller.turn_off()
+        elif action == "light_warm":
+            bulb_controller.turn_on_white(brightness=brightness, color_temp=2700)
+        elif action == "light_daylight":
+            bulb_controller.turn_on_white(brightness=brightness, color_temp=4000)
+        elif action == "light_cool":
+            bulb_controller.turn_on_white(brightness=brightness, color_temp=6500)
+        elif action == "light_color":
+            color = data.get("color", "white")
+            bulb_controller.set_color(color, brightness=brightness)
+        elif action == "light_brightness":
+            bulb_controller.set_brightness(brightness)
+        elif action == "light_rgb":
+            interval = float(data.get("interval", 2))
+            bulb_controller.start_rgb_cycle(interval_seconds=interval, brightness=brightness)
+        elif action == "light_rgb_stop":
+            bulb_controller.stop_rgb_cycle()
+        else:
+            return jsonify({"status": "error", "message": f"Unknown lamp action: {action}"}), 400
+
+        return jsonify({"status": "success", "lamp": bulb_controller.get_state()})
+
+    except Exception as exc:
+        return jsonify({
+            "status": "error",
+            "message": str(exc),
+            "lamp": bulb_controller.get_state(),
+        }), 500
+
+
+@app.route("/api/lamp-state", methods=["GET"])
+def lamp_state():
+    return jsonify(bulb_controller.get_state())
 
 
 @app.route("/api/settings", methods=["GET"])
@@ -802,7 +1378,7 @@ def gmail_login():
         print(f"[LOGIN] ❌ Исключение: {e}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/callback', methods=['GET'])
+@app.route('/api/gmail/callback', methods=['GET'])
 def gmail_callback():
     """Handle Gmail OAuth callback"""
     try:
@@ -819,11 +1395,20 @@ def gmail_callback():
         if error:
             error_description = request.args.get('error_description', error)
             print(f"[CALLBACK] ❌ Ошибка от Google: {error_description}")
-            return jsonify({"error": f"Google error: {error_description}"}), 400
-        
+            return f"""<!DOCTYPE html><html><head><meta charset="utf-8"></head>
+<body style="font-family:sans-serif;background:#0f172a;color:#f87171;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
+<div style="text-align:center"><div style="font-size:48px">✗</div>
+<p>Google error: {error_description}</p></div>
+<script>try{{window.opener&&window.opener.postMessage({{gmailError:'{error_description}'}},'*');}}catch(e){{}}setTimeout(function(){{window.close();}},3000);</script>
+</body></html>""", 400
+
         if not code:
             print(f"[CALLBACK] ❌ Код авторизации не получен")
-            return jsonify({"error": "No authorization code received"}), 400
+            return f"""<!DOCTYPE html><html><head><meta charset="utf-8"></head>
+<body style="font-family:sans-serif;background:#0f172a;color:#f87171;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
+<div style="text-align:center"><p>No authorization code received.</p></div>
+<script>setTimeout(function(){{window.close();}},2000);</script>
+</body></html>""", 400
         
         print(f"[CALLBACK] Обмен кода на токен...")
         result = gmail_service.exchange_code_for_token(code, state)
@@ -852,10 +1437,22 @@ def gmail_callback():
             session['gmail_email'] = email
             session['gmail_authenticated'] = True
             
-            print(f"[CALLBACK] ✅ Данные сохранены в БД, перенаправляю...")
-        
-        # Redirect back to dashboard with success
-        return redirect(f"http://localhost:5000/?gmail_auth=success&email={email}")
+            print(f"[CALLBACK] ✅ Данные сохранены в БД, закрываю popup...")
+
+        # Close the popup and signal success to parent window
+        return f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Auth Success</title></head>
+<body style="font-family:sans-serif;background:#0f172a;color:#34d399;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
+<div style="text-align:center">
+  <div style="font-size:48px">✓</div>
+  <p style="font-size:18px">Gmail connected: {email}</p>
+  <p style="color:#94a3b8;font-size:14px">This window will close automatically…</p>
+</div>
+<script>
+  try {{ window.opener && window.opener.postMessage({{gmailAuth: true, email: {repr(email)}}}, '*'); }} catch(e) {{}}
+  setTimeout(function(){{ window.close(); }}, 1500);
+</script>
+</body></html>"""
     except Exception as e:
         print(f"[CALLBACK] ❌ Исключение: {e}")
         import traceback
@@ -869,19 +1466,9 @@ def gmail_status():
     """Check Gmail authentication status"""
     try:
         is_auth = gmail_service.is_authenticated()
-        gmail_email = session.get('gmail_email', '')
-        
-        print(f"\n[STATUS] Проверка статуса авторизации")
-        print(f"[STATUS] is_authenticated: {is_auth}")
-        print(f"[STATUS] Email в сессии: {gmail_email}")
-        print(f"[STATUS] token.json существует: {Path('token.json').exists()}")
-        
-        return jsonify({
-            "authenticated": is_auth,
-            "email": gmail_email
-        }), 200
+        gmail_email = _resolve_gmail_email()
+        return jsonify({"authenticated": is_auth, "email": gmail_email}), 200
     except Exception as e:
-        print(f"[STATUS] ❌ Ошибка: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/gmail/emails', methods=['GET'])
@@ -970,98 +1557,249 @@ def gmail_logout():
 
 @app.route('/api/emails/inbox', methods=['GET'])
 def get_inbox():
-    """Get inbox emails (cached from Gmail or local)"""
+    """Return cached inbox emails ordered newest-first."""
     try:
-        gmail_email = session.get('gmail_email', '')
-        max_results = request.args.get('max_results', 50, type=int)
-        
+        gmail_email = _resolve_gmail_email()
+        max_results = request.args.get('max_results', 500, type=int)
+
         if not gmail_email:
             return jsonify({"emails": [], "source": "none"}), 200
-        
-        # Get Gmail account
+
         gmail_account = GmailAccount.query.filter_by(email=gmail_email).first()
-        
         if not gmail_account:
             return jsonify({"emails": [], "source": "none"}), 200
-        
-        # Get cached emails from database
-        emails = EmailMessage.query.filter_by(account_id=gmail_account.id)\
-            .order_by(EmailMessage.received_at.desc())\
-            .limit(max_results)\
-            .all()
-        
+
+        emails = (EmailMessage.query
+                  .filter_by(account_id=gmail_account.id)
+                  .order_by(EmailMessage.received_at.desc())
+                  .limit(max_results)
+                  .all())
+
         emails_data = [{
-            'id': e.gmail_id,
-            'subject': e.subject,
-            'from': e.sender,
-            'body': e.body or '',
-            'date': e.received_at.isoformat(),
-            'is_read': e.is_read
+            'id':       e.gmail_id,
+            'subject':  e.subject,
+            'from':     e.sender,
+            'body':     e.body or '',
+            'date':     e.received_at.strftime('%Y-%m-%dT%H:%M:%SZ'),  # UTC ISO
+            'is_read':  e.is_read,
         } for e in emails]
-        
+
+        unread = sum(1 for e in emails if not e.is_read)
+
         return jsonify({
-            "emails": emails_data,
-            "source": "cache",
-            "total": len(emails_data)
+            "emails":       emails_data,
+            "source":       "cache",
+            "total":        len(emails_data),
+            "unread_count": unread,
         }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 @app.route('/api/emails/sync', methods=['POST'])
 def sync_emails():
-    """Fetch fresh emails from Gmail and cache them"""
+    """Sync emails from Gmail and cache them with correct timestamps."""
     try:
         if not gmail_service.is_authenticated():
             return jsonify({"error": "Not authenticated with Gmail"}), 401
-        
-        gmail_email = session.get('gmail_email', '')
+
+        gmail_email = _resolve_gmail_email()
         if not gmail_email:
-            return jsonify({"error": "No Gmail email in session"}), 400
-        
-        # 🔥 ВОТ НАША ЗАЩИТА: Проверяем, есть ли аккаунт в базе данных
+            return jsonify({"error": "No Gmail session"}), 400
+
         gmail_account = GmailAccount.query.filter_by(email=gmail_email).first()
         if not gmail_account:
-            # Если база пустая, а кука осталась - стираем куку и просим войти заново!
             session.clear()
-            return jsonify({"error": "Database reset detected. Please login again."}), 400
+            return jsonify({"error": "Database reset — please login again."}), 400
 
-        # Fetch from Gmail API
-        result = gmail_service.get_emails(max_results=10)
-        
+        data = request.get_json(silent=True) or {}
+        mode = data.get('mode', 'fast')
+
+        if mode == 'full':
+            query       = 'in:inbox newer_than:2m'
+            max_results = 0          # paginate through everything
+        else:
+            # Fast: 2 months window but capped at 200 for speed
+            query       = 'in:inbox newer_than:2m'
+            max_results = 200
+
+        result = gmail_service.get_emails_for_sync(query=query, max_results=max_results)
+
         if 'error' in result:
             return jsonify(result), 400
-            
-        # Дальше твой код сохранения в базу (if gmail_account and 'emails' in result: ...)
-        
-        # Cache emails
-        gmail_account = GmailAccount.query.filter_by(email=gmail_email).first()
-        if gmail_account and 'emails' in result:
-            for email_data in result['emails']:
-                existing = EmailMessage.query.filter_by(
-                    gmail_id=email_data.get('id', ''),
-                    account_id=gmail_account.id
-                ).first()
-                
-                if not existing:
-                    msg = EmailMessage(
-                        gmail_id=email_data.get('id', ''),
-                        account_id=gmail_account.id,
-                        sender=email_data.get('from', 'Unknown'),
-                        subject=email_data.get('subject', 'No Subject'),
-                        body=email_data.get('body', ''),
-                        received_at=datetime.utcnow()
-                    )
-                    db.session.add(msg)
-            
-            db.session.commit()
-        
+
+        fetched_ids = result.get('message_ids', set())
+        added = updated = removed = 0
+
+        for email_data in result.get('emails', []):
+            gmail_id = email_data.get('id', '')
+            if not gmail_id:
+                continue
+
+            # Use actual email date, not sync time
+            date_str    = email_data.get('date', '')
+            received_at = email_data.get('date_dt') or _parse_email_date(date_str)
+            is_read     = email_data.get('is_read', False)
+
+            existing = EmailMessage.query.filter_by(
+                gmail_id=gmail_id, account_id=gmail_account.id
+            ).first()
+
+            # snippet used as preview; body loaded on-demand
+            snippet = email_data.get('snippet', '')
+
+            if not existing:
+                db.session.add(EmailMessage(
+                    gmail_id=gmail_id,
+                    account_id=gmail_account.id,
+                    sender=email_data.get('from', 'Unknown'),
+                    subject=email_data.get('subject', '(No Subject)'),
+                    body=snippet,   # store snippet; full body fetched on open
+                    received_at=received_at,
+                    is_read=is_read,
+                ))
+                added += 1
+            else:
+                changed = False
+                for attr, val in [('sender',      email_data.get('from',    existing.sender)),
+                                   ('subject',     email_data.get('subject', existing.subject)),
+                                   ('received_at', received_at),
+                                   ('is_read',     is_read)]:
+                    if getattr(existing, attr) != val:
+                        setattr(existing, attr, val)
+                        changed = True
+                # Never overwrite an already-fetched full body with a shorter snippet
+                new_body = email_data.get('body', '') or snippet
+                if new_body and (not existing.body or len(new_body) > len(existing.body or '')):
+                    existing.body = new_body
+                    changed = True
+                if changed:
+                    updated += 1
+
+        # Full sync: purge locally-cached emails no longer in Gmail inbox
+        if mode == 'full' and fetched_ids:
+            for msg in EmailMessage.query.filter_by(account_id=gmail_account.id).all():
+                if msg.gmail_id not in fetched_ids:
+                    db.session.delete(msg)
+                    removed += 1
+
+        db.session.commit()
+        total = EmailMessage.query.filter_by(account_id=gmail_account.id).count()
+
         return jsonify({
-            "success": True,
-            "message": "Emails synced successfully",
-            "count": len(result.get('emails', []))
+            "success":      True,
+            "added":        added,
+            "updated":      updated,
+            "removed":      removed,
+            "total_cached": total,
         }), 200
+
     except Exception as e:
         db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/emails/clear-cache', methods=['POST'])
+def clear_email_cache():
+    """Delete all locally-cached emails for the authenticated account (forces fresh sync)."""
+    try:
+        gmail_email = _resolve_gmail_email()
+        if not gmail_email:
+            return jsonify({"error": "Not authenticated"}), 401
+        gmail_account = GmailAccount.query.filter_by(email=gmail_email).first()
+        if not gmail_account:
+            return jsonify({"error": "No Gmail account found"}), 400
+        deleted = EmailMessage.query.filter_by(account_id=gmail_account.id).delete()
+        db.session.commit()
+        return jsonify({"success": True, "deleted": deleted}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/emails/unread-count', methods=['GET'])
+def email_unread_count():
+    """Return count of unread cached messages for authenticated Gmail account."""
+    try:
+        gmail_email = session.get('gmail_email', '')
+        if not gmail_email:
+            return jsonify({"count": 0}), 200
+        account = GmailAccount.query.filter_by(email=gmail_email).first()
+        if not account:
+            return jsonify({"count": 0}), 200
+        count = EmailMessage.query.filter_by(account_id=account.id, is_read=False).count()
+        return jsonify({"count": count}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/emails/<gmail_id>/read', methods=['POST'])
+def mark_email_read(gmail_id):
+    """Mark an email as read locally and in Gmail."""
+    try:
+        gmail_email = session.get('gmail_email', '')
+        if not gmail_email:
+            return jsonify({"error": "Not authenticated"}), 401
+        account = GmailAccount.query.filter_by(email=gmail_email).first()
+        if not account:
+            return jsonify({"error": "Account not found"}), 404
+
+        msg = EmailMessage.query.filter_by(
+            gmail_id=gmail_id, account_id=account.id
+        ).first()
+        if msg and not msg.is_read:
+            msg.is_read = True
+            db.session.commit()
+
+        # Also mark as read in Gmail (remove UNREAD label)
+        try:
+            svc = gmail_service.get_service()
+            if svc:
+                svc.users().messages().modify(
+                    userId='me', id=gmail_id,
+                    body={'removeLabelIds': ['UNREAD']}
+                ).execute()
+        except Exception:
+            pass
+
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/emails/message/<gmail_id>', methods=['GET'])
+def get_email_message(gmail_id):
+    """Return full email content by gmail_id (fallback fetch when body is missing)."""
+    try:
+        gmail_email = session.get('gmail_email', '')
+        account = None
+        if gmail_email:
+            account = GmailAccount.query.filter_by(email=gmail_email).first()
+
+        # Try local cache first
+        if account:
+            msg = EmailMessage.query.filter_by(
+                gmail_id=gmail_id, account_id=account.id
+            ).first()
+            if msg and msg.body:
+                return jsonify({
+                    'id':      msg.gmail_id,
+                    'subject': msg.subject,
+                    'from':    msg.sender,
+                    'body':    msg.body,
+                    'is_read': msg.is_read,
+                    'date':    msg.received_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                }), 200
+
+        # Fetch live from Gmail
+        svc = gmail_service.get_service()
+        if svc:
+            details = gmail_service._get_message_details(svc, gmail_id)
+            if details:
+                return jsonify(details), 200
+
+        return jsonify({"error": "Message not found"}), 404
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 

@@ -81,19 +81,22 @@
         <!-- PAGE: DASHBOARD -->
         <section class="page active" id="page-dashboard">
             <div class="dashboard-grid">
-                <!-- Quick Actions -->
+                <!-- Lamp Control -->
                 <div class="card quick-actions-card">
                     <div class="card-header">
-                        <span class="material-icons-round card-icon">bolt</span>
-                        <h2 data-i18n="quick_actions">Quick Actions</h2>
+                        <span class="material-icons-round card-icon">lightbulb</span>
+                        <h2 data-i18n="lamp_control">Lamp Control</h2>
+                        <span class="lamp-badge" id="lampBadge">OFF</span>
                     </div>
-                    <div class="actions-grid">
+
+                    <!-- Power row -->
+                    <div class="actions-grid" style="margin-bottom:14px">
                         <button class="action-btn" data-action="light" id="btnLight">
                             <div class="action-icon-wrap">
-                                <span class="material-icons-round">lightbulb</span>
+                                <span class="material-icons-round">power_settings_new</span>
                             </div>
-                            <span class="action-label" data-i18n="light_onoff">Light On/Off</span>
-                            <span class="action-status" data-i18n="status_ready">Ready</span>
+                            <span class="action-label" data-i18n="light_onoff">On / Off</span>
+                            <span class="action-status" id="lightStatus" data-i18n="status_ready">Ready</span>
                         </button>
                         <button class="action-btn" data-action="robot" id="btnRobot">
                             <div class="action-icon-wrap">
@@ -101,6 +104,62 @@
                             </div>
                             <span class="action-label" data-i18n="call_robot">Call Robot</span>
                             <span class="action-status" data-i18n="status_ready">Ready</span>
+                        </button>
+                    </div>
+
+                    <!-- Brightness slider -->
+                    <div class="lamp-section">
+                        <div class="lamp-section-label">
+                            <span class="material-icons-round">brightness_6</span>
+                            <span data-i18n="brightness">Brightness</span>
+                            <span class="lamp-val" id="brightnessVal">80%</span>
+                        </div>
+                        <input type="range" class="lamp-slider" id="brightnessSlider"
+                               min="1" max="100" value="80">
+                    </div>
+
+                    <!-- White presets -->
+                    <div class="lamp-section">
+                        <div class="lamp-section-label">
+                            <span class="material-icons-round">wb_sunny</span>
+                            <span data-i18n="white_preset">White Preset</span>
+                        </div>
+                        <div class="lamp-preset-row">
+                            <button class="lamp-preset-btn" data-action="light_warm" title="2700K">
+                                <span class="material-icons-round">wb_incandescent</span> Warm
+                            </button>
+                            <button class="lamp-preset-btn" data-action="light_daylight" title="4000K">
+                                <span class="material-icons-round">light_mode</span> Day
+                            </button>
+                            <button class="lamp-preset-btn" data-action="light_cool" title="6500K">
+                                <span class="material-icons-round">ac_unit</span> Cool
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Color swatches -->
+                    <div class="lamp-section">
+                        <div class="lamp-section-label">
+                            <span class="material-icons-round">palette</span>
+                            <span data-i18n="color">Color</span>
+                        </div>
+                        <div class="lamp-colors">
+                            <button class="lamp-color-btn" style="--c:#ff2222" data-color="red"    title="Red"></button>
+                            <button class="lamp-color-btn" style="--c:#22dd44" data-color="green"  title="Green"></button>
+                            <button class="lamp-color-btn" style="--c:#2255ff" data-color="blue"   title="Blue"></button>
+                            <button class="lamp-color-btn" style="--c:#ffee00" data-color="yellow" title="Yellow"></button>
+                            <button class="lamp-color-btn" style="--c:#ff8800" data-color="orange" title="Orange"></button>
+                            <button class="lamp-color-btn" style="--c:#aa00ff" data-color="purple" title="Purple"></button>
+                            <button class="lamp-color-btn" style="--c:#ff55cc" data-color="pink"   title="Pink"></button>
+                            <button class="lamp-color-btn" style="--c:#00eeee" data-color="cyan"   title="Cyan"></button>
+                        </div>
+                    </div>
+
+                    <!-- RGB cycle -->
+                    <div class="lamp-section">
+                        <button class="lamp-rgb-btn" id="btnRgb">
+                            <span class="material-icons-round">auto_awesome</span>
+                            <span id="rgbBtnLabel">RGB Cycle</span>
                         </button>
                     </div>
                 </div>
@@ -242,6 +301,11 @@
                         <span class="material-icons-round card-icon">email</span>
                         <h2 data-i18n="email">Email</h2>
                         <div style="display: flex; gap: 8px; align-items: center; margin-left: auto;">
+                            <button class="account-icon-btn" id="syncAllEmailBtn" title="Sync all emails (2 months)"
+                                style="background: none; border: none; cursor: pointer; color: var(--accent); display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600;">
+                                <span class="material-icons-round" style="font-size:16px;">cloud_sync</span>
+                                <span id="syncAllEmailLabel">Sync All</span>
+                            </button>
                             <button class="account-icon-btn" id="refreshEmailBtn" title="Refresh emails"
                                 style="background: none; border: none; cursor: pointer; color: var(--text-primary); display: flex; align-items: center;">
                                 <span class="material-icons-round">refresh</span>
@@ -256,10 +320,7 @@
                     </div>
 
                     <!-- Email List -->
-                    <div id="emails-list" style="padding: 0; max-height: 400px; overflow-y: auto;">
-                        <div style="padding: 20px; text-align: center; color: var(--text-secondary);">Loading emails...
-                        </div>
-                    </div>
+                    <div id="emails-list" style="padding: 0; max-height: 400px; overflow-y: auto;"></div>
 
                     <!-- Pagination Controls -->
                     <div id="emailPaginationContainer"
