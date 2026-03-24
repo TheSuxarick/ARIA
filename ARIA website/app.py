@@ -1,5 +1,11 @@
 import sys
 import io
+import os
+
+_nvidia_cublas_bin = os.path.join(sys.prefix, "Lib", "site-packages", "nvidia", "cublas", "bin")
+if os.path.isdir(_nvidia_cublas_bin):
+    os.environ["PATH"] = _nvidia_cublas_bin + os.pathsep + os.environ.get("PATH", "")
+
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
@@ -7,7 +13,6 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 from flask_socketio import SocketIO
 import requests
 import re
-import os
 import subprocess
 import socket as _socket
 import threading as _threading
@@ -82,6 +87,12 @@ GEMINI_API_KEYS = [
 ]
 GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta"
 _gemini_key_index = 0
+
+MANGISOZ_API_KEYS = [
+    k.strip() for k in os.environ.get("MANGISOZ_API_KEYS", "").split(",") if k.strip()
+]
+MANGISOZ_BASE = "https://mangisoz.nu.edu.kz/backend"
+_mangisoz_key_index = 0
 
 PERSONALITY_PROMPTS = {
     "default": (
@@ -1058,7 +1069,7 @@ def sync_emails():
 
 AUDIO_MIC_PORT = 12345
 AUDIO_SPK_PORT = 12346
-ESP32_IP_OVERRIDE = os.environ.get("ESP32_IP", "192.168.137.248")
+ESP32_IP_OVERRIDE = os.environ.get("ESP32_IP", "192.168.137.140")
 _esp32_audio_ip = None
 
 def _esp32_send_ip():
@@ -1165,7 +1176,7 @@ def _get_whisper(size="tiny"):
         from faster_whisper import WhisperModel
         try:
             print(f"[ROBOT] Loading Whisper model ({size})...", flush=True)
-            _whisper_models[size] = WhisperModel(size, device="cpu", compute_type="int8")
+            _whisper_models[size] = WhisperModel(size, device="cuda", compute_type="float16")
             print(f"[ROBOT] Whisper model ({size}) loaded.", flush=True)
         except Exception as e:
             print(f"[ROBOT] Failed to load Whisper ({size}): {e}", flush=True)
@@ -1175,11 +1186,11 @@ def _get_whisper(size="tiny"):
             raise
     return _whisper_models[size]
 
-_WHISPER_MODEL_FOR_LANG = {"en": "tiny", "ru": "tiny", "kk": "base"}
+_WHISPER_MODEL_FOR_LANG = {"en": "tiny", "ru": "tiny", "kk": "small"}
 
 def _preload_whisper():
     _get_whisper("tiny")
-    _get_whisper("base")
+    _get_whisper("small")
 
 _threading.Thread(target=_preload_whisper, daemon=True).start()
 
@@ -1223,18 +1234,112 @@ def _pcm_buffer_to_wav(pcm_bytes, sample_rate=16000):
 
 _LANG_SETTING_TO_WHISPER = {"EN": "en", "RU": "ru", "KZ": "kk"}
 
-def _stt(wav_buf):
+
+def _mangisoz_stt(wav_buf):
+    """Kazakh STT via Mangisoz API with key rotation."""
+    global _mangisoz_key_index
+    if not MANGISOZ_API_KEYS:
+        return None, "No MANGISOZ_API_KEYS configured"
+
+    wav_buf.seek(0)
+    wav_bytes = wav_buf.read()
+
+    last_error = ""
+    for _attempt in range(len(MANGISOZ_API_KEYS)):
+        key = MANGISOZ_API_KEYS[_mangisoz_key_index]
+        url = f"{MANGISOZ_BASE}/api/v1/stt/transcribe"
+        try:
+            resp = requests.post(
+                url,
+                headers={"X-API-Key": key},
+                files={"audio": ("audio.wav", wav_bytes, "audio/wav")},
+                data={"language": "kk", "response_format": "json"},
+                timeout=30,
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                text = data.get("text", "").strip()
+                return text, None
+
+            if resp.status_code in (402, 429, 503):
+                last_error = f"HTTP {resp.status_code}: {resp.text[:200]}"
+                _mangisoz_key_index = (_mangisoz_key_index + 1) % len(MANGISOZ_API_KEYS)
+                continue
+
+            return None, f"Mangisoz API error ({resp.status_code}): {resp.text[:200]}"
+        except Exception as e:
+            last_error = str(e)
+            _mangisoz_key_index = (_mangisoz_key_index + 1) % len(MANGISOZ_API_KEYS)
+            continue
+
+    return None, f"All Mangisoz keys exhausted. Last: {last_error}"
+
+
+def _gemini_stt(wav_buf):
+    """Kazakh STT fallback via Gemini generateContent with inline audio."""
+    global _gemini_key_index
+    if not GEMINI_API_KEYS:
+        return None, "No GEMINI_API_KEYS configured"
+
+    import base64
+    wav_buf.seek(0)
+    audio_b64 = base64.b64encode(wav_buf.read()).decode("ascii")
+
+    system_text = (
+        "Transcribe the following Kazakh audio exactly. "
+        "Return ONLY the transcribed Kazakh text, nothing else."
+    )
+    contents = [
+        {
+            "parts": [
+                {"inline_data": {"mime_type": "audio/wav", "data": audio_b64}},
+                {"text": "Transcribe this Kazakh speech."},
+            ]
+        }
+    ]
+
+    last_error = ""
+    for _attempt in range(len(GEMINI_API_KEYS)):
+        key = GEMINI_API_KEYS[_gemini_key_index]
+        url = f"{GEMINI_BASE}/models/gemini-2.0-flash:generateContent?key={key}"
+        payload = {
+            "contents": contents,
+            "systemInstruction": {"parts": [{"text": system_text}]},
+            "generationConfig": {"temperature": 0.1, "maxOutputTokens": 1024},
+        }
+        try:
+            resp = requests.post(url, json=payload, timeout=60)
+            resp_data = resp.json()
+            if resp.status_code == 200 and "candidates" in resp_data:
+                parts = resp_data["candidates"][0]["content"]["parts"]
+                text = "".join(p["text"] for p in parts if "text" in p).strip()
+                return text, None
+
+            error = resp_data.get("error", {})
+            status = error.get("status", "")
+            msg = error.get("message", str(resp_data))
+            if status in ("RESOURCE_EXHAUSTED", "RATE_LIMIT_EXCEEDED") or resp.status_code == 429:
+                last_error = msg
+                _gemini_key_index = (_gemini_key_index + 1) % len(GEMINI_API_KEYS)
+                continue
+            return None, f"Gemini STT error ({resp.status_code}): {msg}"
+        except Exception as e:
+            last_error = str(e)
+            _gemini_key_index = (_gemini_key_index + 1) % len(GEMINI_API_KEYS)
+            continue
+
+    return None, f"All Gemini keys exhausted. Last: {last_error}"
+
+
+def _whisper_stt(wav_buf, whisper_lang):
+    """STT via local Whisper model (used for EN/RU and as last-resort fallback)."""
     import time
-
-    ui_lang = settings.get("language", "EN")
-    whisper_lang = _LANG_SETTING_TO_WHISPER.get(ui_lang, "en")
     model_size = _WHISPER_MODEL_FOR_LANG.get(whisper_lang, "tiny")
-
     t0 = time.time()
     model = _get_whisper(model_size)
     t_load = time.time() - t0
-
     t1 = time.time()
+    wav_buf.seek(0)
     segments, info = model.transcribe(
         wav_buf, beam_size=5,
         language=whisper_lang,
@@ -1242,10 +1347,37 @@ def _stt(wav_buf):
     )
     text = " ".join(seg.text for seg in segments).strip()
     t_transcribe = time.time() - t1
+    print(f"[ROBOT] Whisper STT: '{text}' (lang={whisper_lang}, model={model_size}) "
+          f"| load={t_load:.2f}s transcribe={t_transcribe:.2f}s", flush=True)
+    return text, whisper_lang
 
-    lang = whisper_lang or info.language or "en"
-    print(f"[ROBOT] STT: '{text}' (lang={lang}, model={model_size}) | load={t_load:.2f}s transcribe={t_transcribe:.2f}s", flush=True)
-    return text, lang
+
+def _stt(wav_buf):
+    import time
+
+    ui_lang = settings.get("language", "EN")
+    whisper_lang = _LANG_SETTING_TO_WHISPER.get(ui_lang, "en")
+
+    if whisper_lang != "kk":
+        return _whisper_stt(wav_buf, whisper_lang)
+
+    t0 = time.time()
+
+    text, err = _mangisoz_stt(wav_buf)
+    if text:
+        elapsed = time.time() - t0
+        print(f"[ROBOT] STT: '{text}' (lang=kk, backend=mangisoz) | {elapsed:.2f}s", flush=True)
+        return text, "kk"
+    print(f"[ROBOT] Mangisoz STT failed: {err}  -> trying Gemini", flush=True)
+
+    text, err = _gemini_stt(wav_buf)
+    if text:
+        elapsed = time.time() - t0
+        print(f"[ROBOT] STT: '{text}' (lang=kk, backend=gemini) | {elapsed:.2f}s", flush=True)
+        return text, "kk"
+    print(f"[ROBOT] Gemini STT failed: {err}  -> falling back to Whisper", flush=True)
+
+    return _whisper_stt(wav_buf, "kk")
 
 
 _TTS_VOICES = {
@@ -1462,8 +1594,8 @@ def _robot_pipeline():
             contents.append({"role": role, "parts": [{"text": msg["text"]}]})
 
         # ── DEBUG: set to True to skip real API call ──
-        _ROBOT_DEBUG = True
-        _ROBOT_DEBUG_TEXT = "Привет, это тестовое сообщение. Всё работает отлично!"
+        _ROBOT_DEBUG = False
+        # _ROBOT_DEBUG_TEXT = "Привет, это тестовое сообщение. Всё работает отлично!"
         # _ROBOT_DEBUG_TEXT = "Сәлеметсіз бе, бұл сынақ хабарлама. Бәрі жақсы жұмыс істейді!"
         # _ROBOT_DEBUG_TEXT = "Hello, this is a test message. Everything works great!"
         if _ROBOT_DEBUG:

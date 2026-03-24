@@ -18,6 +18,15 @@
         "documentation": {}
     },
     {
+        "label": "os",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
+        "documentation": {}
+    },
+    {
         "label": "Flask",
         "importPath": "flask",
         "description": "flask",
@@ -129,15 +138,6 @@
         "importPath": "re",
         "description": "re",
         "detail": "re",
-        "documentation": {}
-    },
-    {
-        "label": "os",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "os",
-        "description": "os",
-        "detail": "os",
         "documentation": {}
     },
     {
@@ -1342,11 +1342,20 @@
         "documentation": {}
     },
     {
+        "label": "_nvidia_cublas_bin",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "_nvidia_cublas_bin = os.path.join(sys.prefix, \"Lib\", \"site-packages\", \"nvidia\", \"cublas\", \"bin\")\nif os.path.isdir(_nvidia_cublas_bin):\n    os.environ[\"PATH\"] = _nvidia_cublas_bin + os.pathsep + os.environ.get(\"PATH\", \"\")\nsys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')\nsys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')\nfrom flask import Flask, render_template, request, jsonify, redirect, url_for, session\nfrom flask_socketio import SocketIO\nimport requests\nimport re\nimport subprocess",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
         "label": "sys.stdout",
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')\nsys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')\nfrom flask import Flask, render_template, request, jsonify, redirect, url_for, session\nfrom flask_socketio import SocketIO\nimport requests\nimport re\nimport os\nimport subprocess\nimport socket as _socket\nimport threading as _threading",
+        "peekOfCode": "sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')\nsys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')\nfrom flask import Flask, render_template, request, jsonify, redirect, url_for, session\nfrom flask_socketio import SocketIO\nimport requests\nimport re\nimport subprocess\nimport socket as _socket\nimport threading as _threading\nfrom datetime import datetime, timedelta",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1355,7 +1364,7 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')\nfrom flask import Flask, render_template, request, jsonify, redirect, url_for, session\nfrom flask_socketio import SocketIO\nimport requests\nimport re\nimport os\nimport subprocess\nimport socket as _socket\nimport threading as _threading\nfrom datetime import datetime, timedelta",
+        "peekOfCode": "sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')\nfrom flask import Flask, render_template, request, jsonify, redirect, url_for, session\nfrom flask_socketio import SocketIO\nimport requests\nimport re\nimport subprocess\nimport socket as _socket\nimport threading as _threading\nfrom datetime import datetime, timedelta\nfrom pathlib import Path",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1463,7 +1472,7 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "chat_history = []\nGEMINI_API_KEYS = [\n    k.strip() for k in os.environ.get(\"GEMINI_API_KEYS\", \"\").split(\",\") if k.strip()\n]\nGEMINI_BASE = \"https://generativelanguage.googleapis.com/v1beta\"\n_gemini_key_index = 0\nPERSONALITY_PROMPTS = {\n    \"default\": (\n        \"You are ARIA, a smart home AI assistant. \"\n        \"You are helpful, friendly, and knowledgeable. \"",
+        "peekOfCode": "chat_history = []\nGEMINI_API_KEYS = [\n    k.strip() for k in os.environ.get(\"GEMINI_API_KEYS\", \"\").split(\",\") if k.strip()\n]\nGEMINI_BASE = \"https://generativelanguage.googleapis.com/v1beta\"\n_gemini_key_index = 0\nMANGISOZ_API_KEYS = [\n    k.strip() for k in os.environ.get(\"MANGISOZ_API_KEYS\", \"\").split(\",\") if k.strip()\n]\nMANGISOZ_BASE = \"https://mangisoz.nu.edu.kz/backend\"",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1472,7 +1481,7 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "GEMINI_API_KEYS = [\n    k.strip() for k in os.environ.get(\"GEMINI_API_KEYS\", \"\").split(\",\") if k.strip()\n]\nGEMINI_BASE = \"https://generativelanguage.googleapis.com/v1beta\"\n_gemini_key_index = 0\nPERSONALITY_PROMPTS = {\n    \"default\": (\n        \"You are ARIA, a smart home AI assistant. \"\n        \"You are helpful, friendly, and knowledgeable. \"\n        \"You can see and read emails that the user explicitly shares with you in the current conversation. \"",
+        "peekOfCode": "GEMINI_API_KEYS = [\n    k.strip() for k in os.environ.get(\"GEMINI_API_KEYS\", \"\").split(\",\") if k.strip()\n]\nGEMINI_BASE = \"https://generativelanguage.googleapis.com/v1beta\"\n_gemini_key_index = 0\nMANGISOZ_API_KEYS = [\n    k.strip() for k in os.environ.get(\"MANGISOZ_API_KEYS\", \"\").split(\",\") if k.strip()\n]\nMANGISOZ_BASE = \"https://mangisoz.nu.edu.kz/backend\"\n_mangisoz_key_index = 0",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1481,7 +1490,7 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "GEMINI_BASE = \"https://generativelanguage.googleapis.com/v1beta\"\n_gemini_key_index = 0\nPERSONALITY_PROMPTS = {\n    \"default\": (\n        \"You are ARIA, a smart home AI assistant. \"\n        \"You are helpful, friendly, and knowledgeable. \"\n        \"You can see and read emails that the user explicitly shares with you in the current conversation. \"\n        \"When an email is provided in the context, you can analyze it, summarize it, help draft replies, or answer questions about it.\"\n    ),\n    \"chill\": (",
+        "peekOfCode": "GEMINI_BASE = \"https://generativelanguage.googleapis.com/v1beta\"\n_gemini_key_index = 0\nMANGISOZ_API_KEYS = [\n    k.strip() for k in os.environ.get(\"MANGISOZ_API_KEYS\", \"\").split(\",\") if k.strip()\n]\nMANGISOZ_BASE = \"https://mangisoz.nu.edu.kz/backend\"\n_mangisoz_key_index = 0\nPERSONALITY_PROMPTS = {\n    \"default\": (\n        \"You are ARIA, a smart home AI assistant. \"",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1490,7 +1499,34 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "_gemini_key_index = 0\nPERSONALITY_PROMPTS = {\n    \"default\": (\n        \"You are ARIA, a smart home AI assistant. \"\n        \"You are helpful, friendly, and knowledgeable. \"\n        \"You can see and read emails that the user explicitly shares with you in the current conversation. \"\n        \"When an email is provided in the context, you can analyze it, summarize it, help draft replies, or answer questions about it.\"\n    ),\n    \"chill\": (\n        \"You are ARIA, a super chill and laid-back smart home AI assistant. \"",
+        "peekOfCode": "_gemini_key_index = 0\nMANGISOZ_API_KEYS = [\n    k.strip() for k in os.environ.get(\"MANGISOZ_API_KEYS\", \"\").split(\",\") if k.strip()\n]\nMANGISOZ_BASE = \"https://mangisoz.nu.edu.kz/backend\"\n_mangisoz_key_index = 0\nPERSONALITY_PROMPTS = {\n    \"default\": (\n        \"You are ARIA, a smart home AI assistant. \"\n        \"You are helpful, friendly, and knowledgeable. \"",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "MANGISOZ_API_KEYS",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "MANGISOZ_API_KEYS = [\n    k.strip() for k in os.environ.get(\"MANGISOZ_API_KEYS\", \"\").split(\",\") if k.strip()\n]\nMANGISOZ_BASE = \"https://mangisoz.nu.edu.kz/backend\"\n_mangisoz_key_index = 0\nPERSONALITY_PROMPTS = {\n    \"default\": (\n        \"You are ARIA, a smart home AI assistant. \"\n        \"You are helpful, friendly, and knowledgeable. \"\n        \"You can see and read emails that the user explicitly shares with you in the current conversation. \"",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "MANGISOZ_BASE",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "MANGISOZ_BASE = \"https://mangisoz.nu.edu.kz/backend\"\n_mangisoz_key_index = 0\nPERSONALITY_PROMPTS = {\n    \"default\": (\n        \"You are ARIA, a smart home AI assistant. \"\n        \"You are helpful, friendly, and knowledgeable. \"\n        \"You can see and read emails that the user explicitly shares with you in the current conversation. \"\n        \"When an email is provided in the context, you can analyze it, summarize it, help draft replies, or answer questions about it.\"\n    ),\n    \"chill\": (",
+        "detail": "ARIA website.app",
+        "documentation": {}
+    },
+    {
+        "label": "_mangisoz_key_index",
+        "kind": 5,
+        "importPath": "ARIA website.app",
+        "description": "ARIA website.app",
+        "peekOfCode": "_mangisoz_key_index = 0\nPERSONALITY_PROMPTS = {\n    \"default\": (\n        \"You are ARIA, a smart home AI assistant. \"\n        \"You are helpful, friendly, and knowledgeable. \"\n        \"You can see and read emails that the user explicitly shares with you in the current conversation. \"\n        \"When an email is provided in the context, you can analyze it, summarize it, help draft replies, or answer questions about it.\"\n    ),\n    \"chill\": (\n        \"You are ARIA, a super chill and laid-back smart home AI assistant. \"",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1562,7 +1598,7 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "AUDIO_MIC_PORT = 12345\nAUDIO_SPK_PORT = 12346\nESP32_IP_OVERRIDE = os.environ.get(\"ESP32_IP\", \"192.168.137.248\")\n_esp32_audio_ip = None\ndef _esp32_send_ip():\n    \"\"\"Return the IP to send audio TO the ESP32. Prefers override (for NAT scenarios).\"\"\"\n    return ESP32_IP_OVERRIDE or _esp32_audio_ip\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None",
+        "peekOfCode": "AUDIO_MIC_PORT = 12345\nAUDIO_SPK_PORT = 12346\nESP32_IP_OVERRIDE = os.environ.get(\"ESP32_IP\", \"192.168.137.140\")\n_esp32_audio_ip = None\ndef _esp32_send_ip():\n    \"\"\"Return the IP to send audio TO the ESP32. Prefers override (for NAT scenarios).\"\"\"\n    return ESP32_IP_OVERRIDE or _esp32_audio_ip\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1571,7 +1607,7 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "AUDIO_SPK_PORT = 12346\nESP32_IP_OVERRIDE = os.environ.get(\"ESP32_IP\", \"192.168.137.248\")\n_esp32_audio_ip = None\ndef _esp32_send_ip():\n    \"\"\"Return the IP to send audio TO the ESP32. Prefers override (for NAT scenarios).\"\"\"\n    return ESP32_IP_OVERRIDE or _esp32_audio_ip\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None",
+        "peekOfCode": "AUDIO_SPK_PORT = 12346\nESP32_IP_OVERRIDE = os.environ.get(\"ESP32_IP\", \"192.168.137.140\")\n_esp32_audio_ip = None\ndef _esp32_send_ip():\n    \"\"\"Return the IP to send audio TO the ESP32. Prefers override (for NAT scenarios).\"\"\"\n    return ESP32_IP_OVERRIDE or _esp32_audio_ip\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1580,7 +1616,7 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "ESP32_IP_OVERRIDE = os.environ.get(\"ESP32_IP\", \"192.168.137.248\")\n_esp32_audio_ip = None\ndef _esp32_send_ip():\n    \"\"\"Return the IP to send audio TO the ESP32. Prefers override (for NAT scenarios).\"\"\"\n    return ESP32_IP_OVERRIDE or _esp32_audio_ip\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\n_audio_recv_count = 0",
+        "peekOfCode": "ESP32_IP_OVERRIDE = os.environ.get(\"ESP32_IP\", \"192.168.137.140\")\n_esp32_audio_ip = None\ndef _esp32_send_ip():\n    \"\"\"Return the IP to send audio TO the ESP32. Prefers override (for NAT scenarios).\"\"\"\n    return ESP32_IP_OVERRIDE or _esp32_audio_ip\n_audio_listeners = 0\n_audio_bridge_ok = False\n_udp_recv = None\n_udp_send = None\n_audio_recv_count = 0",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1670,7 +1706,7 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "_whisper_models = {}\ndef _get_whisper(size=\"tiny\"):\n    if size not in _whisper_models:\n        from faster_whisper import WhisperModel\n        try:\n            print(f\"[ROBOT] Loading Whisper model ({size})...\", flush=True)\n            _whisper_models[size] = WhisperModel(size, device=\"cpu\", compute_type=\"int8\")\n            print(f\"[ROBOT] Whisper model ({size}) loaded.\", flush=True)\n        except Exception as e:\n            print(f\"[ROBOT] Failed to load Whisper ({size}): {e}\", flush=True)",
+        "peekOfCode": "_whisper_models = {}\ndef _get_whisper(size=\"tiny\"):\n    if size not in _whisper_models:\n        from faster_whisper import WhisperModel\n        try:\n            print(f\"[ROBOT] Loading Whisper model ({size})...\", flush=True)\n            _whisper_models[size] = WhisperModel(size, device=\"cuda\", compute_type=\"float16\")\n            print(f\"[ROBOT] Whisper model ({size}) loaded.\", flush=True)\n        except Exception as e:\n            print(f\"[ROBOT] Failed to load Whisper ({size}): {e}\", flush=True)",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1679,7 +1715,7 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "_WHISPER_MODEL_FOR_LANG = {\"en\": \"tiny\", \"ru\": \"tiny\", \"kk\": \"base\"}\ndef _preload_whisper():\n    _get_whisper(\"tiny\")\n    _get_whisper(\"base\")\n_threading.Thread(target=_preload_whisper, daemon=True).start()\ndef _generate_beep(freq=800, duration_ms=300, sample_rate=16000):\n    n_samples = int(sample_rate * duration_ms / 1000)\n    pcm = bytearray(n_samples * 2)\n    for i in range(n_samples):\n        t = i / sample_rate",
+        "peekOfCode": "_WHISPER_MODEL_FOR_LANG = {\"en\": \"tiny\", \"ru\": \"tiny\", \"kk\": \"small\"}\ndef _preload_whisper():\n    _get_whisper(\"tiny\")\n    _get_whisper(\"small\")\n_threading.Thread(target=_preload_whisper, daemon=True).start()\ndef _generate_beep(freq=800, duration_ms=300, sample_rate=16000):\n    n_samples = int(sample_rate * duration_ms / 1000)\n    pcm = bytearray(n_samples * 2)\n    for i in range(n_samples):\n        t = i / sample_rate",
         "detail": "ARIA website.app",
         "documentation": {}
     },
@@ -1688,7 +1724,7 @@
         "kind": 5,
         "importPath": "ARIA website.app",
         "description": "ARIA website.app",
-        "peekOfCode": "_LANG_SETTING_TO_WHISPER = {\"EN\": \"en\", \"RU\": \"ru\", \"KZ\": \"kk\"}\ndef _stt(wav_buf):\n    import time\n    ui_lang = settings.get(\"language\", \"EN\")\n    whisper_lang = _LANG_SETTING_TO_WHISPER.get(ui_lang, \"en\")\n    model_size = _WHISPER_MODEL_FOR_LANG.get(whisper_lang, \"tiny\")\n    t0 = time.time()\n    model = _get_whisper(model_size)\n    t_load = time.time() - t0\n    t1 = time.time()",
+        "peekOfCode": "_LANG_SETTING_TO_WHISPER = {\"EN\": \"en\", \"RU\": \"ru\", \"KZ\": \"kk\"}\ndef _mangisoz_stt(wav_buf):\n    \"\"\"Kazakh STT via Mangisoz API with key rotation.\"\"\"\n    global _mangisoz_key_index\n    if not MANGISOZ_API_KEYS:\n        return None, \"No MANGISOZ_API_KEYS configured\"\n    wav_buf.seek(0)\n    wav_bytes = wav_buf.read()\n    last_error = \"\"\n    for _attempt in range(len(MANGISOZ_API_KEYS)):",
         "detail": "ARIA website.app",
         "documentation": {}
     },
