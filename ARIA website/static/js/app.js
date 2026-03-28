@@ -295,6 +295,10 @@ document.addEventListener("DOMContentLoaded", () => {
             persona_nerd: "Nerd",
             toast_personality_changed: "Personality set to",
             language: "Language",
+            wake_word: "Wake Word",
+            wake_word_desc: 'Say "Computer" to activate',
+            wake_word_on: "Wake word enabled",
+            wake_word_off: "Wake word disabled",
             // Toasts
             toast_lights_toggled: "Lights toggled",
             toast_robot_called: "Robot called",
@@ -364,6 +368,10 @@ document.addEventListener("DOMContentLoaded", () => {
             persona_nerd: "Ботан",
             toast_personality_changed: "Личность:",
             language: "Язык",
+            wake_word: "Слово-активатор",
+            wake_word_desc: 'Скажите "Компьютер" для активации',
+            wake_word_on: "Слово-активатор включён",
+            wake_word_off: "Слово-активатор выключен",
             toast_lights_toggled: "Свет переключён",
             toast_robot_called: "Робот вызван",
             toast_action_failed: "Ошибка действия",
@@ -430,6 +438,10 @@ document.addEventListener("DOMContentLoaded", () => {
             persona_nerd: "Нерд",
             toast_personality_changed: "Тұлға:",
             language: "Тіл",
+            wake_word: "Белсенді сөз",
+            wake_word_desc: '"Компьютер" деп айтыңыз',
+            wake_word_on: "Белсенді сөз қосылды",
+            wake_word_off: "Белсенді сөз өшірілді",
             toast_lights_toggled: "Жарық ауыстырылды",
             toast_robot_called: "Робот шақырылды",
             toast_action_failed: "Әрекет қатесі",
@@ -865,6 +877,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         b.classList.toggle("active", b.dataset.persona === d.personality);
                     });
                 }
+                const wakeToggle = document.getElementById("wakeWordToggle");
+                if (wakeToggle && d.wake_word !== undefined) {
+                    wakeToggle.checked = d.wake_word;
+                }
             }
         } catch { }
     }
@@ -883,6 +899,18 @@ document.addEventListener("DOMContentLoaded", () => {
             } catch { }
         });
     });
+
+    // ─── Wake Word Toggle ───
+    const wakeWordToggle = document.getElementById("wakeWordToggle");
+    if (wakeWordToggle) {
+        wakeWordToggle.addEventListener("change", async () => {
+            const enabled = wakeWordToggle.checked;
+            showToast(enabled ? t("wake_word_on") : t("wake_word_off"), "info");
+            try {
+                await fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wake_word: enabled }) });
+            } catch { }
+        });
+    }
 
     // ─── Personality ───
     document.querySelectorAll(".persona-btn").forEach(btn => {

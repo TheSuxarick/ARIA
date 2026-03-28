@@ -193,12 +193,23 @@ PERSONALITY_PROMPTS = {
 # LAMP CONTROL — Yeelight
 # ═══════════════════════════════════════════════════════════════════════════
 
-LAMP_IP = (
-    os.environ.get("LAMP_IP")
-    or os.environ.get("YEELIGHT_IP")
-    or os.environ.get("BULB_IP")
-    or "10.72.61.149"
-)
+LAMP_MAC = os.environ.get("LAMP_MAC", "c4:93:bb:20:3a:29").lower().replace("-", ":")
+LAMP_IP_FALLBACK = os.environ.get("LAMP_IP") or os.environ.get("YEELIGHT_IP") or os.environ.get("BULB_IP")
+
+
+def _resolve_lamp_ip():
+    """Resolve lamp IP from MAC via ARP table, fall back to env/hardcoded IP."""
+    import subprocess
+    mac_normalized = LAMP_MAC.replace(":", "-")
+    try:
+        out = subprocess.check_output("arp -a", shell=True, text=True, timeout=5)
+        for line in out.splitlines():
+            parts = line.split()
+            if len(parts) >= 2 and mac_normalized in parts[1].lower():
+                return parts[0]
+    except Exception:
+        pass
+    return LAMP_IP_FALLBACK
 
 LAMP_KEYWORDS  = ["lamp", "light", "bulb", "ламп", "свет", "шам", "жарық"]
 LAMP_ON_WORDS  = ["turn on", "включ", "қос", "жағ"]
@@ -232,11 +243,13 @@ class AppBulbController:
         "cyan":   (  0, 255, 255),
     }
 
-    def __init__(self, ip: str):
-        self.ip = ip
+    def __init__(self, mac: str):
+        self.mac = mac
+        self.ip = None
         self._bulb = None
         self._state = {
-            "ip": ip,
+            "mac": mac,
+            "ip": None,
             "power": "off",
             "mode": "white",
             "color": None,
@@ -250,11 +263,17 @@ class AppBulbController:
 
     def _ensure(self):
         if self._bulb is None:
+            ip = _resolve_lamp_ip()
+            if not ip:
+                raise RuntimeError(f"Cannot resolve lamp MAC {self.mac} to IP (not in ARP table)")
+            self.ip = ip
+            self._state["ip"] = ip
             try:
                 from yeelight import Bulb
-                self._bulb = Bulb(self.ip, auto_on=False)
+                self._bulb = Bulb(ip, auto_on=False)
+                print(f"[LAMP] Connected via MAC {self.mac} -> IP {ip}", flush=True)
             except Exception as exc:
-                raise RuntimeError(f"Cannot connect to lamp at {self.ip}: {exc}") from exc
+                raise RuntimeError(f"Cannot connect to lamp at {ip}: {exc}") from exc
         return self._bulb
 
     def turn_on_white(self, brightness: int = 80, color_temp: int = 4000):
@@ -348,7 +367,7 @@ class AppBulbController:
         return dict(self._state)
 
 
-bulb_controller = AppBulbController(LAMP_IP)
+bulb_controller = AppBulbController(LAMP_MAC)
 
 
 # ── Lamp helpers ─────────────────────────────────────────────────────────────
@@ -1191,6 +1210,7 @@ def lamp_state():
 def get_settings():
     return jsonify({
         **settings,
+        "wake_word": _wake_word_enabled,
         "api_keys_count": len(GEMINI_API_KEYS),
         "current_key_index": _gemini_key_index,
     })
@@ -1198,10 +1218,17 @@ def get_settings():
 
 @app.route("/api/settings", methods=["POST"])
 def update_settings():
+    global _wake_word_enabled
     data = request.get_json()
     for key in ("model", "language", "personality"):
         if key in data:
             settings[key] = data[key]
+    if "wake_word" in data:
+        enabled = bool(data["wake_word"])
+        if enabled and _wake_word_model is None:
+            _init_wake_word_model()
+        _wake_word_enabled = enabled
+        print(f"[WAKE] {'Enabled' if enabled else 'Disabled'}", flush=True)
     return jsonify({"status": "success"})
 
 
@@ -1940,12 +1967,42 @@ def get_email_message(gmail_id):
 
 AUDIO_MIC_PORT = 12345
 AUDIO_SPK_PORT = 12346
-ESP32_IP_OVERRIDE = os.environ.get("ESP32_IP", "192.168.137.140")
+ESP32_MAC = os.environ.get("ESP32_MAC", "9c:9c:1f:e9:96:f4").lower().replace("-", ":")
+_esp32_ip_cache = None
+_esp32_ip_cache_time = 0
 _esp32_audio_ip = None
 
+
+def _resolve_ip_from_mac(mac):
+    """Look up an IP address by MAC in the system ARP table."""
+    import subprocess
+    try:
+        out = subprocess.check_output("arp -a", shell=True, text=True, timeout=5)
+        mac_normalized = mac.lower().replace(":", "-")
+        for line in out.splitlines():
+            parts = line.split()
+            if len(parts) >= 2 and mac_normalized in parts[1].lower():
+                return parts[0]
+    except Exception:
+        pass
+    return None
+
+
 def _esp32_send_ip():
-    """Return the IP to send audio TO the ESP32. Prefers override (for NAT scenarios)."""
-    return ESP32_IP_OVERRIDE or _esp32_audio_ip
+    """Resolve ESP32 IP from its MAC address (cached 30s). Falls back to UDP source IP."""
+    global _esp32_ip_cache, _esp32_ip_cache_time
+    import time
+    now = time.time()
+    if _esp32_ip_cache and now - _esp32_ip_cache_time < 30:
+        return _esp32_ip_cache
+    ip = _resolve_ip_from_mac(ESP32_MAC)
+    if ip:
+        if ip != _esp32_ip_cache:
+            print(f"[AUDIO] ESP32 MAC {ESP32_MAC} -> IP {ip}", flush=True)
+        _esp32_ip_cache = ip
+        _esp32_ip_cache_time = now
+        return ip
+    return _esp32_ip_cache or _esp32_audio_ip
 _audio_listeners = 0
 _audio_bridge_ok = False
 _udp_recv = None
@@ -1956,6 +2013,63 @@ _audio_emit_count = 0
 _robot_recording = False
 _robot_buffer = []
 
+# ── Wake word detection ──────────────────────────────────────────────────────
+
+_wake_word_enabled = False
+_wake_word_model = None
+_WAKE_WORD_THRESHOLD = 0.1
+_WAKE_FRAME_SAMPLES = 1280  # 80ms at 16kHz — OpenWakeWord's expected frame size
+_wake_audio_buf = bytearray()
+
+
+def _init_wake_word_model():
+    global _wake_word_model
+    if _wake_word_model is not None:
+        return _wake_word_model
+    try:
+        from openwakeword.model import Model
+        model_path = str(Path(__file__).resolve().parent / "models" / "computer_v2.onnx")
+        _wake_word_model = Model(wakeword_models=[model_path], inference_framework="onnx")
+        print(f"[WAKE] Model loaded from {model_path}", flush=True)
+        print(f"[WAKE] Model names: {list(_wake_word_model.models.keys())}", flush=True)
+        return _wake_word_model
+    except Exception as e:
+        print(f"[WAKE] Failed to load wake word model: {e}", flush=True)
+        return None
+
+
+def _wake_word_feed(pcm_bytes):
+    """Buffer incoming PCM and feed 1280-sample frames to OpenWakeWord."""
+    global _wake_audio_buf
+    if not _wake_word_enabled or _robot_recording:
+        return False
+    model = _wake_word_model
+    if model is None:
+        return False
+
+    _wake_audio_buf.extend(pcm_bytes)
+    frame_bytes = _WAKE_FRAME_SAMPLES * 2  # 2560 bytes per frame
+
+    triggered = False
+    while len(_wake_audio_buf) >= frame_bytes:
+        import numpy as np
+        frame = np.frombuffer(bytes(_wake_audio_buf[:frame_bytes]), dtype=np.int16)
+        _wake_audio_buf = _wake_audio_buf[frame_bytes:]
+        prediction = model.predict(frame)
+        for mdl_name, score in prediction.items():
+            if score > _WAKE_WORD_THRESHOLD:
+                print(f"[WAKE] Detected '{mdl_name}' (score={score:.3f})", flush=True)
+                model.reset()
+                _wake_audio_buf.clear()
+                return True
+
+    if len(_wake_audio_buf) > frame_bytes * 10:
+        _wake_audio_buf = _wake_audio_buf[-frame_bytes:]
+
+    return triggered
+
+
+# ── Audio bridge ─────────────────────────────────────────────────────────────
 
 def _init_audio_bridge():
     global _audio_bridge_ok, _udp_recv, _udp_send
@@ -1978,6 +2092,9 @@ def _init_audio_bridge():
                     _audio_recv_count += 1
                     if _robot_recording:
                         _robot_buffer.append(data)
+                    elif _wake_word_enabled and _wake_word_feed(data):
+                        socketio.emit("robot_status", {"state": "wake_word", "detail": "Computer"}, namespace="/audio")
+                        _threading.Thread(target=_robot_pipeline, daemon=True).start()
                     socketio.emit("esp_audio", data, namespace="/audio")
                     _audio_emit_count += 1
                     now = _time.time()
@@ -1990,7 +2107,8 @@ def _init_audio_bridge():
 
         _threading.Thread(target=_recv_loop, daemon=True).start()
         _audio_bridge_ok = True
-        print(f"[AUDIO] Bridge active on UDP port {AUDIO_MIC_PORT} | send_ip={ESP32_IP_OVERRIDE or 'auto-detect'}", flush=True)
+        resolved = _esp32_send_ip()
+        print(f"[AUDIO] Bridge active on UDP port {AUDIO_MIC_PORT} | ESP32 MAC={ESP32_MAC} -> IP={resolved or 'pending'}", flush=True)
     except OSError as e:
         print(f"[AUDIO] Port 12345 in use -- audio bridge disabled: {e}", flush=True)
 
@@ -2057,10 +2175,9 @@ def _get_whisper(size="tiny"):
             raise
     return _whisper_models[size]
 
-_WHISPER_MODEL_FOR_LANG = {"en": "tiny", "ru": "tiny", "kk": "small"}
+_WHISPER_MODEL_FOR_LANG = {"en": "small", "ru": "small", "kk": "small"}
 
 def _preload_whisper():
-    _get_whisper("tiny")
     _get_whisper("small")
 
 _threading.Thread(target=_preload_whisper, daemon=True).start()
@@ -2465,10 +2582,10 @@ def _robot_pipeline():
             contents.append({"role": role, "parts": [{"text": msg["text"]}]})
 
         # ── DEBUG: set to True to skip real API call ──
-        _ROBOT_DEBUG = False
+        _ROBOT_DEBUG = True
         # _ROBOT_DEBUG_TEXT = "Привет, это тестовое сообщение. Всё работает отлично!"
         # _ROBOT_DEBUG_TEXT = "Сәлеметсіз бе, бұл сынақ хабарлама. Бәрі жақсы жұмыс істейді!"
-        # _ROBOT_DEBUG_TEXT = "Hello, this is a test message. Everything works great!"
+        _ROBOT_DEBUG_TEXT = "Hello, this is a test message. Everything works great!"
         if _ROBOT_DEBUG:
             ai_text = _ROBOT_DEBUG_TEXT
             t_llm = 0.0
