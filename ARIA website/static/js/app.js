@@ -299,6 +299,10 @@ document.addEventListener("DOMContentLoaded", () => {
             wake_word_desc: 'Say "Computer" to activate',
             wake_word_on: "Wake word enabled",
             wake_word_off: "Wake word disabled",
+            audio_source: "Audio Source",
+            audio_src_pc: "This Device",
+            audio_src_pc_on: "Using device mic & speaker",
+            audio_src_esp_on: "Using ESP32 mic & speaker",
             // Toasts
             toast_lights_toggled: "Lights toggled",
             toast_robot_called: "Robot called",
@@ -372,6 +376,10 @@ document.addEventListener("DOMContentLoaded", () => {
             wake_word_desc: 'Скажите "Компьютер" для активации',
             wake_word_on: "Слово-активатор включён",
             wake_word_off: "Слово-активатор выключен",
+            audio_source: "Источник звука",
+            audio_src_pc: "Это устройство",
+            audio_src_pc_on: "Используется микрофон и динамик устройства",
+            audio_src_esp_on: "Используется микрофон и динамик ESP32",
             toast_lights_toggled: "Свет переключён",
             toast_robot_called: "Робот вызван",
             toast_action_failed: "Ошибка действия",
@@ -442,6 +450,10 @@ document.addEventListener("DOMContentLoaded", () => {
             wake_word_desc: '"Компьютер" деп айтыңыз',
             wake_word_on: "Белсенді сөз қосылды",
             wake_word_off: "Белсенді сөз өшірілді",
+            audio_source: "Дыбыс көзі",
+            audio_src_pc: "Бұл құрылғы",
+            audio_src_pc_on: "Құрылғының микрофоны мен динамигі қолданылуда",
+            audio_src_esp_on: "ESP32 микрофоны мен динамигі қолданылуда",
             toast_lights_toggled: "Жарық ауыстырылды",
             toast_robot_called: "Робот шақырылды",
             toast_action_failed: "Әрекет қатесі",
@@ -881,6 +893,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (wakeToggle && d.wake_word !== undefined) {
                     wakeToggle.checked = d.wake_word;
                 }
+                if (d.audio_source) {
+                    document.querySelectorAll(".audio-src-btn").forEach(b => {
+                        b.classList.toggle("active", b.dataset.source === d.audio_source);
+                    });
+                }
             }
         } catch { }
     }
@@ -911,6 +928,19 @@ document.addEventListener("DOMContentLoaded", () => {
             } catch { }
         });
     }
+
+    // ─── Audio Source ───
+    document.querySelectorAll(".audio-src-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            document.querySelectorAll(".audio-src-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            const source = btn.dataset.source;
+            showToast(source === "pc" ? t("audio_src_pc_on") : t("audio_src_esp_on"), "info");
+            try {
+                await fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ audio_source: source }) });
+            } catch { }
+        });
+    });
 
     // ─── Personality ───
     document.querySelectorAll(".persona-btn").forEach(btn => {

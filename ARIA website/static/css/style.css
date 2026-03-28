@@ -681,6 +681,22 @@ body {
     transform: translateX(22px); background: var(--accent-light);
 }
 
+/* ─── AUDIO SOURCE ─── */
+.audio-source-buttons { display: flex; gap: 10px; }
+.audio-src-btn {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 10px 16px; border-radius: 10px;
+    background: var(--bg-input); border: 1px solid var(--border-color);
+    color: var(--text-secondary); cursor: pointer; font-size: 0.85rem;
+    transition: var(--transition);
+}
+.audio-src-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+.audio-src-btn.active {
+    border-color: var(--accent); background: var(--accent-bg);
+    color: var(--accent-light); box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.audio-src-btn .material-icons-round { font-size: 1.1rem; }
+
 /* ─── PERSONALITY ─── */
 .personality-grid {
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;

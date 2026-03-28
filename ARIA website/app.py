@@ -1211,6 +1211,7 @@ def get_settings():
     return jsonify({
         **settings,
         "wake_word": _wake_word_enabled,
+        "audio_source": settings.get("audio_source", "esp32"),
         "api_keys_count": len(GEMINI_API_KEYS),
         "current_key_index": _gemini_key_index,
     })
@@ -1220,7 +1221,7 @@ def get_settings():
 def update_settings():
     global _wake_word_enabled
     data = request.get_json()
-    for key in ("model", "language", "personality"):
+    for key in ("model", "language", "personality", "audio_source"):
         if key in data:
             settings[key] = data[key]
     if "wake_word" in data:
@@ -2194,6 +2195,160 @@ def _generate_beep(freq=800, duration_ms=300, sample_rate=16000):
     return bytes(pcm)
 
 
+# ── PC microphone / speaker support ──────────────────────────────────────────
+
+def _record_from_pc_mic(silence_threshold=500, silence_duration=1.0,
+                        max_record_time=15.0, sample_rate=16000):
+    """Record from default PC mic until silence. Returns raw PCM bytes."""
+    import pyaudio
+    import time
+
+    CHUNK = 1024
+    pa = pyaudio.PyAudio()
+    try:
+        stream = pa.open(format=pyaudio.paInt16, channels=1,
+                         rate=sample_rate, input=True,
+                         frames_per_buffer=CHUNK)
+    except Exception as e:
+        pa.terminate()
+        raise RuntimeError(f"Cannot open PC microphone: {e}")
+
+    print("[PC-MIC] Recording from PC microphone...", flush=True)
+    frames = []
+    speech_started = False
+    silence_start = None
+    record_start = time.time()
+
+    try:
+        while True:
+            elapsed = time.time() - record_start
+            if elapsed > max_record_time:
+                print(f"[PC-MIC] Max recording time reached ({max_record_time}s)", flush=True)
+                break
+
+            data = stream.read(CHUNK, exception_on_overflow=False)
+            frames.append(data)
+
+            n_samples = len(data) // 2
+            if n_samples == 0:
+                continue
+            samples = _struct.unpack(f"<{n_samples}h", data)
+            peak = max(abs(s) for s in samples)
+
+            if not speech_started:
+                if peak > silence_threshold:
+                    speech_started = True
+                    silence_start = None
+                    print(f"[PC-MIC] Speech detected (peak={peak})", flush=True)
+            else:
+                if peak < silence_threshold:
+                    if silence_start is None:
+                        silence_start = time.time()
+                    elif time.time() - silence_start >= silence_duration:
+                        print("[PC-MIC] Silence detected, stopping", flush=True)
+                        break
+                else:
+                    silence_start = None
+    finally:
+        stream.stop_stream()
+        stream.close()
+        pa.terminate()
+
+    return b"".join(frames)
+
+
+def _play_pcm_on_pc_speaker(pcm_bytes, sample_rate=16000):
+    """Play raw 16-bit PCM on the default PC speaker."""
+    import pyaudio
+    CHUNK = 1024
+    pa = pyaudio.PyAudio()
+    try:
+        stream = pa.open(format=pyaudio.paInt16, channels=1,
+                         rate=sample_rate, output=True,
+                         frames_per_buffer=CHUNK)
+        for offset in range(0, len(pcm_bytes), CHUNK):
+            stream.write(pcm_bytes[offset:offset + CHUNK])
+        stream.stop_stream()
+        stream.close()
+    finally:
+        pa.terminate()
+
+
+def _tts_stream_to_pc_speaker(text, lang="en"):
+    """Stream Edge TTS -> ffmpeg (mp3->pcm) -> PC speaker via pyaudio."""
+    import edge_tts
+    import subprocess
+    import pyaudio
+    import time
+
+    voices_to_try = _TTS_VOICE_FALLBACKS.get(lang, _TTS_VOICE_FALLBACKS["en"])
+    voice = voices_to_try[0]
+    sample_rate = 16000
+    CHUNK = 1024
+    t0 = time.time()
+    total_pcm = 0
+    first_audio_at = None
+
+    ffmpeg_proc = subprocess.Popen(
+        ["ffmpeg", "-hide_banner", "-loglevel", "error",
+         "-i", "pipe:0",
+         "-f", "s16le", "-ar", str(sample_rate), "-ac", "1",
+         "pipe:1"],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        bufsize=8192,
+    )
+
+    pa = pyaudio.PyAudio()
+    stream = pa.open(format=pyaudio.paInt16, channels=1,
+                     rate=sample_rate, output=True,
+                     frames_per_buffer=CHUNK)
+
+    def _pcm_player():
+        nonlocal total_pcm, first_audio_at
+        while True:
+            pcm = ffmpeg_proc.stdout.read(CHUNK)
+            if not pcm:
+                break
+            if first_audio_at is None:
+                first_audio_at = time.time()
+            total_pcm += len(pcm)
+            stream.write(pcm)
+
+    player_thread = _threading.Thread(target=_pcm_player, daemon=True)
+    player_thread.start()
+
+    loop = _asyncio.new_event_loop()
+    try:
+        async def _stream():
+            comm = edge_tts.Communicate(text, voice, rate=TTS_RATE)
+            async for chunk in comm.stream():
+                if chunk["type"] == "audio":
+                    try:
+                        ffmpeg_proc.stdin.write(chunk["data"])
+                        ffmpeg_proc.stdin.flush()
+                    except BrokenPipeError:
+                        break
+        loop.run_until_complete(_stream())
+    except Exception as e:
+        print(f"[ROBOT] PC TTS error ({voice}): {e}", flush=True)
+    finally:
+        loop.close()
+
+    try:
+        ffmpeg_proc.stdin.close()
+    except Exception:
+        pass
+    player_thread.join(timeout=30)
+    ffmpeg_proc.wait(timeout=10)
+    stream.stop_stream()
+    stream.close()
+    pa.terminate()
+
+    tts_latency = (first_audio_at - t0) if first_audio_at else (time.time() - t0)
+    print(f"[ROBOT] PC-TTS: {voice} | gen={tts_latency:.2f}s | {total_pcm}B pcm", flush=True)
+    return tts_latency
+
+
 def _send_pcm_to_esp32(pcm_bytes, sample_rate=16000):
     if not _esp32_send_ip() or not _udp_send:
         return
@@ -2477,75 +2632,89 @@ def _robot_pipeline():
     global _robot_recording
     import time
 
+    use_pc = settings.get("audio_source", "esp32") == "pc"
+    source_label = "PC" if use_pc else "ESP32"
+
     try:
         pipeline_start = time.time()
-        print(f"[ROBOT] Pipeline started. esp32_send_ip={_esp32_send_ip()} (recv_from={_esp32_audio_ip}) udp_send={'OK' if _udp_send else 'NONE'} bridge={_audio_bridge_ok}", flush=True)
+        print(f"[ROBOT] Pipeline started (source={source_label}). esp32_send_ip={_esp32_send_ip()} bridge={_audio_bridge_ok}", flush=True)
         socketio.emit("robot_status", {"state": "listening"}, namespace="/audio")
 
-        beep = _generate_beep(800, 300)
-        print(f"[ROBOT] Sending beep ({len(beep)}B) to {_esp32_send_ip()}:{AUDIO_SPK_PORT}", flush=True)
-        _send_pcm_to_esp32(beep)
+        if use_pc:
+            beep = _generate_beep(800, 300)
+            _play_pcm_on_pc_speaker(beep)
+            record_start = time.time()
+            all_pcm = _record_from_pc_mic()
+            silence_detected_at = time.time()
+            first_audio_pkt_at = record_start
+            end_beep = _generate_beep(600, 200)
+            _play_pcm_on_pc_speaker(end_beep)
+        else:
+            beep = _generate_beep(800, 300)
+            print(f"[ROBOT] Sending beep ({len(beep)}B) to {_esp32_send_ip()}:{AUDIO_SPK_PORT}", flush=True)
+            _send_pcm_to_esp32(beep)
 
-        _robot_buffer.clear()
-        _robot_recording = True
+            _robot_buffer.clear()
+            _robot_recording = True
 
-        SILENCE_THRESHOLD = 500
-        SILENCE_DURATION = 1.0
-        MAX_RECORD_TIME = 15.0
-        CHECK_INTERVAL = 0.1
+            SILENCE_THRESHOLD = 500
+            SILENCE_DURATION = 1.0
+            MAX_RECORD_TIME = 15.0
+            CHECK_INTERVAL = 0.1
 
-        speech_started = False
-        silence_start = None
-        first_audio_pkt_at = None
-        record_start = time.time()
+            speech_started = False
+            silence_start = None
+            first_audio_pkt_at = None
+            record_start = time.time()
 
-        while True:
-            time.sleep(CHECK_INTERVAL)
-            elapsed = time.time() - record_start
+            while True:
+                time.sleep(CHECK_INTERVAL)
+                elapsed = time.time() - record_start
 
-            if elapsed > MAX_RECORD_TIME:
-                print(f"[ROBOT] Max recording time reached ({MAX_RECORD_TIME}s)", flush=True)
-                break
+                if elapsed > MAX_RECORD_TIME:
+                    print(f"[ROBOT] Max recording time reached ({MAX_RECORD_TIME}s)", flush=True)
+                    break
 
-            if not _robot_buffer:
-                continue
+                if not _robot_buffer:
+                    continue
 
-            if first_audio_pkt_at is None:
-                first_audio_pkt_at = time.time()
+                if first_audio_pkt_at is None:
+                    first_audio_pkt_at = time.time()
 
-            last_chunk = _robot_buffer[-1]
-            n_samples = len(last_chunk) // 2
-            if n_samples == 0:
-                continue
-            samples = _struct.unpack(f"<{n_samples}h", last_chunk)
-            peak = max(abs(s) for s in samples)
+                last_chunk = _robot_buffer[-1]
+                n_samples = len(last_chunk) // 2
+                if n_samples == 0:
+                    continue
+                samples = _struct.unpack(f"<{n_samples}h", last_chunk)
+                peak = max(abs(s) for s in samples)
 
-            if not speech_started:
-                if peak > SILENCE_THRESHOLD:
-                    speech_started = True
-                    silence_start = None
-                    print(f"[ROBOT] Speech detected (peak={peak})", flush=True)
-            else:
-                if peak < SILENCE_THRESHOLD:
-                    if silence_start is None:
-                        silence_start = time.time()
-                    elif time.time() - silence_start >= SILENCE_DURATION:
-                        print(f"[ROBOT] Silence detected, stopping recording", flush=True)
-                        break
+                if not speech_started:
+                    if peak > SILENCE_THRESHOLD:
+                        speech_started = True
+                        silence_start = None
+                        print(f"[ROBOT] Speech detected (peak={peak})", flush=True)
                 else:
-                    silence_start = None
+                    if peak < SILENCE_THRESHOLD:
+                        if silence_start is None:
+                            silence_start = time.time()
+                        elif time.time() - silence_start >= SILENCE_DURATION:
+                            print(f"[ROBOT] Silence detected, stopping recording", flush=True)
+                            break
+                    else:
+                        silence_start = None
 
-        _robot_recording = False
-        silence_detected_at = time.time()
+            _robot_recording = False
+            silence_detected_at = time.time()
+
+            end_beep = _generate_beep(600, 200)
+            _send_pcm_to_esp32(end_beep)
+
+            all_pcm = b"".join(_robot_buffer)
+            _robot_buffer.clear()
+
         t_record = silence_detected_at - record_start
-
-        end_beep = _generate_beep(600, 200)
-        _send_pcm_to_esp32(end_beep)
-
-        all_pcm = b"".join(_robot_buffer)
-        _robot_buffer.clear()
         audio_duration = len(all_pcm) / 32000.0
-        print(f"[ROBOT] Recording: {audio_duration:.1f}s audio | {len(all_pcm)}B", flush=True)
+        print(f"[ROBOT] Recording ({source_label}): {audio_duration:.1f}s audio | {len(all_pcm)}B", flush=True)
 
         if len(all_pcm) < 3200:
             socketio.emit("robot_status", {"state": "idle", "error": "No speech detected"}, namespace="/audio")
@@ -2582,7 +2751,7 @@ def _robot_pipeline():
             contents.append({"role": role, "parts": [{"text": msg["text"]}]})
 
         # ── DEBUG: set to True to skip real API call ──
-        _ROBOT_DEBUG = True
+        _ROBOT_DEBUG = False
         # _ROBOT_DEBUG_TEXT = "Привет, это тестовое сообщение. Всё работает отлично!"
         # _ROBOT_DEBUG_TEXT = "Сәлеметсіз бе, бұл сынақ хабарлама. Бәрі жақсы жұмыс істейді!"
         _ROBOT_DEBUG_TEXT = "Hello, this is a test message. Everything works great!"
@@ -2590,10 +2759,27 @@ def _robot_pipeline():
             ai_text = _ROBOT_DEBUG_TEXT
             t_llm = 0.0
         else:
-            ai_text, err = _gemini_call(model, system_text, contents)
-            t_llm = time.time() - t0
-            if err:
-                ai_text = f"Sorry, I had a problem: {err}"
+            # ── Lamp command interception ──
+            lamp_reply, lamp_st = _handle_lamp_command(user_text)
+            if lamp_reply:
+                ai_text = lamp_reply
+                t_llm = 0.0
+                if lamp_st:
+                    socketio.emit("lamp_update", lamp_st, namespace="/audio")
+            else:
+                # ── Weather query interception ──
+                weather_city = detect_weather_query(user_text)
+                if weather_city:
+                    w = fetch_weather(weather_city)
+                    fc = fetch_forecast(weather_city)
+                    ai_text = _format_weather_ai_reply(user_text, w, fc, model, system_text)
+                    t_llm = time.time() - t0
+                else:
+                    # ── Normal LLM call ──
+                    ai_text, err = _gemini_call(model, system_text, contents)
+                    t_llm = time.time() - t0
+                    if err:
+                        ai_text = f"Sorry, I had a problem: {err}"
         # ── END DEBUG ──
         chat_history.append({"role": "assistant", "text": ai_text})
 
@@ -2604,7 +2790,10 @@ def _robot_pipeline():
         t_tts_start = time.time()
         tts_latency = 0
         try:
-            tts_latency = _tts_stream_to_esp32(ai_text, lang=detected_lang) or 0
+            if use_pc:
+                tts_latency = _tts_stream_to_pc_speaker(ai_text, lang=detected_lang) or 0
+            else:
+                tts_latency = _tts_stream_to_esp32(ai_text, lang=detected_lang) or 0
             t_speak = time.time() - t_tts_start
         except Exception as e:
             t_speak = time.time() - t_tts_start
@@ -2614,11 +2803,11 @@ def _robot_pipeline():
         first_pkt_to_reply = (silence_detected_at - first_audio_pkt_at) + processing_time if first_audio_pkt_at else 0
 
         print(f"[ROBOT]", flush=True)
-        print(f"[ROBOT] ======== PIPELINE SUMMARY ========", flush=True)
+        print(f"[ROBOT] ======== PIPELINE SUMMARY ({source_label}) ========", flush=True)
         print(f"[ROBOT]  STT          : {t_stt:.2f}s", flush=True)
         print(f"[ROBOT]  LLM          : {t_llm:.2f}s", flush=True)
         print(f"[ROBOT]  TTS gen      : {tts_latency:.2f}s  (time to first audio out)", flush=True)
-        print(f"[ROBOT]  TTS playback : {t_speak - tts_latency:.2f}s  (streaming to ESP32)", flush=True)
+        print(f"[ROBOT]  TTS playback : {t_speak - tts_latency:.2f}s  (streaming to {source_label})", flush=True)
         print(f"[ROBOT]  --------------------------------", flush=True)
         print(f"[ROBOT]  PROCESSING   : {processing_time:.2f}s  = STT + LLM + TTS gen", flush=True)
         print(f"[ROBOT]  TOTAL WALL   : {time.time() - pipeline_start:.2f}s", flush=True)
