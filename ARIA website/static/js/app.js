@@ -312,6 +312,8 @@ document.addEventListener("DOMContentLoaded", () => {
             chat_label_aria: "ARIA",
             chat_error: "Something went wrong.",
             chat_no_server: "Cannot connect to server.",
+            chat_clear_confirm: "Clear entire chat history?",
+            chat_cleared: "Chat history cleared",
             // Camera directions
             cam_up: "Camera: Up",
             cam_down: "Camera: Down",
@@ -377,6 +379,8 @@ document.addEventListener("DOMContentLoaded", () => {
             chat_label_aria: "ARIA",
             chat_error: "Что-то пошло не так.",
             chat_no_server: "Нет подключения к серверу.",
+            chat_clear_confirm: "Очистить всю историю чата?",
+            chat_cleared: "История чата очищена",
             cam_up: "Камера: Вверх",
             cam_down: "Камера: Вниз",
             cam_left: "Камера: Влево",
@@ -441,6 +445,8 @@ document.addEventListener("DOMContentLoaded", () => {
             chat_label_aria: "ARIA",
             chat_error: "Бірдеңе дұрыс болмады.",
             chat_no_server: "Серверге қосылу мүмкін емес.",
+            chat_clear_confirm: "Чат тарихын толық тазалау керек пе?",
+            chat_cleared: "Чат тарихы тазаланды",
             cam_up: "Камера: Жоғары",
             cam_down: "Камера: Төмен",
             cam_left: "Камера: Солға",
@@ -493,11 +499,17 @@ document.addEventListener("DOMContentLoaded", () => {
         sidebar.classList.remove("open");
         overlay.classList.remove("show");
         if (pageName === "camera" && !cameraIp) discoverCamera();
+        // Persist active page so refresh lands on the same page
+        localStorage.setItem("aria-active-page", pageName);
     }
 
     navLinks.forEach(link => {
         link.addEventListener("click", (e) => { e.preventDefault(); navigateTo(link.dataset.page); });
     });
+
+    // Restore last active page on load (default: dashboard)
+    const savedPage = localStorage.getItem("aria-active-page") || "dashboard";
+    navigateTo(savedPage);
     menuToggle.addEventListener("click", () => { sidebar.classList.toggle("open"); overlay.classList.toggle("show"); });
     overlay.addEventListener("click", () => { sidebar.classList.remove("open"); overlay.classList.remove("show"); });
 
@@ -511,7 +523,18 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => { toast.classList.add("toast-exit"); setTimeout(() => toast.remove(), 300); }, 3000);
     }
 
-    // ─── Chat ───
+    // ─── Chat Session ───
+    function getChatSessionId() {
+        let sid = localStorage.getItem("aria-chat-session");
+        if (!sid) {
+            sid = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
+            localStorage.setItem("aria-chat-session", sid);
+        }
+        return sid;
+    }
+    const chatSessionId = getChatSessionId();
+    const chatHeaders = { "Content-Type": "application/json", "X-Chat-Session": chatSessionId };
+
     function addChatBubble(role, text) {
         const bubble = document.createElement("div");
         bubble.className = `chat-bubble ${role}`;
@@ -519,6 +542,31 @@ document.addEventListener("DOMContentLoaded", () => {
         bubble.innerHTML = `<span class="chat-bubble-label">${label}</span>${escapeHtml(text)}`;
         chatMessages.appendChild(bubble);
         chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    async function loadChatHistory() {
+        try {
+            const resp = await fetch("/api/chat/history?limit=100", { headers: { "X-Chat-Session": chatSessionId } });
+            if (!resp.ok) return;
+            const data = await resp.json();
+            if (data.messages && data.messages.length > 0) {
+                chatMessages.innerHTML = "";
+                data.messages.forEach(m => addChatBubble(m.role, m.text));
+            }
+        } catch (e) { /* silent on first load */ }
+    }
+    loadChatHistory();
+
+    const clearChatBtn = document.getElementById("clearChatBtn");
+    if (clearChatBtn) {
+        clearChatBtn.addEventListener("click", async () => {
+            if (!confirm(t("chat_clear_confirm") || "Clear entire chat history?")) return;
+            try {
+                await fetch("/api/chat/history", { method: "DELETE", headers: { "X-Chat-Session": chatSessionId } });
+                chatMessages.innerHTML = "";
+                showToast(t("chat_cleared") || "Chat history cleared", "success");
+            } catch (e) { showToast("Error clearing chat", "error"); }
+        });
     }
 
     function showTyping() {
@@ -549,6 +597,37 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
+        // Check for email sync command
+        const syncKeywords = ["sync mail", "sync email", "sync all mail", "sync all email",
+                              "синхронизируй почту", "синхронизировать почту", "обнови почту",
+                              "refresh mail", "refresh email", "update mail", "update email"];
+        const lowerText = text.toLowerCase();
+        if (syncKeywords.some(kw => lowerText.includes(kw))) {
+            removeTyping();
+            addChatBubble("assistant", "Syncing all emails now — this may take a moment…");
+            (async () => {
+                try {
+                    const btn = document.getElementById('syncAllEmailBtn');
+                    const label = document.getElementById('syncAllEmailLabel');
+                    if (btn) { btn.disabled = true; }
+                    if (label) label.textContent = 'Syncing…';
+                    await fetch('/api/emails/clear-cache', { method: 'POST' });
+                    localStorage.removeItem('lastFullEmailSync');
+                    await syncEmailsBackground('full');
+                    addChatBubble("assistant", "Email sync complete! Your inbox is up to date.");
+                    showToast("Email synced successfully", "success");
+                } catch (e) {
+                    addChatBubble("assistant", "Sync failed: " + e.message);
+                } finally {
+                    const btn = document.getElementById('syncAllEmailBtn');
+                    const label = document.getElementById('syncAllEmailLabel');
+                    if (btn) btn.disabled = false;
+                    if (label) label.textContent = 'Sync All';
+                }
+            })();
+            return;
+        }
+
         try {
             // Get current email if modal is open
             const modal = document.getElementById('emailDetailModal');
@@ -577,7 +656,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 payload.email = emailContent;
             }
 
-            const resp = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+            const resp = await fetch("/api/chat", { method: "POST", headers: chatHeaders, body: JSON.stringify(payload) });
             removeTyping();
             if (resp.ok) { const data = await resp.json(); addChatBubble("assistant", data.reply); if (data.lamp) updateLampUI(data.lamp); }
             else addChatBubble("assistant", t("chat_error"));

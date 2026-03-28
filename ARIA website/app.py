@@ -13,6 +13,9 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 from flask_socketio import SocketIO
 import requests
 import re
+import hmac
+import hashlib
+import secrets
 from email.utils import parsedate_to_datetime as _email_parsedate_raw
 import subprocess
 import socket as _socket
@@ -20,7 +23,7 @@ import threading as _threading
 from datetime import datetime, timedelta
 from pathlib import Path
 from gmail_service import GmailService
-from models import db, User, Session, GmailAccount, EmailMessage
+from models import db, ChatMessage, User, Session, GmailAccount, EmailMessage
 
 
 def _load_env():
@@ -75,12 +78,11 @@ def _resolve_gmail_email() -> str:
     return email
 
 
-# ⚠️ ВАЖНО: Редирект 127.0.0.1 → localhost (для OAuth) 
+# ⚠️ ВАЖНО: Редирект 127.0.0.1 → localhost (для OAuth)
 @app.before_request
 def redirect_127_to_localhost():
     """Перенаправляем 127.0.0.1 на localhost для совместимости с OAuth"""
     if request.host.startswith('127.0.0.1'):
-        # Заменяем 127.0.0.1 на localhost в URL
         new_host = request.host.replace('127.0.0.1', 'localhost')
         url = request.url.replace(f"http://{request.host}", f"http://{new_host}")
         print(f"\n[REDIRECT] 127.0.0.1 → localhost")
@@ -98,7 +100,20 @@ settings = {
     "language": "EN",
     "personality": "default",
 }
-chat_history = []
+chat_history = []  # kept as a fast in-process mirror; DB is source of truth
+
+
+def _get_chat_session_id():
+    """Return chat session ID from request header, or a default for backwards compat."""
+    return request.headers.get("X-Chat-Session", "default")
+
+
+def _save_chat_msg(session_id: str, role: str, text: str):
+    """Persist one chat message to the database and the in-memory mirror."""
+    msg = ChatMessage(session_id=session_id, role=role, text=text)
+    db.session.add(msg)
+    db.session.commit()
+    chat_history.append({"role": role, "text": text})
 
 GEMINI_API_KEYS = [
     k.strip() for k in os.environ.get("GEMINI_API_KEYS", "").split(",") if k.strip()
@@ -480,11 +495,21 @@ YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "")
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 
 WEATHER_KEYWORDS = [
+    # English
     "weather", "temperature", "forecast", "wind", "humidity", "rain", "snow", "storm",
+    "how cold", "how hot", "how warm", "will it rain", "will it snow", "umbrella",
+    "sunny", "cloudy", "foggy", "hail", "thunder", "lightning", "drizzle",
+    # Russian
     "погода", "температура", "прогноз", "ветер", "влажность", "дождь", "снег",
-    "ауа райы", "температура", "болжам", "жел", "ылғалдылық", "жаңбыр", "қар",
-    "how cold", "how hot", "how warm", "какая погода", "сколько градусов",
+    "гроза", "туман", "облачно", "солнечно", "ливень", "жара", "мороз", "похолодание",
+    "какая погода", "сколько градусов", "что с погодой", "будет ли дождь",
+    "будет ли снег", "взять зонт", "тепло ли", "холодно ли",
+    # Kazakh
+    "ауа райы", "болжам", "жел", "ылғалдылық", "жаңбыр", "қар",
 ]
+
+# Remembers the last city the user asked about so follow-up questions work
+_last_weather_city = "Almaty"
 
 
 WIND_DIRS = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
@@ -542,48 +567,59 @@ def _tz_id_str(tz_seconds):
 
 
 def fetch_weather(city):
-    try:
-        resp = requests.get(
-            f"{OWM_BASE}/weather",
-            params={"q": city, "appid": OWM_KEY, "units": "metric"},
-            timeout=10,
-        )
-        if resp.status_code != 200:
-            return None
-        d = resp.json()
-        tz = d.get("timezone", 0)
-        wind = d.get("wind", {})
-        wind_speed_ms = wind.get("speed", 0)
-        wind_kph = round(wind_speed_ms * 3.6, 1)
-        vis_m = d.get("visibility", 10000)
-        return {
-            "city": d.get("name", city),
-            "country": d.get("sys", {}).get("country", ""),
-            "localtime": _epoch_to_localtime(d["dt"], tz),
-            "localtime_epoch": d["dt"] + tz,
-            "tz_id": _tz_id_str(tz),
-            "last_updated": _epoch_to_localtime(d["dt"], tz),
-            "temp": d["main"]["temp"],
-            "feels_like": d["main"]["feels_like"],
-            "temp_min": d["main"]["temp_min"],
-            "temp_max": d["main"]["temp_max"],
-            "humidity": d["main"]["humidity"],
-            "pressure": d["main"]["pressure"],
-            "wind_kph": wind_kph,
-            "wind_deg": wind.get("deg", 0),
-            "wind_dir": _wind_dir(wind.get("deg")),
-            "vis_km": round(vis_m / 1000, 1),
-            "clouds": d.get("clouds", {}).get("all", 0),
-            "description": d["weather"][0]["description"].title() if d.get("weather") else "",
-            "icon": d["weather"][0]["icon"] if d.get("weather") else "03d",
-            "sunrise": _epoch_to_hhmm(d["sys"]["sunrise"], tz) if d.get("sys", {}).get("sunrise") else "",
-            "sunset": _epoch_to_hhmm(d["sys"]["sunset"], tz) if d.get("sys", {}).get("sunset") else "",
-        }
-    except Exception:
-        return None
+    # Try normalized name first, then fall back to raw city string
+    candidates = [_normalize_city(city)]
+    if city not in candidates:
+        candidates.append(city)
+    # Also try just the first word in case extra words slipped through
+    first_word = city.split()[0] if ' ' in city else None
+    if first_word and _normalize_city(first_word) not in candidates:
+        candidates.append(_normalize_city(first_word))
 
+    for attempt_city in candidates:
+        try:
+            resp = requests.get(
+                f"{OWM_BASE}/weather",
+                params={"q": attempt_city, "appid": OWM_KEY, "units": "metric"},
+                timeout=10,
+            )
+            if resp.status_code != 200:
+                continue
+            d = resp.json()
+            tz = d.get("timezone", 0)
+            wind = d.get("wind", {})
+            wind_speed_ms = wind.get("speed", 0)
+            wind_kph = round(wind_speed_ms * 3.6, 1)
+            vis_m = d.get("visibility", 10000)
+            return {
+                "city": d.get("name", attempt_city),
+                "country": d.get("sys", {}).get("country", ""),
+                "localtime": _epoch_to_localtime(d["dt"], tz),
+                "localtime_epoch": d["dt"] + tz,
+                "tz_id": _tz_id_str(tz),
+                "last_updated": _epoch_to_localtime(d["dt"], tz),
+                "temp": round(d["main"]["temp"]),
+                "feels_like": round(d["main"]["feels_like"]),
+                "temp_min": round(d["main"]["temp_min"]),
+                "temp_max": round(d["main"]["temp_max"]),
+                "humidity": d["main"]["humidity"],
+                "pressure": d["main"]["pressure"],
+                "wind_kph": round(wind_kph),
+                "wind_deg": wind.get("deg", 0),
+                "wind_dir": _wind_dir(wind.get("deg")),
+                "vis_km": round(vis_m / 1000, 1),
+                "clouds": d.get("clouds", {}).get("all", 0),
+                "description": d["weather"][0]["description"].title() if d.get("weather") else "",
+                "icon": d["weather"][0]["icon"] if d.get("weather") else "03d",
+                "sunrise": _epoch_to_hhmm(d["sys"]["sunrise"], tz) if d.get("sys", {}).get("sunrise") else "",
+                "sunset": _epoch_to_hhmm(d["sys"]["sunset"], tz) if d.get("sys", {}).get("sunset") else "",
+            }
+        except Exception:
+            continue
+    return None
 
 def fetch_forecast(city):
+    city = _normalize_city(city)
     try:
         resp = requests.get(
             f"{OWM_BASE}/forecast",
@@ -623,26 +659,68 @@ def fetch_forecast(city):
         return None
 
 
+# Russian prepositional/locative city forms → OWM-recognized name
+_CITY_NORM = {
+    "алмате": "Almaty", "алматы": "Almaty", "алма-ате": "Almaty", "алма-аты": "Almaty",
+    "астане": "Astana", "астана": "Astana", "нур-султане": "Astana",
+    "шымкенте": "Shymkent", "шымкент": "Shymkent",
+    "москве": "Moscow", "москва": "Moscow",
+    "питере": "Saint Petersburg", "петербурге": "Saint Petersburg",
+    "санкт-петербурге": "Saint Petersburg", "санкт-петербург": "Saint Petersburg",
+    "новосибирске": "Novosibirsk", "екатеринбурге": "Yekaterinburg",
+    "лондоне": "London", "париже": "Paris", "берлине": "Berlin",
+    "нью-йорке": "New York", "токио": "Tokyo", "пекине": "Beijing",
+    "дубае": "Dubai", "стамбуле": "Istanbul",
+    "киеве": "Kyiv", "минске": "Minsk", "ташкенте": "Tashkent",
+    "бишкеке": "Bishkek", "тбилиси": "Tbilisi", "баку": "Baku", "ереване": "Yerevan",
+    "риге": "Riga", "вильнюсе": "Vilnius", "таллине": "Tallinn",
+}
+
+
+def _normalize_city(city: str) -> str:
+    """Convert Russian declined city forms to OWM-compatible names."""
+    key = city.lower().strip()
+    if key in _CITY_NORM:
+        return _CITY_NORM[key]
+    # Generic fallback: Russian prepositional case often ends in -е; try stripping it
+    if key.endswith("е") and len(key) > 4:
+        candidate = key[:-1]
+        # try with -и suffix (е→и) and without suffix
+        for c in (candidate + "и", candidate + "ы", candidate):
+            if c in _CITY_NORM:
+                return _CITY_NORM[c]
+    return city
+
+
 def detect_weather_query(message):
+    global _last_weather_city
     msg = message.lower()
     if not any(kw in msg for kw in WEATHER_KEYWORDS):
         return None
 
     city_patterns = [
-        r"weather\s+(?:in|at|for)\s+([a-zA-Z\s\-]+)",
-        r"погод[аеу]\s+(?:в|во)\s+([а-яА-ЯёЁ\s\-]+)",
-        r"температур[аеу]\s+(?:в|во)\s+([а-яА-ЯёЁ\s\-]+)",
-        r"ауа райы\s+([а-яА-ЯёЁәіңғүұқөһa-zA-Z\s\-]+)",
-        r"(?:in|at|for)\s+([a-zA-Z\s\-]+?)(?:\?|$|\.)",
-        r"(?:в|во)\s+([а-яА-ЯёЁ\s\-]+?)(?:\?|$|\.)",
+        # English: stop at word boundary / punctuation
+        r"weather\s+(?:in|at|for)\s+([a-zA-Z][a-zA-Z\s\-]{1,30})(?:\?|$|\.|,|\s+(?:now|today|tonight|tomorrow))",
+        r"(?:in|at|for)\s+([a-zA-Z][a-zA-Z\s\-]{1,20})(?:\?|$|\.|,)",
+        # Russian: capture only Cyrillic + hyphens (no spaces) to avoid grabbing trailing words
+        r"погод[аеу]\s+(?:в|во)\s+([а-яА-ЯёЁ][а-яА-ЯёЁ\-]+)",
+        r"температур[аеу]\s+(?:в|во)\s+([а-яА-ЯёЁ][а-яА-ЯёЁ\-]+)",
+        r"(?:в|во)\s+([а-яА-ЯёЁ][а-яА-ЯёЁ\-]+)\s+(?:сейчас|сегодня|погода|температура|прогноз)",
+        r"(?:в|во)\s+([а-яА-ЯёЁ][а-яА-ЯёЁ\-]+?)(?:\?|$|\.)",
+        # Kazakh
+        r"ауа райы\s+([а-яА-ЯёЁәіңғүұқөһa-zA-Z\-]+)",
     ]
     for pattern in city_patterns:
         m = re.search(pattern, msg, re.IGNORECASE)
         if m:
             city = m.group(1).strip().rstrip("?., ")
             if len(city) > 1:
-                return city
-    return "Almaty"
+                found = _normalize_city(city)
+                _last_weather_city = found
+                return found
+
+    # No city found in message — use the last city the user asked about
+    return _last_weather_city
 
 
 @app.route("/")
@@ -848,63 +926,101 @@ def _format_email_direct_reply(message: str, email_data=None):
     return "Recent emails:\n" + "\n".join(lines)
 
 
-def _format_weather_direct_reply(message: str, weather_data: dict) -> str:
-    lang = _detect_message_lang(message)
-    if not weather_data:
-        if lang == "ru":
-            return "Не удалось получить погоду для этого города."
-        if lang == "kz":
-            return "Бұл қала бойынша ауа райын алу мүмкін болмады."
-        return "I could not fetch weather for that city."
+def _build_weather_context(current: dict, forecast: dict) -> str:
+    """Serialize current weather + 48h forecast into a compact text block for Gemini."""
+    lines = []
+    if current:
+        city = current.get("city", "?")
+        country = current.get("country", "")
+        lines.append(f"=== Current weather in {city}, {country} ===")
+        lines.append(f"Time: {current.get('localtime', 'N/A')} ({current.get('tz_id', '')})")
+        lines.append(f"Temperature: {current.get('temp')}°C, feels like {current.get('feels_like')}°C")
+        lines.append(f"Condition: {current.get('description', 'N/A')}")
+        lines.append(f"Humidity: {current.get('humidity')}%")
+        lines.append(f"Wind: {current.get('wind_kph')} km/h {current.get('wind_dir', '')}")
+        lines.append(f"Clouds: {current.get('clouds')}%")
+        lines.append(f"Visibility: {current.get('vis_km')} km")
+        lines.append(f"Pressure: {current.get('pressure')} hPa")
+        lines.append(f"Sunrise: {current.get('sunrise')}  Sunset: {current.get('sunset')}")
 
-    city = weather_data.get("city", "Unknown")
-    country = weather_data.get("country", "")
-    localtime = weather_data.get("localtime", "N/A")
-    temp = weather_data.get("temp", "N/A")
-    feels = weather_data.get("feels_like", "N/A")
-    cond = weather_data.get("description", "N/A")
-    humidity = weather_data.get("humidity", "N/A")
-    wind = weather_data.get("wind_kph", "N/A")
-    wind_dir = weather_data.get("wind_dir", "")
+    if forecast and forecast.get("forecast"):
+        lines.append("\n=== 48-hour forecast (3-hour steps) ===")
+        for entry in forecast["forecast"][:16]:  # 16 × 3h = 48 hours
+            lines.append(
+                f"{entry['local_time']}  {round(entry['temp'])}°C  {entry['description']}  "
+                f"Wind {round(entry['wind_kph'])} km/h  Humidity {entry['humidity']}%"
+            )
+    return "\n".join(lines)
+
+
+def _format_weather_ai_reply(message: str, current: dict, forecast: dict, model: str, system_text: str) -> str:
+    """Ask Gemini to answer the user's weather question using live data."""
+    lang = _detect_message_lang(message)
+    if not current:
+        if lang == "ru":
+            return "Не удалось получить погоду. Проверьте название города."
+        if lang == "kz":
+            return "Ауа райын алу мүмкін болмады. Қала атауын тексеріңіз."
+        return "Could not fetch weather for that city. Please check the city name."
+
+    weather_ctx = _build_weather_context(current, forecast)
 
     if lang == "ru":
-        return (
-            f"Погода в {city}, {country}:\n"
-            f"- Локальное время: {localtime}\n"
-            f"- Температура: {temp}°C (ощущается как {feels}°C)\n"
-            f"- Состояние: {cond}\n"
-            f"- Влажность: {humidity}%\n"
-            f"- Ветер: {wind} км/ч {wind_dir}"
-        )
-    if lang == "kz":
-        return (
-            f"{city}, {country} қаласындағы ауа райы:\n"
-            f"- Жергілікті уақыт: {localtime}\n"
-            f"- Температура: {temp}°C (сезіледі: {feels}°C)\n"
-            f"- Жағдайы: {cond}\n"
-            f"- Ылғалдылық: {humidity}%\n"
-            f"- Жел: {wind} км/сағ {wind_dir}"
-        )
-    return (
-        f"Weather in {city}, {country}:\n"
-        f"- Local time: {localtime}\n"
-        f"- Temperature: {temp}°C (feels like {feels}°C)\n"
-        f"- Condition: {cond}\n"
-        f"- Humidity: {humidity}%\n"
-        f"- Wind: {wind} km/h {wind_dir}"
+        lang_instruction = "Отвечай на русском языке."
+    elif lang == "kz":
+        lang_instruction = "Қазақ тілінде жауап бер."
+    else:
+        lang_instruction = "Reply in English."
+
+    prompt_system = (
+        f"{system_text}\n\n"
+        f"You have access to real-time weather data provided below. "
+        f"When answering a general weather question ('what is the weather', 'какая погода'), "
+        f"ALWAYS include ALL of these fields in your reply (same as a weather widget): "
+        f"temperature, feels like, condition, humidity, wind speed & direction, "
+        f"pressure, visibility, clouds %, sunrise & sunset. "
+        f"When the user asks a specific question (rain tomorrow, should I take umbrella, "
+        f"forecast for the week, etc.) — answer that specifically AND still mention "
+        f"the most relevant data points. "
+        f"Format numbers the same way as the data (already rounded integers). "
+        f"Be natural and conversational, not a raw data dump. "
+        f"{lang_instruction}\n\n"
+        f"[LIVE WEATHER DATA]\n{weather_ctx}"
     )
+
+    contents = [{"role": "user", "parts": [{"text": message}]}]
+    ai_text, err = _gemini_call(model, prompt_system, contents)
+    if err or not ai_text:
+        # Graceful fallback to structured reply if Gemini fails
+        city = current.get("city", "?")
+        country = current.get("country", "")
+        temp = current.get("temp")
+        feels = current.get("feels_like")
+        cond = current.get("description", "N/A")
+        hum = current.get("humidity")
+        wind = current.get("wind_kph")
+        wind_dir = current.get("wind_dir", "")
+        if lang == "ru":
+            return (f"Погода в {city}, {country}:\n"
+                    f"🌡 {temp}°C (ощущается {feels}°C) — {cond}\n"
+                    f"💧 Влажность: {hum}%   💨 Ветер: {wind} км/ч {wind_dir}")
+        return (f"Weather in {city}, {country}:\n"
+                f"🌡 {temp}°C (feels {feels}°C) — {cond}\n"
+                f"💧 Humidity: {hum}%   💨 Wind: {wind} km/h {wind_dir}")
+    return ai_text
 
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
     data = request.get_json()
     user_message = data.get("message", "")
-    email_data = data.get("email", None)  # Extract email if present
-    
+    email_data = data.get("email", None)
+    sid = _get_chat_session_id()
+
     if not user_message:
         return jsonify({"error": "Empty message"}), 400
 
-    chat_history.append({"role": "user", "text": user_message})
+    _save_chat_msg(sid, "user", user_message)
 
     try:
         model = settings.get("model", "gemini-2.0-flash")
@@ -915,57 +1031,56 @@ def chat():
             memory_text = "\n".join(f"- {m['text']}" for m in context_memory)
             system_text += f"\n\nContext memory:\n{memory_text}"
 
-        # Add email context if email is open
         if email_data:
-            email_context = f"\n\n[CURRENT EMAIL CONTEXT]\n"
-            if email_data.get("subject"):
-                email_context += f"Subject: {email_data['subject']}\n"
-            if email_data.get("from"):
-                email_context += f"From: {email_data['from']}\n"
-            if email_data.get("to"):
-                email_context += f"To: {email_data['to']}\n"
-            if email_data.get("date"):
-                email_context += f"Date: {email_data['date']}\n"
+            email_context = "\n\n[CURRENT EMAIL CONTEXT]\n"
+            for k in ("subject", "from", "to", "date"):
+                if email_data.get(k):
+                    email_context += f"{k.title()}: {email_data[k]}\n"
             if email_data.get("body"):
                 email_context += f"Content:\n{email_data['body']}\n"
             email_context += "\nYou can help analyze, summarize, reply to, or perform actions related to this email."
             system_text += email_context
         else:
-            # If no email is explicitly open, fetch recent emails from database
             recent_emails = get_recent_emails(limit=10)
             if recent_emails:
                 system_text += recent_emails
 
-        # ── Lamp command interception (no Gemini needed) ──────────────────
+        # ── Lamp command interception ─────────────────────────────────────
         lamp_reply, lamp_st = _handle_lamp_command(user_message)
         if lamp_reply:
-            chat_history.append({"role": "assistant", "text": lamp_reply})
+            _save_chat_msg(sid, "assistant", lamp_reply)
             resp_data = {"reply": lamp_reply}
             if lamp_st:
                 resp_data["lamp"] = lamp_st
             return jsonify(resp_data)
-        # ─────────────────────────────────────────────────────────────────
 
-        # ── Email query interception (deterministic, DB-backed) ──────────
+        # ── Email query interception ──────────────────────────────────────
         if _is_email_query(user_message):
             email_reply = _format_email_direct_reply(user_message, email_data=email_data)
-            chat_history.append({"role": "assistant", "text": email_reply})
+            _save_chat_msg(sid, "assistant", email_reply)
             return jsonify({"reply": email_reply})
-        # ─────────────────────────────────────────────────────────────────
 
-        # ── Weather query interception (deterministic, API-backed) ───────
+        # ── Weather query interception ────────────────────────────────────
         weather_city = detect_weather_query(user_message)
         if weather_city:
             w = fetch_weather(weather_city)
-            weather_reply = _format_weather_direct_reply(user_message, w)
-            chat_history.append({"role": "assistant", "text": weather_reply})
+            fc = fetch_forecast(weather_city)
+            weather_reply = _format_weather_ai_reply(user_message, w, fc, model, system_text)
+            _save_chat_msg(sid, "assistant", weather_reply)
             return jsonify({"reply": weather_reply})
-        # ─────────────────────────────────────────────────────────────────
+
+        # ── Build Gemini conversation from DB history ─────────────────────
+        db_msgs = (ChatMessage.query
+                   .filter_by(session_id=sid)
+                   .order_by(ChatMessage.created_at.desc())
+                   .limit(30)
+                   .all())
+        db_msgs.reverse()
 
         contents = []
-        for msg in chat_history[-20:]:
-            role = "user" if msg["role"] == "user" else "model"
-            contents.append({"role": role, "parts": [{"text": msg["text"]}]})
+        for m in db_msgs:
+            role = "user" if m.role == "user" else "model"
+            contents.append({"role": role, "parts": [{"text": m.text}]})
 
         ai_text, err = _gemini_call(model, system_text, contents)
         if err:
@@ -973,8 +1088,31 @@ def chat():
     except Exception as e:
         ai_text = f"Connection error: {str(e)}"
 
-    chat_history.append({"role": "assistant", "text": ai_text})
+    _save_chat_msg(sid, "assistant", ai_text)
     return jsonify({"reply": ai_text})
+
+
+@app.route("/api/chat/history", methods=["GET"])
+def chat_history_get():
+    """Return chat history for the current session (newest last)."""
+    sid = _get_chat_session_id()
+    limit = min(int(request.args.get("limit", 100)), 500)
+    msgs = (ChatMessage.query
+            .filter_by(session_id=sid)
+            .order_by(ChatMessage.created_at.asc())
+            .limit(limit)
+            .all())
+    return jsonify({"messages": [m.to_dict() for m in msgs]})
+
+
+@app.route("/api/chat/history", methods=["DELETE"])
+def chat_history_clear():
+    """Clear all chat history for the current session."""
+    sid = _get_chat_session_id()
+    ChatMessage.query.filter_by(session_id=sid).delete()
+    db.session.commit()
+    chat_history.clear()
+    return jsonify({"status": "ok"})
 
 
 @app.route("/api/weather", methods=["GET"])
@@ -1183,23 +1321,21 @@ def play_music():
 
 # ═══════════════════════ EMAIL SERVICE ENDPOINTS ═══════════════════════
 
-import hashlib
-import secrets
-
 # ═══════════════════════ PASSWORD HELPERS ═══════════════════════
 
 def hash_password(password):
-    """Hash password with salt"""
     salt = secrets.token_hex(16)
-    pwd_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
+    pwd_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100_000)
     return f"{salt}${pwd_hash.hex()}"
 
+
 def verify_password(stored_hash, password):
-    """Verify password against hash"""
     try:
         salt, pwd_hash = stored_hash.split('$')
-        return hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000).hex() == pwd_hash
-    except:
+        expected = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100_000).hex()
+        # Timing-safe comparison — prevents timing side-channel attacks
+        return hmac.compare_digest(expected, pwd_hash)
+    except Exception:
         return False
 
 def create_session_token(user_id):
@@ -1244,7 +1380,6 @@ def email_register():
         if not email or not password:
             return jsonify({"error": "Email and password required"}), 400
 
-        # Check if email already exists
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
             return jsonify({"error": "Email already registered"}), 400
@@ -1252,7 +1387,6 @@ def email_register():
         if len(password) < 6:
             return jsonify({"error": "Password must be at least 6 characters"}), 400
 
-        # Create new user
         new_user = User(
             email=email,
             password_hash=hash_password(password)
@@ -1270,6 +1404,7 @@ def email_register():
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+
 @app.route('/api/email/login', methods=['POST'])
 def email_login():
     """Login to email account"""
@@ -1281,13 +1416,11 @@ def email_login():
         if not email or not password:
             return jsonify({"error": "Email and password required"}), 400
 
-        # Find user in database
         user = User.query.filter_by(email=email).first()
-        
+
         if not user or not verify_password(user.password_hash, password):
             return jsonify({"error": "Invalid email or password"}), 401
 
-        # Create session token
         session_token = create_session_token(user.id)
 
         return jsonify({
@@ -2491,18 +2624,12 @@ def camera_control():
 
 
 if __name__ == '__main__':
+    _debug = os.environ.get("FLASK_DEBUG", "false").lower() in ("1", "true", "yes")
     print("\n" + "="*70)
-    print("🚀 ARIA Application Starting")
+    print("ARIA Application Starting")
     print("="*70)
-    print(f"\n✅ Открывайте браузер на: http://localhost:5000")
-    print(f"\n⚠️  ВАЖНО ДЛЯ GMAIL OAUTH:")
-    print(f"   • Используйте ТОЛЬКО: http://localhost:5000")
-    print(f"   • НЕ используйте: http://127.0.0.1:5000")
-    print(f"   • (Если откроется 127.0.0.1, будет редирект на localhost)")
-    print(f"\n📧 Gmail OAuth endpoints:")
-    print(f"   • Авторизация: http://localhost:5000/api/gmail/login")
-    print(f"   • Статус: http://localhost:5000/api/gmail/status")
-    print(f"   • Отправить письмо: POST http://localhost:5000/api/gmail/send")
-    print(f"\n" + "="*70)
-    
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    print(f"  Open: http://localhost:5000")
+    print(f"  Debug mode: {'ON (development)' if _debug else 'OFF (production)'}")
+    print(f"\n  Gmail OAuth: http://localhost:5000/api/gmail/login")
+    print("="*70 + "\n")
+    socketio.run(app, host='0.0.0.0', port=5000, debug=_debug, allow_unsafe_werkzeug=True)

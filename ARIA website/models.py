@@ -1,9 +1,29 @@
-"""Database models for ARIA email service."""
+"""Database models for ARIA."""
 
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import secrets
 
 db = SQLAlchemy()
+
+
+class ChatMessage(db.Model):
+    """Persisted chat message, scoped to a chat session."""
+    __tablename__ = 'chat_messages'
+
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.String(64), nullable=False, index=True)
+    role = db.Column(db.String(16), nullable=False)  # "user" | "assistant"
+    text = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "role": self.role,
+            "text": self.text,
+            "created_at": self.created_at.isoformat() + "Z",
+        }
 
 class User(db.Model):
     """User account model for local email authentication."""

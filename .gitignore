@@ -3,6 +3,11 @@
 .env.local
 .env.*.local
 
+# OAuth credentials (NEVER commit these!)
+credentials.json
+token.json
+*.json.secret
+
 # Python
 __pycache__/
 *.py[cod]
@@ -60,3 +65,9 @@ logs/
 
 # Qdrant data (if local)
 qdrant_data/
+
+# SQLite database (contains passwords, tokens, cached emails — never commit)
+*.db
+*.sqlite
+*.sqlite3
+instance/

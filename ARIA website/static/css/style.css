@@ -204,6 +204,14 @@ body {
 .card-header h2 { font-size: 1rem; font-weight: 600; }
 .card-icon { font-size: 20px; color: var(--accent-light); }
 
+.clear-chat-btn {
+    margin-left: auto; background: none; border: none; cursor: pointer;
+    color: var(--text-secondary); display: flex; align-items: center;
+    padding: 6px; border-radius: var(--radius-md); transition: var(--transition);
+}
+.clear-chat-btn:hover { color: var(--danger); background: rgba(239,68,68,0.1); }
+.clear-chat-btn .material-icons-round { font-size: 20px; }
+
 /* ─── DASHBOARD ─── */
 .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .quick-actions-card { grid-column: 1; }
@@ -696,15 +704,8 @@ body {
 @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(40px); } }
 
 /* ─── EMAIL & ACCOUNT STYLES ─── */
-.card-header {
-    position: relative;
-}
-
+/* Buttons share .account-icon-btn; do not absolutely position them or they stack on one spot. */
 .account-icon-btn {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
     background: none;
     border: none;
     cursor: pointer;
@@ -714,11 +715,12 @@ body {
     padding: 8px;
     border-radius: var(--radius-full);
     transition: var(--transition);
+    flex-shrink: 0;
 }
 
 .account-icon-btn:hover {
     background: var(--accent-bg);
-    transform: translateY(-50%) scale(1.1);
+    transform: scale(1.05);
 }
 
 .account-avatar {
