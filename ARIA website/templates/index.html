@@ -89,21 +89,15 @@
                         <span class="lamp-badge" id="lampBadge">OFF</span>
                     </div>
 
-                    <!-- Power row -->
-                    <div class="actions-grid" style="margin-bottom:14px">
+                    <div class="lamp-scroll">
+                    <!-- Power -->
+                    <div class="actions-grid actions-grid--single" style="margin-bottom:14px">
                         <button class="action-btn" data-action="light" id="btnLight">
                             <div class="action-icon-wrap">
                                 <span class="material-icons-round">power_settings_new</span>
                             </div>
                             <span class="action-label" data-i18n="light_onoff">On / Off</span>
                             <span class="action-status" id="lightStatus" data-i18n="status_ready">Ready</span>
-                        </button>
-                        <button class="action-btn" data-action="robot" id="btnRobot">
-                            <div class="action-icon-wrap">
-                                <span class="material-icons-round">smart_toy</span>
-                            </div>
-                            <span class="action-label" data-i18n="call_robot">Call Robot</span>
-                            <span class="action-status" data-i18n="status_ready">Ready</span>
                         </button>
                     </div>
 
@@ -162,9 +156,26 @@
                             <span id="rgbBtnLabel">RGB Cycle</span>
                         </button>
                     </div>
+                    </div>
                 </div>
 
-                <!-- AI Chat -->
+                <!-- Voice robot (top-right) — AI chat must sit directly below in grid -->
+                <div class="card robot-card">
+                    <div class="card-header">
+                        <span class="material-icons-round card-icon">smart_toy</span>
+                        <h2 data-i18n="robot_card_title">Voice robot</h2>
+                    </div>
+                    <p class="robot-card-hint" data-i18n="robot_card_hint">Press the button, speak your request, then listen for the reply.</p>
+                    <button type="button" class="action-btn robot-action-btn" id="btnRobot">
+                        <div class="action-icon-wrap">
+                            <span class="material-icons-round">mic</span>
+                        </div>
+                        <span class="action-label" data-i18n="call_robot">Call Robot</span>
+                        <span class="action-status" data-i18n="status_ready">Ready</span>
+                    </button>
+                </div>
+
+                <!-- AI Chat (bottom-right, under Voice robot) -->
                 <div class="card chat-card">
                     <div class="card-header">
                         <span class="material-icons-round card-icon">forum</span>
@@ -304,14 +315,11 @@
                         <span class="material-icons-round card-icon">email</span>
                         <h2 data-i18n="email">Email</h2>
                         <div style="display: flex; gap: 8px; align-items: center; margin-left: auto;">
-                            <button class="account-icon-btn" id="syncAllEmailBtn" title="Sync all emails (2 months)"
-                                style="background: none; border: none; cursor: pointer; color: var(--accent); display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600;">
-                                <span class="material-icons-round" style="font-size:16px;">cloud_sync</span>
-                                <span id="syncAllEmailLabel">Sync All</span>
-                            </button>
-                            <button class="account-icon-btn" id="refreshEmailBtn" title="Refresh emails"
-                                style="background: none; border: none; cursor: pointer; color: var(--text-primary); display: flex; align-items: center;">
-                                <span class="material-icons-round">refresh</span>
+                            <button type="button" class="account-icon-btn email-sync-btn" id="syncAllEmailBtn"
+                                title="Refresh inbox and sync with Gmail (up to 2 months)"
+                                style="background: none; border: none; cursor: pointer; color: var(--accent); display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 6px 8px; border-radius: var(--radius-md);">
+                                <span class="material-icons-round" style="font-size:18px;">sync</span>
+                                <span id="syncAllEmailLabel">Sync</span>
                             </button>
                             <button class="account-icon-btn" id="accountIconBtn" title="Account">
                                 <div class="account-avatar" id="accountAvatar">
@@ -333,7 +341,7 @@
                             <span class="material-icons-round" style="font-size: 16px;">chevron_left</span>
                             <span>Newer</span>
                         </button>
-                        <span id="emailPageInfo" style="color: var(--text-secondary); font-size: 12px;">1 / 6</span>
+                        <span id="emailPageInfo" style="color: var(--text-secondary); font-size: 12px;">1 / 1</span>
                         <button id="emailOlderBtn"
                             style="background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 4px; transition: color 0.2s;">
                             <span>Older</span>

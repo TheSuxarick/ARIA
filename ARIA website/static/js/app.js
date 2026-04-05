@@ -261,6 +261,8 @@ document.addEventListener("DOMContentLoaded", () => {
             quick_actions: "Quick Actions",
             light_onoff: "Light On/Off",
             call_robot: "Call Robot",
+            robot_card_title: "Voice robot",
+            robot_card_hint: "Press the button, speak your request, then listen for the reply.",
             status_ready: "Ready",
             status_active: "Active",
             status_processing: "Processing...",
@@ -277,6 +279,10 @@ document.addEventListener("DOMContentLoaded", () => {
             weather_widget: "Weather widget",
             email: "Email",
             email_integration: "Email integration",
+            email_connect_title: "Connect Gmail",
+            email_connect_hint: "Sign in with Google to load your inbox here. You can also use “Login with Gmail” in Account.",
+            email_connect_btn: "Sign in with Gmail",
+            email_connect_open_account: "Open Account",
             // Settings
             context_memory: "Context Memory",
             memory_placeholder: "Add a memory entry...",
@@ -306,6 +312,9 @@ document.addEventListener("DOMContentLoaded", () => {
             // Toasts
             toast_lights_toggled: "Lights toggled",
             toast_robot_called: "Robot called",
+            toast_robot_connecting: "Connecting to robot…",
+            toast_robot_listening: "Robot listening…",
+            toast_robot_audio_unavailable: "Robot: audio server unavailable",
             toast_action_failed: "Action failed",
             toast_settings_saved: "Settings saved",
             toast_save_failed: "Save failed",
@@ -341,6 +350,8 @@ document.addEventListener("DOMContentLoaded", () => {
             quick_actions: "Быстрые действия",
             light_onoff: "Свет Вкл/Выкл",
             call_robot: "Вызвать робота",
+            robot_card_title: "Голосовой робот",
+            robot_card_hint: "Нажмите кнопку, произнесите запрос и дождитесь ответа.",
             status_ready: "Готов",
             status_active: "Активен",
             status_processing: "Обработка...",
@@ -355,6 +366,10 @@ document.addEventListener("DOMContentLoaded", () => {
             weather_widget: "Виджет погоды",
             email: "Почта",
             email_integration: "Интеграция почты",
+            email_connect_title: "Подключите Gmail",
+            email_connect_hint: "Войдите через Google, чтобы загрузить почту. Также можно нажать «Войти через Gmail» в разделе Аккаунт.",
+            email_connect_btn: "Войти через Gmail",
+            email_connect_open_account: "Открыть аккаунт",
             context_memory: "Контекстная память",
             memory_placeholder: "Добавить запись...",
             model_settings: "Настройки модели",
@@ -382,6 +397,9 @@ document.addEventListener("DOMContentLoaded", () => {
             audio_src_esp_on: "Используется микрофон и динамик ESP32",
             toast_lights_toggled: "Свет переключён",
             toast_robot_called: "Робот вызван",
+            toast_robot_connecting: "Подключение к роботу…",
+            toast_robot_listening: "Робот слушает…",
+            toast_robot_audio_unavailable: "Робот: нет связи с аудио-сервером",
             toast_action_failed: "Ошибка действия",
             toast_settings_saved: "Настройки сохранены",
             toast_save_failed: "Ошибка сохранения",
@@ -415,6 +433,8 @@ document.addEventListener("DOMContentLoaded", () => {
             quick_actions: "Жылдам әрекеттер",
             light_onoff: "Жарық Қосу/Өшіру",
             call_robot: "Роботты шақыру",
+            robot_card_title: "Дыбыстық робот",
+            robot_card_hint: "Батырманы басыңыз, сұрауыңызды айтыңыз да, жауапты тыңдаңыз.",
             status_ready: "Дайын",
             status_active: "Белсенді",
             status_processing: "Өңделуде...",
@@ -429,6 +449,10 @@ document.addEventListener("DOMContentLoaded", () => {
             weather_widget: "Ауа райы виджеті",
             email: "Пошта",
             email_integration: "Пошта интеграциясы",
+            email_connect_title: "Gmail қосу",
+            email_connect_hint: "Поштаны көру үшін Google арқылы кіріңіз. «Gmail арқылы кіру» түймесі Аккаунт бөлімінде де бар.",
+            email_connect_btn: "Gmail арқылы кіру",
+            email_connect_open_account: "Аккаунтты ашу",
             context_memory: "Контекстік жады",
             memory_placeholder: "Жазба қосу...",
             model_settings: "Модель баптаулары",
@@ -456,6 +480,9 @@ document.addEventListener("DOMContentLoaded", () => {
             audio_src_esp_on: "ESP32 микрофоны мен динамигі қолданылуда",
             toast_lights_toggled: "Жарық ауыстырылды",
             toast_robot_called: "Робот шақырылды",
+            toast_robot_connecting: "Роботқа қосылу…",
+            toast_robot_listening: "Робот тыңдауда…",
+            toast_robot_audio_unavailable: "Робот: аудио сервер қол жетімсіз",
             toast_action_failed: "Әрекет қатесі",
             toast_settings_saved: "Баптаулар сақталды",
             toast_save_failed: "Сақтау қатесі",
@@ -646,7 +673,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     const btn = document.getElementById('syncAllEmailBtn');
                     const label = document.getElementById('syncAllEmailLabel');
                     if (btn) btn.disabled = false;
-                    if (label) label.textContent = 'Sync All';
+                    if (label) label.textContent = 'Sync';
                 }
             })();
             return;
@@ -1274,6 +1301,7 @@ document.addEventListener("DOMContentLoaded", () => {
         _aSocket = io("/audio");
         _aSocket.on("connect", () => console.log("[AUDIO] Socket connected to /audio"));
         _aSocket.on("connect_error", (err) => console.error("[AUDIO] Connection error:", err.message));
+        _aSocket.on("lamp_update", (state) => updateLampUI(state));
         return _aSocket;
     }
     let _robotActive = false;
@@ -1477,9 +1505,26 @@ document.addEventListener("DOMContentLoaded", () => {
                 addChatBubble("assistant", data.text);
             });
 
-            sock.emit("robot_start");
+            function onRobotConnectError() {
+                sock.off("connect_error", onRobotConnectError);
+                setRobotState("idle");
+                showToast(t("toast_robot_audio_unavailable"), "error");
+            }
+
             setRobotState("listening");
-            showToast("Robot listening...", "success");
+
+            if (sock.connected) {
+                sock.emit("robot_start");
+                showToast(t("toast_robot_listening"), "success");
+            } else {
+                showToast(t("toast_robot_connecting"), "info");
+                sock.once("connect_error", onRobotConnectError);
+                sock.once("connect", () => {
+                    sock.off("connect_error", onRobotConnectError);
+                    sock.emit("robot_start");
+                    showToast(t("toast_robot_listening"), "success");
+                });
+            }
         });
     }
 
@@ -1560,9 +1605,51 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (email) setCurrentAccount(email);
                 if (gmailSection) gmailSection.style.display = 'block';
                 loadEmails();
+            } else {
+                localStorage.removeItem(GMAIL_AUTH_KEY);
+                if (gmailSection) gmailSection.style.display = 'none';
+                loadEmails();
             }
         } catch (e) {
             console.error('Gmail status check error:', e);
+        }
+    }
+
+    /** Inbox unavailable until Gmail OAuth — show CTA instead of empty list / demo data */
+    function renderEmailConnectPrompt() {
+        const emailsList = document.getElementById('emails-list');
+        if (!emailsList) return;
+        emailsList.innerHTML = `
+            <div class="email-gmail-prompt" style="padding: 28px 20px; text-align: center; color: var(--text-secondary); max-width: 340px; margin: 0 auto;">
+                <span class="material-icons-round" style="font-size: 48px; color: var(--accent-light); opacity: 0.9;">mark_email_unread</span>
+                <p style="margin: 14px 0 8px; font-size: 15px; font-weight: 600; color: var(--text-primary);">${t('email_connect_title')}</p>
+                <p style="margin: 0 0 18px; font-size: 12px; line-height: 1.55; color: var(--text-secondary);">${t('email_connect_hint')}</p>
+                <div style="display: flex; flex-direction: column; gap: 10px; align-items: stretch;">
+                    <button type="button" id="emailConnectGmailBtn" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 16px; border-radius: var(--radius-md); font-size: 0.9rem; font-weight: 600; cursor: pointer; border: none; background: #ea4335; color: #fff;">
+                        <span class="material-icons-round" style="font-size: 20px;">mail</span>
+                        ${t('email_connect_btn')}
+                    </button>
+                    <button type="button" id="emailOpenAccountBtn" style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-primary); padding: 9px 12px; border-radius: var(--radius-md); font-size: 0.82rem; cursor: pointer;">
+                        ${t('email_connect_open_account')}
+                    </button>
+                </div>
+            </div>`;
+        const pageInfo = document.getElementById('emailPageInfo');
+        if (pageInfo) pageInfo.textContent = '—';
+        const newerBtn = document.getElementById('emailNewerBtn');
+        const olderBtn = document.getElementById('emailOlderBtn');
+        if (newerBtn) { newerBtn.disabled = true; newerBtn.style.opacity = '0.5'; }
+        if (olderBtn) { olderBtn.disabled = true; olderBtn.style.opacity = '0.5'; }
+        const connectBtn = document.getElementById('emailConnectGmailBtn');
+        if (connectBtn && gmailLoginBtn) {
+            connectBtn.onclick = () => { gmailLoginBtn.click(); };
+        }
+        const accBtn = document.getElementById('emailOpenAccountBtn');
+        if (accBtn && accountIconBtn) {
+            accBtn.onclick = () => {
+                openModal();
+                if (gmailSection) gmailSection.style.display = 'block';
+            };
         }
     }
 
@@ -1575,14 +1662,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: JSON.stringify({ mode }),
             });
             if (syncResp.ok) {
-                // Refresh the list silently after sync
-                const resp = await fetch('/api/emails/inbox?max_results=500');
-                const data = await resp.json();
-                if (data.emails && data.emails.length > 0) {
-                    window._ariaEmails = data.emails;
-                    renderEmailList(window._ariaActiveFilter || 'all');
-                    updateUnreadBadge();
-                }
+                // Re-run full inbox pipeline (classification + mocks) — skip nested sync
+                await loadEmails(mode, true);
+                updateUnreadBadge();
             }
         } catch (e) {
             console.error('Background sync error:', e);
@@ -1590,33 +1672,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Load and display emails (mode: 'fast' or 'full')
-    async function loadEmails(mode = 'fast') {
+    // skipBackgroundSync: set true when called from syncEmailsBackground to avoid recursion
+    async function loadEmails(mode = 'fast', skipBackgroundSync = false) {
         try {
             // Step 1: show cached emails INSTANTLY (no API calls)
             const cached = await fetch('/api/emails/inbox?max_results=500');
             const cachedData = await cached.json();
 
-            // Step 2: sync Gmail in background (non-blocking)
-            syncEmailsBackground(mode);
-
-            // Use cached data for immediate render
-            const resp = cached;
-            const data = cachedData;
-
-            // Ищем правильный контейнер из твоего HTML!
             const emailsList = document.getElementById('emails-list');
             if (!emailsList) return;
 
-            // Если писем нет - показываем красивую заглушку в emails-list
-            if (!data.emails || data.emails.length === 0) {
+            if (cachedData.error) {
                 emailsList.innerHTML = `
-                    <div class="placeholder-content" style="padding: 30px; text-align: center; color: var(--text-secondary);">
-                        <span class="material-icons-round" style="font-size: 32px; opacity: 0.5;">mail_outline</span>
-                        <p style="margin-top: 8px; font-size: 14px;">No emails yet</p>
-                    </div>
-                `;
+                    <div style="padding: 28px; text-align: center; color: var(--danger); font-size: 13px;">
+                        <span class="material-icons-round" style="font-size: 36px; opacity: 0.7;">error_outline</span>
+                        <p style="margin-top: 10px;">${escapeHtml(cachedData.error)}</p>
+                    </div>`;
                 return;
             }
+
+            if (cachedData.needs_gmail || cachedData.source === 'none') {
+                renderEmailConnectPrompt();
+                return;
+            }
+
+            // Step 2: sync Gmail in background (non-blocking)
+            if (!skipBackgroundSync) syncEmailsBackground(mode);
+
+            const data = cachedData;
 
             // ── Email classification helpers ──────────────────────────────
             const AD_SENDER_PATTERNS = [
@@ -1704,8 +1787,11 @@ document.addEventListener("DOMContentLoaded", () => {
             // Classify every email
             allEmails.forEach(e => { e._category = classifyEmail(e); });
 
-            // Filter out ads from all views — ads are NEVER shown
-            const visibleEmails = allEmails.filter(e => e._category !== 'ad');
+            // Filter out ads from default "all" view; if that hides everything, show full inbox
+            let visibleEmails = allEmails.filter(e => e._category !== 'ad');
+            if (visibleEmails.length === 0 && allEmails.length > 0) {
+                visibleEmails = allEmails.slice();
+            }
 
             // Store for modal & filter use
             window._ariaEmails = visibleEmails;
@@ -1729,6 +1815,12 @@ document.addEventListener("DOMContentLoaded", () => {
                         <span class="material-icons-round" style="font-size:32px; opacity:0.4;">inbox</span>
                         <p style="margin:8px 0 0; font-size:13px;">No emails in this category</p>
                     </div>`;
+                    const pageInfoEmpty = document.getElementById('emailPageInfo');
+                    if (pageInfoEmpty) pageInfoEmpty.textContent = '0 / 0';
+                    const newerBtn = document.getElementById('emailNewerBtn');
+                    const olderBtn = document.getElementById('emailOlderBtn');
+                    if (newerBtn) { newerBtn.disabled = true; newerBtn.style.opacity = '0.5'; }
+                    if (olderBtn) { olderBtn.disabled = true; olderBtn.style.opacity = '0.5'; }
                     return;
                 }
 
@@ -2384,6 +2476,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     gmailSection.style.display = 'none';
                 }
                 showToast('Disconnected from Gmail', 'success');
+                loadEmails();
             } catch (e) {
                 showToast('Error disconnecting Gmail: ' + e.message, 'error');
             }
@@ -2393,37 +2486,26 @@ document.addEventListener("DOMContentLoaded", () => {
     // Event listeners
     accountIconBtn.addEventListener('click', openModal);
 
-    // Refresh email button
-    const refreshEmailBtn = document.getElementById('refreshEmailBtn');
-    if (refreshEmailBtn) {
-        refreshEmailBtn.addEventListener('click', async () => {
-            refreshEmailBtn.disabled = true;
-            refreshEmailBtn.style.opacity = '0.5';
-            await loadEmails('fast');
-            refreshEmailBtn.disabled = false;
-            refreshEmailBtn.style.opacity = '1';
-        });
-    }
-
-    // "Sync All" — clears cache and re-fetches 2 months of emails
+    // Одна кнопка Sync: быстрое обновление списка из кэша, затем полная синхронизация с Gmail
     const syncAllEmailBtn = document.getElementById('syncAllEmailBtn');
     const syncAllEmailLabel = document.getElementById('syncAllEmailLabel');
+    const SYNC_LABEL_DEFAULT = 'Sync';
     if (syncAllEmailBtn) {
-        syncAllEmailBtn.addEventListener('click', async () => {
+        syncAllEmailBtn.addEventListener('click', async (ev) => {
+            ev.preventDefault();
             syncAllEmailBtn.disabled = true;
-            if (syncAllEmailLabel) syncAllEmailLabel.textContent = 'Syncing…';
             try {
-                // 1. Wipe local cache so stale data disappears
+                if (syncAllEmailLabel) syncAllEmailLabel.textContent = 'Updating…';
+                await loadEmails('fast', true);
+                if (syncAllEmailLabel) syncAllEmailLabel.textContent = 'Syncing…';
                 await fetch('/api/emails/clear-cache', { method: 'POST' });
-                // 2. Reset full-sync timestamp so maybeFullSync() won't skip
                 localStorage.removeItem('lastFullEmailSync');
-                // 3. Run full 2-month sync (fast with batch requests)
                 await syncEmailsBackground('full');
             } catch (e) {
-                console.error('Sync All error:', e);
+                console.error('Email sync error:', e);
             } finally {
                 syncAllEmailBtn.disabled = false;
-                if (syncAllEmailLabel) syncAllEmailLabel.textContent = 'Sync All';
+                if (syncAllEmailLabel) syncAllEmailLabel.textContent = SYNC_LABEL_DEFAULT;
             }
         });
     }

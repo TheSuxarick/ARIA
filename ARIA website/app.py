@@ -1724,11 +1724,11 @@ def get_inbox():
         max_results = request.args.get('max_results', 500, type=int)
 
         if not gmail_email:
-            return jsonify({"emails": [], "source": "none"}), 200
+            return jsonify({"emails": [], "source": "none", "needs_gmail": True}), 200
 
         gmail_account = GmailAccount.query.filter_by(email=gmail_email).first()
         if not gmail_account:
-            return jsonify({"emails": [], "source": "none"}), 200
+            return jsonify({"emails": [], "source": "none", "needs_gmail": True}), 200
 
         emails = (EmailMessage.query
                   .filter_by(account_id=gmail_account.id)
@@ -1750,6 +1750,7 @@ def get_inbox():
         return jsonify({
             "emails":       emails_data,
             "source":       "cache",
+            "needs_gmail":  False,
             "total":        len(emails_data),
             "unread_count": unread,
         }), 200

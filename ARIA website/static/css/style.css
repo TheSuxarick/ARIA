@@ -186,8 +186,17 @@ body {
 }
 
 /* ─── PAGES ─── */
-.page { display: none; padding: 24px 28px; overflow-y: auto; flex: 1; }
+.page { display: none; padding: 24px 28px; overflow-y: auto; flex: 1; min-height: 0; }
 .page.active { display: block; }
+
+/* Dashboard: fixed layout — grid fills viewport, long chat scrolls inside card */
+#page-dashboard.page.active {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+}
 
 /* ─── CARDS ─── */
 .card {
@@ -213,10 +222,115 @@ body {
 .clear-chat-btn .material-icons-round { font-size: 20px; }
 
 /* ─── DASHBOARD ─── */
-.dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.quick-actions-card { grid-column: 1; }
-.chat-card { grid-column: 2; grid-row: 1 / 3; display: flex; flex-direction: column; }
+/* Right column: Voice robot = compact (content height); chat = fills rest */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+        "lamp robot"
+        "lamp chat";
+    gap: 20px;
+    align-items: stretch;
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+}
+.dashboard-grid .quick-actions-card {
+    grid-area: lamp;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+}
+.dashboard-grid .quick-actions-card .card-header {
+    flex-shrink: 0;
+}
+.dashboard-grid .lamp-scroll {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+    overscroll-behavior: contain;
+}
+.dashboard-grid .robot-card {
+    grid-area: robot;
+    align-self: start;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+    padding: 14px 16px 16px;
+    overflow: hidden;
+}
+.dashboard-grid .robot-card .card-header {
+    margin-bottom: 8px;
+}
+.dashboard-grid .robot-card .card-header h2 {
+    font-size: 0.92rem;
+}
+.dashboard-grid .robot-card .robot-card-hint {
+    margin: 0 0 10px;
+    font-size: 0.75rem;
+    line-height: 1.4;
+}
+.dashboard-grid .robot-card .robot-action-btn {
+    padding: 12px 14px;
+    gap: 6px;
+}
+.dashboard-grid .robot-card .robot-action-btn .action-icon-wrap {
+    width: 44px;
+    height: 44px;
+}
+.dashboard-grid .robot-card .robot-action-btn .action-icon-wrap .material-icons-round {
+    font-size: 22px;
+}
+.dashboard-grid .robot-card .robot-action-btn .action-label {
+    font-size: 0.82rem;
+}
+.dashboard-grid .robot-card .robot-action-btn .action-status {
+    font-size: 0.68rem;
+}
+.dashboard-grid .chat-card {
+    grid-area: chat;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+}
+.dashboard-grid .chat-card .card-header {
+    flex-shrink: 0;
+}
+/* Messages scroll inside card — long AI replies never stretch the grid */
+.dashboard-grid .chat-card .chat-messages {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    padding-left: 14px;
+    padding-right: 14px;
+}
+.dashboard-grid .chat-card .chat-input-wrap {
+    flex-shrink: 0;
+    margin-top: auto;
+}
 .actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.actions-grid--single { grid-template-columns: 1fr; }
+.robot-card-hint {
+    font-size: 0.82rem; color: var(--text-secondary); line-height: 1.45;
+    margin: -6px 0 16px 0;
+}
+.robot-action-btn { width: 100%; }
 .action-btn {
     display: flex; flex-direction: column; align-items: center; gap: 10px;
     padding: 24px 16px; background: var(--bg-input);
@@ -322,13 +436,16 @@ body {
 
 /* ─── CHAT ─── */
 .chat-messages {
-    flex: 1; overflow-y: auto; padding: 8px 0;
+    flex: 1; overflow-y: auto;
+    padding: 8px 14px;
     display: flex; flex-direction: column; gap: 12px;
     min-height: 200px; max-height: 380px;
+    box-sizing: border-box;
 }
 .chat-bubble { max-width: 85%; padding: 10px 16px; border-radius: var(--radius-md); font-size: 0.9rem; line-height: 1.5; }
 .chat-bubble.user {
-    align-self: flex-end; background: linear-gradient(135deg, var(--accent), #047857);
+    align-self: flex-end;
+    background: linear-gradient(135deg, var(--accent), #047857);
     color: white; border-bottom-right-radius: 4px;
 }
 .chat-bubble.assistant {
@@ -761,6 +878,14 @@ body {
     transform: scale(1.05);
 }
 
+.email-sync-btn {
+    border-radius: var(--radius-md) !important;
+}
+.email-sync-btn:hover {
+    background: var(--accent-bg) !important;
+    transform: none;
+}
+
 .account-avatar {
     width: 40px;
     height: 40px;
@@ -1077,8 +1202,23 @@ hr {
     .sidebar.open { transform: translateX(0); }
     .main-content { margin-left: 0; }
     .menu-toggle { display: flex; }
-    .dashboard-grid { grid-template-columns: 1fr; }
-    .chat-card { grid-column: 1; grid-row: auto; }
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        grid-template-areas:
+            "lamp"
+            "robot"
+            "chat";
+        flex: none;
+        max-height: none;
+        overflow: visible;
+    }
+    #page-dashboard.page.active {
+        overflow-y: auto;
+    }
+    .dashboard-grid .chat-card .chat-messages {
+        max-height: min(380px, 50vh);
+    }
     .functions-grid { grid-template-columns: 1fr; }
     .weather-card { grid-column: span 1; grid-row: auto; }
     .functions-grid .email-card { grid-column: 1; grid-row: auto; }
