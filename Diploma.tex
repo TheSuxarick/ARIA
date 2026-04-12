@@ -1,0 +1,530 @@
+\documentclass[12pt,a4paper]{report}
+
+% Font and encoding
+\usepackage[T2A, T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian, english]{babel}
+\babelprovide[import]{kazakh}
+\usepackage{tempora}
+\usepackage{geometry}
+\geometry{a4paper, margin=2.5cm}
+
+% Packages
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage[table]{xcolor}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{indentfirst}
+\usepackage{microtype}
+\usepackage{parskip}
+
+% Spacing
+\onehalfspacing
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=blue,
+    citecolor=black
+}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!10},
+    keywordstyle=\color{blue},
+    stringstyle=\color{red!70!black},
+    commentstyle=\color{green!50!black},
+    showstringspaces=false,
+    numbers=left,
+    numberstyle=\tiny,
+    tabsize=2
+}
+
+\titleformat{\chapter}[display]
+  {\normalfont\Large\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\LARGE}
+\titlespacing*{\chapter}{0pt}{20pt}{20pt}
+
+\titleformat{\section}
+  {\normalfont\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}
+  {\normalfont\normalsize\bfseries}{\thesubsection}{1em}{}
+
+\definecolor{tableblue}{RGB}{129, 183, 255}
+
+% -----------------------------------------------
+\begin{document}
+
+% -----------------------------------------------
+% TITLE PAGE 1
+% -----------------------------------------------
+\begin{titlepage}
+\centering
+
+\includegraphics[width=0.3\textwidth]{sdu_logo.png}\\[1cm]
+
+{\large SDU University\\Faculty of Engineering and Natural Sciences}
+
+\vspace{3cm}
+{\Huge\bfseries DIPLOMA PROJECT}
+
+\vspace{0.5cm}
+{\Large ARIA. The personal AI assistant for home monitoring, device control, and information access.}
+
+\vspace{1.5cm}
+{\normalsize
+Kenesbayev Arsen, Orynbek Aidos, Sagibek Adil\\[0.5em]
+6B06102   -- ``Computer Science''
+}
+
+\vfill
+{\normalsize Kaskelen, 2026}
+\end{titlepage}
+
+% -----------------------------------------------
+% TITLE PAGE 2
+% -----------------------------------------------
+\begin{titlepage}
+    \centering
+
+    \includegraphics[width=0.25\textwidth]{sdu_logo.png}\\[0.5cm]
+
+    {\Large \textbf{SDU University}}\\[0.2cm]
+    {\large Faculty of Engineering and Natural Sciences}
+
+    \vfill
+
+    \begin{flushright}
+        \begin{minipage}{0.4\textwidth}
+            \raggedleft
+            Dean of Faculty\\
+            Assistant Professor,\\
+            Ph.D. Ramis Akhmedov\\[1.5cm]
+
+            \rule{7cm}{0.6pt}\\
+            \guillemotleft\hspace{1cm}\guillemotright\hspace{2cm} 2026y.
+        \end{minipage}
+    \end{flushright}
+
+\vspace{2cm}
+\centering
+{\Huge\bfseries DIPLOMA PROJECT}
+
+\vspace{0.5cm}
+{\Large ARIA. The personal AI assistant for home monitoring, device control, and information access.}
+
+\vspace{1cm}
+{\normalsize 6B06102  -- ``Computer Science''}
+
+\vspace{1.5cm}
+\begin{tabular}{ll}
+\textbf{Supervisor:}    & Binara Imankulova \\[0.5em]
+\textbf{Students:}      & Kenesbayev Arsen, Orynbek Aidos, \\
+                        & Sagibek Adil \\
+\end{tabular}
+
+\vfill
+{\normalsize Kaskelen, 2026}
+\end{titlepage}
+
+% -----------------------------------------------
+% ABSTRACT (English)
+% -----------------------------------------------
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+This thesis describes \textbf{ARIA}, an integrated smart-home assistant that combines a locally hosted web application with a custom 3D-printed device. A Flask server provides a browser dashboard, conversational AI (Google Gemini), optional Kazakh-oriented tooling, Gmail integration via OAuth~2.0, weather information, YouTube-based music playback, and control of a Yeelight smart bulb. Physical interaction uses two Espressif ESP32 modules on the same Wi-Fi network: an ESP32-CAM delivers a live MJPEG video stream and drives a stepper motor for horizontal panning (a tilt servo is present in firmware but was not reliably usable in the printed mechanical assembly); a second ESP32 module bridges a digital I2S microphone (INMP441) and a class-D amplifier (MAX98357) to the PC using low-latency UDP audio. Speech recognition uses \textit{faster-whisper}; synthesis uses \textit{edge-tts}; an optional wake-word model (\textit{openWakeWord}) can trigger hands-free sessions. The work highlights how commodity microcontrollers, open Python libraries, and cloud LLM APIs can be composed into a single, extensible home system while keeping part of the stack under the user's control.
+
+% -----------------------------------------------
+% ABSTRACT (Kazakh)
+% -----------------------------------------------
+\begin{otherlanguage}{russian}
+\chapter*{Аңдатпа}
+\addcontentsline{toc}{chapter}{Аңдатпа}
+Бұл дипломдық жобада үйді бақылау, құрылғыларды басқару және ақпаратқа қол жеткізу мақсатында жасалған \textbf{ARIA} интеграцияланған ақылды үй көмекшісі сипатталады. Flask веб-қосымшасы браузер арқылы басқару тақтасын, сұхбаттасу үшін Google Gemini LLM, OAuth~2.0 арқылы Gmail, ауа райы, YouTube негізіндегі музыка және Yeelight шамын басқаруды ұсынады. Физикалық деңгейде екі ESP32 модульі бір Wi-Fi желісінде жұмыс істейді: ESP32-CAM тікелей бейне ағынын және горизонтальды панорамалау үшін шагты қозғалтқышты басқарады (бұрау сервомеханизмі кодта бар, бірақ 3D басып шығару механикасында толық пайдаланылмаған); екінші ESP32 INMP441 микрофоны мен MAX98357 динамигін UDP арқылы дербес компьютермен байланыстырады. Сөйлеуді мәтінге айналдыру \textit{faster-whisper}, синтез \textit{edge-tts}, қосымша ояту сөзі \textit{openWakeWord} арқылы іске асырылады.
+\end{otherlanguage}
+
+% -----------------------------------------------
+% ABSTRACT (Russian)
+% -----------------------------------------------
+\begin{otherlanguage}{russian}
+\chapter*{Аннотация}
+\addcontentsline{toc}{chapter}{Аннотация}
+В данной работе описывается интегрированный помощник для умного дома \textbf{ARIA}, объединяющий локально развернутое веб-приложение и аппаратный модуль с 3D-печатным корпусом. Сервер на Flask предоставляет панель управления в браузере, диалог на базе большой языковой модели Google Gemini, интеграцию с Gmail по OAuth~2.0, данные о погоде, воспроизведение музыки через YouTube и управление умной лампой Yeelight. На аппаратном уровне используются два модуля Espressif ESP32 в одной сети Wi-Fi: ESP32-CAM обеспечивает потоковое MJPEG-видео и управляет шаговым двигателем для горизонтального панорамирования (сервопривод наклона реализован в прошивке, но в напечатанной механике не был устойчиво задействован); второй ESP32 связывает цифровой микрофон INMP441 и усилитель MAX98357 с персональным компьютером по UDP. Распознавание речи выполняется библиотекой \textit{faster-whisper}, синтез речи --- \textit{edge-tts}, опционально используется детектор ключевого слова \textit{openWakeWord}.
+\end{otherlanguage}
+
+\tableofcontents
+
+% -----------------------------------------------
+\chapter{Introduction}
+
+\section{Problem background}
+
+Consumer demand for connected homes continues to grow: lighting, security cameras, voice assistants, and media devices are increasingly networked. Analyst summaries of the global smart-home segment project sustained revenue expansion over multi-year horizons; as one illustrative industry estimate, Technavio reported expected incremental growth on the order of USD~255.2~billion for the worldwide market between 2025 and 2029, with strong CAGR figures cited for the same interval \cite{technavio}. Parallel to this adoption, users face recurring tensions: closed ecosystems, opaque data handling, limited multilingual support (including low-resource languages), and the difficulty of tying together cameras, speech, and actuators in one customizable stack.
+
+Commercial smart speakers and cloud assistants offer polished experiences but often lock integrations to vendor APIs and require always-on cloud policies. Educational and maker-oriented robots emphasize mechanics or curriculum, not necessarily a full web stack with email, weather, and third-party bulbs. The project addresses the gap by implementing an \textbf{open, modular} assistant where the user hosts the control plane on a PC, keeps structured data (chat and cached mail metadata) in a local SQLite database, and attaches inexpensive ESP32 peripherals for vision and audio I/O.
+
+\section{Aim and objectives}
+
+\textbf{Aim.} To design and implement ARIA: a multimodal smart-home assistant that integrates a Flask-based application, cloud LLM reasoning, local speech processing, smart-light control, and an ESP32-based sensing/actuation head fed from a single 5~V supply.
+
+\textbf{Objectives.}
+\begin{itemize}
+    \item Build a web dashboard for chat, settings, camera viewing, and auxiliary functions, with persistent chat history and optional Gmail linking.
+    \item Integrate Google Gemini for natural-language dialogue, with configurable assistant personality and language detection hooks.
+    \item Implement STT (faster-whisper) and TTS (edge-tts) on the host, streaming audio to and from a dedicated ESP32 audio bridge (INMP441 + MAX98357).
+    \item Provide ESP32-CAM firmware for MJPEG streaming and pan (stepper) control; document tilt servo limitations imposed by the physical design.
+    \item Control a Yeelight bulb (power, brightness, color names, warm/cool white, RGB cycle) from parsed user intent.
+    \item Document system architecture, wiring, protocols, and limitations for reproducibility.
+\end{itemize}
+
+\section{Thesis outline}
+
+Chapter~2 reviews related classes of systems (voice assistants, social/educational robots, DIY kits) and core technologies (Flask, WebSockets/Socket.IO, Whisper-family STT, LLM tool use). Chapter~3 presents design and methodology: physical layout (high-level, with space for enclosure-specific detail), electrical interconnect and figures, software architecture of the server and front end, voice pipeline, and firmware responsibilities. Chapter~4 discusses outcomes, qualitative behavior, and constraints. Chapter~5 concludes and suggests future work. Appendix~A collects wiring tables and a short code reference.
+
+% -----------------------------------------------
+\chapter{Literature review and related work}
+
+\section{Voice assistants and smart-home platforms}
+
+General-purpose voice assistants (e.g., Amazon Alexa, Google Assistant, Apple Siri) couple wake-word detection, cloud speech recognition, and template or LLM-backed dialog managers with vendor-specific smart-home frameworks \cite{flask}. They achieve low perceived latency through optimized end-to-end pipelines and proprietary hardware, but customization is bounded by SDK rules and account linking. ARIA inverts part of this trade-off: the user runs the orchestration server locally and treats ESP32 boards as peripherals, which is closer to the \textit{edge + cloud hybrid} pattern common in IoT research, where heavy models may run on a PC or server while microcontrollers handle sensing and actuation \cite{esp-idf}.
+
+\section{Speech recognition and synthesis}
+
+Modern STT builds on large-scale supervised training; Whisper and its re-implementations demonstrated that a single model can generalize across languages and noise conditions \cite{whisper}. The \textit{faster-whisper} project reuses Whisper weights with efficient runtimes suitable for CPU deployment \cite{faster-whisper}. For TTS without hosting proprietary voice servers, Microsoft's Edge browser voices are exposed programmatically via the \textit{edge-tts} package \cite{edge-tts}, which fits a student project needing multiple locales. Optional wake-word detection is implemented with \textit{openWakeWord} \cite{openwakeword}.
+
+\section{Retrieval and tool-augmented dialogue}
+
+Large language models can be grounded with retrieved documents or structured tool outputs; retrieval-augmented generation (RAG) is a standard pattern for knowledge-intensive tasks \cite{rag}. In ARIA, ``retrieval'' appears pragmatically as SQLite-backed email caches and API results (weather, YouTube search) injected into prompts rather than a full vector database, but the design could be extended.
+
+\section{Positioning}
+
+Table~\ref{tab:comparison_detailed} contrasts ARIA with representative categories. It is not exhaustive but clarifies the niche: \textbf{open-source} stack, \textbf{PC-hosted} intelligence, \textbf{digital I2S audio}, and a \textbf{physical camera head} with pan actuation.
+
+\begin{table}[htbp]
+\centering
+\renewcommand{\arraystretch}{1.35}
+\small
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}m{3.1cm}|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+\rowcolor{tableblue}
+\color{white}\textbf{Criterion} &
+\color{white}\textbf{ARIA} &
+\color{white}\textbf{Smart speakers} &
+\color{white}\textbf{Social robots} &
+\color{white}\textbf{DIY kits} \\ \hline
+
+\textbf{LLM depth} & High (Gemini API) & Medium (vendor models / skills) & Low--medium & Often none \\ \hline
+\textbf{Physical sensing} & ESP32-CAM + pan stepper & None & Rich (mobility, expression) & Varies \\ \hline
+\textbf{Openness} & Open repo, user-hosted & Closed ecosystem & Proprietary & Open hardware \\ \hline
+\textbf{Audio path} & I2S INMP441 / MAX98357 & Integrated mics/speakers & Integrated & Often analog buzzers \\ \hline
+\end{tabularx}
+\caption{High-level comparison of ARIA with other product classes.}
+\label{tab:comparison_detailed}
+\end{table}
+
+% -----------------------------------------------
+\chapter{Design and methodology}
+
+\section{System overview}
+
+Figure~\ref{fig:system-arch} summarizes the logical architecture. A desktop or laptop on the LAN runs the Flask process and optional GPU/CPU models. Browser clients talk HTTP and Socket.IO. The ESP32 audio module streams microphone PCM over UDP to the PC and plays back TTS PCM received on a second UDP port. The ESP32-CAM serves MJPEG video and accepts HTTP commands for pan and (intended) tilt. A Yeelight bulb is controlled over the LAN using the manufacturer's local LAN protocol (Python \texttt{yeelight} library \cite{yeelight}).
+
+\begin{figure}[htbp]
+\centering
+\fbox{\parbox{0.88\textwidth}{
+\centering
+\vspace{0.3cm}
+\textit{Conceptual diagram (no separate figure asset):}\\[0.2em]
+\textbf{Browser} $\leftrightarrow$ \textbf{Flask + Socket.IO} $\leftrightarrow$ \textbf{Gemini / Gmail / Weather / YouTube APIs}\\
+$\downarrow$ LAN\\
+\textbf{ESP32-CAM} (HTTP 80/81: UI, MJPEG) \quad | \quad \textbf{ESP32 audio} (UDP: mic 12345, spk 12346)\\
+$\downarrow$\\
+\textbf{Yeelight bulb} (TCP LAN)
+\vspace{0.35cm}
+}}
+\caption{Logical deployment of ARIA on a home LAN.}
+\label{fig:system-arch}
+\end{figure}
+
+\textbf{Repository and reproducibility.} Source code and firmware sketches are maintained in a Git repository; the public reference cited in development is \url{https://github.com/TheSuxarick/aria}.
+
+\section{Physical and mechanical design}
+
+The enclosure is manufactured as a 3D-printed assembly housing both ESP32 boards, optics for the camera module, the stepper-based pan mechanism, and space for audio components and power distribution. \textbf{[Reserved for author-supplied detail:]} exact part numbers, internal layout, cable routing, and photographs of the assembled head should be inserted here---this thesis section intentionally stays at the system level because tolerances and iteration history are specific to the printed parts (e.g., STL assets under \texttt{Device/3D-model/}).
+
+\textbf{Power.} The prototype is powered from a \textbf{5~V DC supply rated for about 10~A}, feeding ESP32 regulators, the audio amplifier, and motor drivers. Individual buck or LDO stages should be documented in the appendix once finalized.
+
+\textbf{Mechanical limitation.} Firmware includes a servo-driven tilt axis, but the physical build did not achieve a reliable tilt range; operationally, \textbf{pan} is the primary repositioning degree of freedom for the camera.
+
+\section{Electrical interconnect}
+
+\subsection{ESP32-CAM module}
+
+The AI-Thinker camera pin mapping follows Espressif reference schematics embedded in the firmware (\texttt{CAMERA\_MODEL\_AI\_THINKER}). Stepper phases use GPIOs \texttt{13, 15, 14, 2}; tilt servo signal uses GPIO~\texttt{12}. Figure~\ref{fig:cam-wiring} should match the project wiring diagram.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{esp32-cam_connection_sheme.png}
+\caption{Wiring diagram for the ESP32-CAM assembly (camera module, pan stepper, tilt servo signal).}
+\label{fig:cam-wiring}
+\end{figure}
+
+\subsection{ESP32-WROOM audio module}
+
+The audio bridge uses two I2S peripherals: RX for the INMP441 and TX for the MAX98357. Table~\ref{tab:audio-pins} lists GPIOs as implemented in repository firmware (\texttt{esp-32-wroom.ino}). GPIO~34 is input-only and is used for the microphone data line per the prototype wiring.
+
+\begin{table}[htbp]
+\centering
+\caption{ESP32 (WROOM) I2S pin assignment in repository firmware.}
+\label{tab:audio-pins}
+\begin{tabular}{lll}
+\toprule
+\textbf{Function} & \textbf{Signal} & \textbf{GPIO} \\
+\midrule
+INMP441 & Bit clock (SCK / BCLK) & 26 \\
+INMP441 & Word select (WS / LRCLK) & 25 \\
+INMP441 & Serial data (SD) & 34 \\
+MAX98357 & Bit clock (BCLK) & 12 \\
+MAX98357 & Left-right clock (LRC) & 14 \\
+MAX98357 & Data in (DIN) & 27 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{esp-32-wroom_connection_scheme.png}
+\caption{Wiring diagram for the ESP32-WROOM audio node (INMP441 + MAX98357).}
+\label{fig:wroom-wiring}
+\end{figure}
+
+\textbf{Audio protocol.} Both directions use \textbf{16-bit signed PCM, mono, 16~kHz}, little-endian, over UDP. The microphone path sends datagrams to \texttt{PC\_IP:12345}; the PC sends speaker frames to the ESP on port~\texttt{12346}.
+
+\section{Software methodology}
+
+Development followed \textbf{iterative prototyping with hardware--software co-design}: camera and audio firmware were tested against early Flask endpoints before the dashboard was finalized; Yeelight and Gmail features were added as independent modules behind HTTP routes to reduce coupling.
+
+\section{Web application design}
+
+\subsection{Purpose and structure}
+
+The front end is a \textbf{single-page dashboard} served from Jinja templates (\texttt{index.html}) with static CSS and JavaScript. Primary navigation sections: \textit{Dashboard} (widgets, chat, quick actions), \textit{Camera} (embedded stream), \textit{Functions} (feature shortcuts), and \textit{Settings} (model, language, personality, wake word). Material Icons and a custom dark/light theme support readability.
+
+\subsection{Client technologies}
+
+\begin{itemize}
+    \item \textbf{HTML5/CSS3} --- layout, responsive sidebar, cards, theme variables.
+    \item \textbf{Vanilla JavaScript} --- \texttt{fetch} calls to REST endpoints (\texttt{/api/chat}, \texttt{/api/weather}, \texttt{/api/play-music}, \texttt{/api/lamp-state}, etc.), Socket.IO client for low-latency audio where enabled, YouTube IFrame API for playback.
+    \item \textbf{Internationalization} --- UI strings selected in JS by language key for EN/RU/KK coverage on visible controls.
+\end{itemize}
+
+\subsection{Back-end server}
+
+The server is implemented in \textbf{Python~3} using \textbf{Flask} \cite{flask} for HTTP and \textbf{Flask-SocketIO} \cite{flask-socketio} (Socket.IO semantics \cite{socketio}) for streaming events such as microphone audio to the browser and robot state updates. SQL persistence uses \textbf{Flask-SQLAlchemy} \cite{flask-sqlalchemy} over \textbf{SQLite} \cite{sqlite}. Gmail access follows OAuth~2.0 \cite{rfc6749, google-oauth, gmail-api}. The LLM endpoint uses the \textbf{Gemini} HTTP API \cite{gemini-api}. Weather data uses OpenWeather-compatible requests \cite{openweather}; music search uses the YouTube Data API \cite{youtube-api}. Rate limiting is available via Flask-Limiter \cite{flask-limiter}.
+
+\subsection{Data model}
+
+Key tables (see \texttt{models.py}): \texttt{ChatMessage} for persisted dialogue lines keyed by session; \texttt{User} and \texttt{Session} for optional local accounts; \texttt{GmailAccount} for OAuth tokens; \texttt{EmailMessage} for cached inbox snippets shown to the model.
+
+\begin{lstlisting}[language=Python, caption={Excerpt: chat message model (conceptual).}, label={lst:model}]
+class ChatMessage(db.Model):
+    __tablename__ = "chat_messages"
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.String(64), nullable=False, index=True)
+    role = db.Column(db.String(16), nullable=False)
+    text = db.Column(db.Text, nullable=False)
+\end{lstlisting}
+
+\subsection{Voice and robot pipeline}
+
+On startup, a background thread may preload a Whisper model (\texttt{faster-whisper}, default \texttt{small} with CPU \texttt{int8} in code paths) \cite{faster-whisper, whisper}. UDP datagrams arriving on port~\texttt{12345} are decoded to PCM, optionally scanned by \textit{openWakeWord} \cite{openwakeword}, then segmented and transcribed. Assistant replies are synthesized with \textit{edge-tts} \cite{edge-tts} and streamed as PCM to the ESP32 speaker task. Audio processing uses \texttt{pydub} where wave assembly is required \cite{pydub}.
+
+\subsection{Device firmware}
+
+\textbf{ESP32-CAM} initializes the camera, Wi-Fi, HTTP servers (port~80 for HTML and \texttt{/action}, port~81 for \texttt{/stream}), FreeRTOS queue-driven stepper stepping, and servo tilt commands.
+
+\textbf{ESP32-WROOM} configures I2S RX/TX, connects to Wi-Fi, and runs two pinned tasks: microphone capture loop (UDP send) and speaker playback loop (UDP receive).
+
+\section{Security and privacy notes}
+
+The prototype targets a trusted LAN. Gmail tokens and API keys must be supplied via environment variables or \texttt{.env}, not committed to version control \cite{python-dotenv}. For production hardening, TLS termination, stricter CORS/Socket.IO origins, and secret rotation would be required.
+
+% -----------------------------------------------
+\chapter{Results and discussion}
+
+\section{Functional outcome}
+
+The integrated system supports: browser-based chat with Gemini; reading and summarizing cached Gmail messages when OAuth is configured; weather and forecast queries; starting YouTube playback from natural language; toggling and recoloring a Yeelight bulb via keyword rules in multiple languages; viewing the ESP32-CAM stream inside the dashboard; and, when the PC pipeline is active, two-way voice through the I2S peripherals.
+
+\section{Limitations}
+
+\begin{itemize}
+    \item \textbf{Mechanics:} tilt servo travel was limited by the printed assembly; pan is the dependable axis.
+    \item \textbf{Network:} devices assume stable LAN connectivity; UDP audio can exhibit dropouts under congestion unless packet sizes and Wi-Fi placement are tuned.
+    \item \textbf{Cloud dependence:} Gemini, Gmail, YouTube, and weather APIs require Internet and suitable API keys; only SQLite state and LAN bulb control remain purely local.
+    \item \textbf{Wake word:} accuracy depends on model choice, microphone SNR, and CPU load; it is optional in settings.
+\end{itemize}
+
+% -----------------------------------------------
+\chapter{Conclusion}
+
+ARIA demonstrates a practical architecture for a student-built smart-home assistant: Flask and Socket.IO coordinate cloud APIs and local speech models, while ESP32 firmware exposes standardized audio and video interfaces. The separation of concerns---PC for AI and STT/TTS, microcontrollers for sensing and output---keeps firmware small and allows rapid iteration on the web layer. Future work includes mechanical revision for full tilt, TLS deployment, richer RAG over personal files, and additional actuator types (e.g., IR blasters or MQTT bridges).
+
+\begin{thebibliography}{99}
+
+\bibitem{technavio}
+\textbf{Global Smart Home Market 2025--2029 (press summary).} Technavio.
+\newblock \url{https://newsroom.technavio.org/smart-homemarket-v2}
+\newblock Accessed: 2026-04-12.
+
+\bibitem{flask}
+\textbf{Flask Documentation.} Pallets Projects.
+\newblock \url{https://flask.palletsprojects.com/en/stable/}
+\newblock Accessed: 2026-04-11.
+
+\bibitem{flask-socketio}
+\textbf{Flask-SocketIO Documentation.} Miguel Grinberg.
+\newblock \url{https://flask-socketio.readthedocs.io/en/latest/}
+\newblock Accessed: 2026-04-11.
+
+\bibitem{socketio}
+\textbf{Socket.IO Documentation (v4).}
+\newblock \url{https://socket.io/docs/v4/}
+\newblock Accessed: 2026-04-11.
+
+\bibitem{sqlalchemy}
+\textbf{SQLAlchemy 2.0 Documentation.}
+\newblock \url{https://docs.sqlalchemy.org/en/20/}
+\newblock Accessed: 2026-04-11.
+
+\bibitem{flask-sqlalchemy}
+\textbf{Flask-SQLAlchemy Documentation.} Pallets Projects.
+\newblock \url{https://flask-sqlalchemy.palletsprojects.com/en/stable/}
+\newblock Accessed: 2026-04-11.
+
+\bibitem{sqlite}
+\textbf{SQLite Documentation.}
+\newblock \url{https://www.sqlite.org/docs.html}
+\newblock Accessed: 2026-04-11.
+
+\bibitem{rfc6749}
+Hardt, D.
+\newblock \textbf{The OAuth 2.0 Authorization Framework.} RFC~6749, IETF, 2012.
+\newblock \url{https://datatracker.ietf.org/doc/html/rfc6749}
+
+\bibitem{google-oauth}
+\textbf{Using OAuth 2.0 to Access Google APIs.} Google.
+\newblock \url{https://developers.google.com/identity/protocols/oauth2}
+\newblock Accessed: 2026-04-11.
+
+\bibitem{gmail-api}
+\textbf{Gmail API Overview.} Google.
+\newblock \url{https://developers.google.com/gmail/api/guides}
+\newblock Accessed: 2026-04-11.
+
+\bibitem{gemini-api}
+\textbf{Gemini API Documentation.} Google.
+\newblock \url{https://ai.google.dev/gemini-api/docs}
+\newblock Accessed: 2026-04-11.
+
+\bibitem{openweather}
+\textbf{Weather APIs.} OpenWeather.
+\newblock \url{https://openweathermap.org/api}
+\newblock Accessed: 2026-04-11.
+
+\bibitem{youtube-api}
+\textbf{YouTube Data API v3.} Google.
+\newblock \url{https://developers.google.com/youtube/v3}
+\newblock Accessed: 2026-04-11.
+
+\bibitem{flask-limiter}
+\textbf{Flask-Limiter Documentation.} Ali-Akber Saifee.
+\newblock \url{https://flask-limiter.readthedocs.io/en/stable/}
+\newblock Accessed: 2026-04-11.
+
+\bibitem{whisper}
+Radford, A., Kim, J.~W., Xu, T., Brockman, G., McLeavey, C., Sutskever, I.
+\newblock \textbf{Robust Speech Recognition via Large-Scale Weak Supervision.} arXiv:2212.04356, 2022.
+\newblock \url{https://arxiv.org/abs/2212.04356}
+
+\bibitem{faster-whisper}
+\textbf{faster-whisper.} SYSTRAN.
+\newblock GitHub repository.
+\newblock \url{https://github.com/SYSTRAN/faster-whisper}
+\newblock Accessed: 2026-04-11.
+
+\bibitem{edge-tts}
+\textbf{edge-tts.} PyPI package.
+\newblock \url{https://pypi.org/project/edge-tts/}
+\newblock Accessed: 2026-04-11.
+
+\bibitem{openwakeword}
+\textbf{openWakeWord.} David Scripka et al.
+\newblock \url{https://github.com/dscripka/openWakeWord}
+\newblock Accessed: 2026-04-12.
+
+\bibitem{pydub}
+\textbf{pydub.} James Robertson.
+\newblock \url{https://github.com/jiaaro/pydub}
+\newblock Accessed: 2026-04-11.
+
+\bibitem{esp-idf}
+\textbf{Get Started --- ESP32 --- ESP-IDF Programming Guide.} Espressif Systems.
+\newblock \url{https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html}
+\newblock Accessed: 2026-04-11.
+
+\bibitem{yeelight}
+\textbf{yeelight (Python library).}
+\newblock \url{https://yeelight.readthedocs.io/}
+\newblock Accessed: 2026-04-11.
+
+\bibitem{rag}
+Lewis, P., et al.
+\newblock \textbf{Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks.} arXiv:2005.11401, 2020.
+\newblock \url{https://arxiv.org/abs/2005.11401}
+
+\bibitem{requests}
+\textbf{Requests: HTTP for Humans.}
+\newblock \url{https://requests.readthedocs.io/en/latest/}
+\newblock Accessed: 2026-04-11.
+
+\bibitem{python-dotenv}
+\textbf{python-dotenv.} PyPI package.
+\newblock \url{https://pypi.org/project/python-dotenv/}
+\newblock Accessed: 2026-04-11.
+
+\end{thebibliography}
+
+\appendix
+
+\chapter{Appendix A: Wiring and protocol summary}
+\label{app:a}
+
+\section{ESP32-CAM control endpoints}
+
+\begin{itemize}
+    \item \textbf{HTTP port 80:} \texttt{/} (minimal HTML UI), \texttt{/action?go=left|right|up|down} (pan/tilt commands).
+    \item \textbf{HTTP port 81:} \texttt{/stream} --- MJPEG multipart stream for embedding in the dashboard.
+\end{itemize}
+
+\section{ESP32 audio UDP ports}
+
+\begin{itemize}
+    \item \textbf{12345} --- microphone PCM from ESP32 to PC (PC listens).
+    \item \textbf{12346} --- speaker PCM from PC to ESP32 (ESP listens).
+\end{itemize}
+
+\section{Yeelight control}
+
+Bulb commands are issued on the LAN once the lamp IP is resolved (ARP table / environment fallback). Natural-language rules in the server map phrases in English, Russian, and Kazakh to power and color changes.
+
+\end{document}
