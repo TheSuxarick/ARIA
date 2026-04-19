@@ -366,6 +366,20 @@ document.addEventListener("DOMContentLoaded", () => {
             audio_src_pc: "This Device",
             audio_src_pc_on: "Using device mic & speaker",
             audio_src_esp_on: "Using ESP32 mic & speaker",
+            noise_reduction: "Noise Reduction",
+            nr_off: "Off",
+            nr_hpf: "HPF only",
+            nr_full: "Full",
+            nr_train: "Train Noise (stay quiet 1s)",
+            nr_training: "Listening to noise… stay quiet",
+            nr_trained: "Trained on {n} frames",
+            nr_train_failed: "Training failed (no audio from ESP32)",
+            nr_profile_idle: 'No profile yet — press "Train" or stay quiet briefly.',
+            nr_profile_auto: "Auto-learning from quiet frames ({n}/{total})",
+            nr_profile_ready: "Noise profile ready",
+            nr_mode_off: "Noise reduction: Off",
+            nr_mode_hpf: "Noise reduction: HPF only",
+            nr_mode_full: "Noise reduction: Full",
             // Toasts
             toast_lights_toggled: "Lights toggled",
             toast_robot_called: "Robot called",
@@ -452,6 +466,20 @@ document.addEventListener("DOMContentLoaded", () => {
             audio_src_pc: "Это устройство",
             audio_src_pc_on: "Используется микрофон и динамик устройства",
             audio_src_esp_on: "Используется микрофон и динамик ESP32",
+            noise_reduction: "Шумоподавление",
+            nr_off: "Выкл",
+            nr_hpf: "Только HPF",
+            nr_full: "Полное",
+            nr_train: "Обучить на шуме (тишина 1с)",
+            nr_training: "Слушаю шум… не шумите",
+            nr_trained: "Обучено на {n} кадрах",
+            nr_train_failed: "Обучение не удалось (нет звука от ESP32)",
+            nr_profile_idle: 'Профиля ещё нет — нажмите «Обучить» или просто помолчите.',
+            nr_profile_auto: "Авто-обучение на тихих кадрах ({n}/{total})",
+            nr_profile_ready: "Профиль шума готов",
+            nr_mode_off: "Шумоподавление: Выкл",
+            nr_mode_hpf: "Шумоподавление: Только HPF",
+            nr_mode_full: "Шумоподавление: Полное",
             toast_lights_toggled: "Свет переключён",
             toast_robot_called: "Робот вызван",
             toast_robot_connecting: "Подключение к роботу…",
@@ -535,6 +563,20 @@ document.addEventListener("DOMContentLoaded", () => {
             audio_src_pc: "Бұл құрылғы",
             audio_src_pc_on: "Құрылғының микрофоны мен динамигі қолданылуда",
             audio_src_esp_on: "ESP32 микрофоны мен динамигі қолданылуда",
+            noise_reduction: "Шу басу",
+            nr_off: "Өшіру",
+            nr_hpf: "Тек HPF",
+            nr_full: "Толық",
+            nr_train: "Шуды үйрету (1с үнсіз тұрыңыз)",
+            nr_training: "Шуды тыңдаудамын… үнсіз тұрыңыз",
+            nr_trained: "{n} кадрда үйретілді",
+            nr_train_failed: "Үйрету сәтсіз (ESP32 дыбысы жоқ)",
+            nr_profile_idle: '«Үйрету» басыңыз немесе аздап үнсіз тұрыңыз.',
+            nr_profile_auto: "Тыныш кадрларда авто-үйрету ({n}/{total})",
+            nr_profile_ready: "Шу профилі дайын",
+            nr_mode_off: "Шу басу: Өшірулі",
+            nr_mode_hpf: "Шу басу: Тек HPF",
+            nr_mode_full: "Шу басу: Толық",
             toast_lights_toggled: "Жарық ауыстырылды",
             toast_robot_called: "Робот шақырылды",
             toast_robot_connecting: "Роботқа қосылу…",
@@ -977,8 +1019,14 @@ document.addEventListener("DOMContentLoaded", () => {
                         b.classList.toggle("active", b.dataset.source === d.audio_source);
                     });
                 }
+                if (d.mic_denoise) {
+                    document.querySelectorAll(".denoise-mode-btn").forEach(b => {
+                        b.classList.toggle("active", b.dataset.mode === d.mic_denoise);
+                    });
+                }
             }
         } catch { }
+        refreshDenoiseProfile();
     }
     loadSettings();
 
@@ -1010,8 +1058,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ─── Audio Source ───
     document.querySelectorAll(".audio-src-btn").forEach(btn => {
+        if (!btn.dataset.source) return;
         btn.addEventListener("click", async () => {
-            document.querySelectorAll(".audio-src-btn").forEach(b => b.classList.remove("active"));
+            document.querySelectorAll(".audio-src-btn").forEach(b => {
+                if (!b.dataset.source) return;
+                b.classList.remove("active");
+            });
             btn.classList.add("active");
             const source = btn.dataset.source;
             showToast(source === "pc" ? t("audio_src_pc_on") : t("audio_src_esp_on"), "info");
@@ -1020,6 +1072,93 @@ document.addEventListener("DOMContentLoaded", () => {
             } catch { }
         });
     });
+
+    // ─── Noise Reduction ───
+    const noiseStatusEl = document.getElementById("noiseProfileStatus");
+    const trainBtn = document.getElementById("trainNoiseBtn");
+    const trainLabel = document.getElementById("trainNoiseLabel");
+
+    function setNoiseStatus(key, vars) {
+        if (!noiseStatusEl) return;
+        let s = t(key) || "";
+        if (vars) {
+            for (const [k, v] of Object.entries(vars)) {
+                s = s.replaceAll(`{${k}}`, v);
+            }
+        }
+        noiseStatusEl.textContent = s;
+        noiseStatusEl.dataset.i18nDynamic = JSON.stringify({ key, vars: vars || null });
+    }
+
+    async function refreshDenoiseProfile() {
+        try {
+            const r = await fetch("/api/audio/denoise/status");
+            if (!r.ok) return;
+            const d = await r.json();
+            const p = d.profile || {};
+            if (p.training_now) {
+                setNoiseStatus("nr_training");
+            } else if (p.trained) {
+                setNoiseStatus("nr_profile_ready");
+            } else if (p.auto_learn_progress > 0) {
+                setNoiseStatus("nr_profile_auto", { n: p.auto_learn_progress, total: p.auto_learn_needed });
+            } else {
+                setNoiseStatus("nr_profile_idle");
+            }
+        } catch { }
+    }
+
+    document.querySelectorAll(".denoise-mode-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            document.querySelectorAll(".denoise-mode-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            const mode = btn.dataset.mode;
+            showToast(t(`nr_mode_${mode}`), "info");
+            try {
+                await fetch("/api/settings", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ mic_denoise: mode }),
+                });
+            } catch { }
+            refreshDenoiseProfile();
+        });
+    });
+
+    if (trainBtn) {
+        trainBtn.addEventListener("click", async () => {
+            if (trainBtn.disabled) return;
+            trainBtn.disabled = true;
+            const origLabel = trainLabel ? trainLabel.textContent : "";
+            if (trainLabel) trainLabel.textContent = t("nr_training");
+            setNoiseStatus("nr_training");
+            showToast(t("nr_training"), "info");
+            try {
+                const resp = await fetch("/api/audio/denoise/retrain", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ duration: 1.2 }),
+                });
+                const d = await resp.json().catch(() => ({}));
+                if (resp.ok && d.trained) {
+                    showToast(
+                        t("nr_trained").replace("{n}", d.frames_averaged ?? "?"),
+                        "success",
+                    );
+                } else {
+                    showToast(t("nr_train_failed"), "error");
+                }
+            } catch {
+                showToast(t("nr_train_failed"), "error");
+            } finally {
+                if (trainLabel) trainLabel.textContent = origLabel || t("nr_train");
+                trainBtn.disabled = false;
+                refreshDenoiseProfile();
+            }
+        });
+    }
+
+    setInterval(refreshDenoiseProfile, 4000);
 
     // ─── Personality ───
     document.querySelectorAll(".persona-btn").forEach(btn => {

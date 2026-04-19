@@ -1,0 +1,911 @@
+SDU University
+Faculty of Engineering and Natural Sciences
+DIPLOMA PROJECT
+Development of a Mobile Application for IELTS Examination Gamification
+Darkhan Kuanyshbay
+Zhanna Rinatova, Assem Sissenova, Aziza Assilkhan,
+Nurkeldi Orynbek, Zhanel Seidakhmetova
+6B06101- “Information Systems”
+Kaskelen, 2025
+SDU University
+Faculty of Engineering and Natural Sciences
+Dean of Faculty
+Assistant Professor,
+Ph.D. Ramis Akhmedov
+«
+»
+DIPLOMA PROJECT
+2025y.
+Development of a Mobile Application for IELTS Examination Gamification
+6B06101- “Information Systems”
+Supervisor:
+Co-supervisor:
+Students:
+Lyazzat Atymtayeva
+Darkhan Kuanyshbay
+Zhanna Rinatova, Assem Sissenova,
+Aziza Assilkhan, Nurkeldi Orynbek,
+Zhanel Seidakhmetova
+Kaskelen, 2025
+Abstract
+This thesis project describes the development of a mobile microlearning application
+that helps adult learners prepare for the International English Language Testing System
+(IELTS) through games. Previous reviews of language learning and IELTS applications
+have pointed to a clear lack of tools that could effectively combine gamification, mi
+crolearning, and adult-oriented design. This thesis discusses a mobile application that
+will consist of five educational games. Each of them addressing specific and more than
+one basic IELTS-related language skill.
+2
+Аңдатпа
+БұлдипломдықжобаересектергеойындарарқылыХалықаралықАғылшынТiлiн
+Тестiлеу Жүйесiне (IELTS) дайындалуға көмектесетiн мобильдi микрооқыту қолдан
+басын әзiрлеудi сипаттайды. Тiлдердi үйренуге және IELTS тапсыруға арналған қо
+сымшалардың алдыңғы зерттеулерi геймификацияны, микрооқытуды және ересек
+терге бағытталған дизайнды тиiмдi үйлестiре алатын құралдардың жетiспеушiлiгiн
+көрсеттi. Бұл тезисте бес оқу ойынынан тұратын мобильдi қосымша жайлы қарас
+тырылады. Олардың әрқайсысы IELTS-пен қатысты белгiлi бiр және бiрнеше негiзгi
+тiлдiк дағдыларды дамытуға бағытталған.
+3
+Аннотация
+В этом дипломном проекте описывается разработка мобильного приложения для
+микрообучения, которое помогает взрослым подготовиться к Международной Си
+стеме Тестирования по Английскому Языку (IELTS) с помощью игр. Предыдущие
+обзоры приложений для изучения языков и сдачи IELTS указывали на явную нехват
+ку инструментов, которые могли бы эффективно сочетать геймификацию, микро
+обучение и дизайн, ориентированный на взрослых. В этой тезисе рассматривается
+мобильное приложение, которое будет состоять из пяти обучающих игр. Каждый из
+них посвящен определенному и более чем одному базовому языку навыку, связан
+ному с IELTS.
+4
+Contents
+1 Introduction 6
+1.1 ProblemBackground . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6
+1.2 AimandObjectives . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+1.3 ThesisOutline. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+2 LiteratureReview 9
+2.1 LanguageApps . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 9
+2.2 IELTSPreparationTools . . . . . . . . . . . . . . . . . . . . . . . . . . . 10
+2.3 NeedforAdult-CenteredIELTSLearningSupport . . . . . . . . . . . . . 11
+3 DesignandMethodology 12
+3.1 Ourproduct . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+3.2 Methodology . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+3.3 Implementation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 13
+3.3.1 Design . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 13
+3.3.2 Back-end . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 18
+3.3.3 Front-End . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 22
+4 ResultsandDiscussion 29
+5 Conclusion 30
+References 31
+AAppendixA 35
+A.1 AgileSprintScheduleinJira . . . . . . . . . . . . . . . . . . . . . . . . . 35
+A.2 DataModelsforUserandGameEntities . . . . . . . . . . . . . . . . . . 36
+5
+Chapter 1
+Introduction
+1.1 Problem Background
+The International English Language Testing System (IELTS) is a well-known interna
+tional examination. It is owned by University of Cambridge ESOL Examination and
+the British Council, IDP IELTS, which is used to assess the level of English language
+proficiency of people who wish to pursue a career or studies in an English speaking envi
+ronment [1].
+Figure 1.1: Number of IELTS Tests Conducted by Year
+Interestingly, the IELTS tests that occur every year around the world have been in
+creasing (See Figure 1.1). You can see that the tests that are provided each year have
+increased by about four times over the last sixteen years. This continuous growth marks
+the long existing global plea for the IELTS test as a proper method of assessing English
+language proficiency [2], [3], [4]. This demand is supported by the level of acceptance
+6
+and approval of IELTS results in 140 countries [1].
+The growth of digital communications and the globalization of business and educa
+tion are very fast. And this, in turn, has led to the fact that there is an expectation of
+professional knowledge of the language from the employee, which means that professional
+knowledge of English is also anticipated in an English-speaking job even when English is
+a second or third language for some of the candidates [5].
+But does this indicate that adult learners can easily prepare for IELTS exams? What
+difficulties do they face along the way?
+Age groups The barrier level
+15-20
+2.86
+21-35
+2.98
+36-50
+3
+Table 1.1: The Level of the Barriers in Different Age Groups. Extracted from [6]
+Clearly, learning a second language is more arduous for adults than for children [7].
+Because with age, the level of barriers to learning a second language increases (See Table
+1.1). It is therefore challenging to attain better results with age [6]. A study by Mardani
+et al. (2024) grouped difficulties in learning a second language into seven categories:
+lack of resources, language complexity, environmental factors, time constraints, learning
+strategies, sociocultural challenges, psychological barriers [7]. It should be understood
+that over and above these difficulties, adults have to shoulder many other responsibilities,
+such as looking after their families and meeting financial obligations [8].
+After reviewing the new facts indicated above, our team drew attention to the fol
+lowing problems related with challenges in learning a second language for adults: lack of
+time, fear of making mistakes, lack of effective approaches [6]. To solve these problems,
+after a long analysis in this area, we decided to develop a mobile microlearning game,
+which serves as an addition to the foundational preparation for the IELTS exam. Be
+cause for both young and adult learners, gamification in language learning applications
+has been shown to improve motivation and learning results [9].
+1.2 Aim and Objectives
+Aim. The aim of this project is to develop a mobile microlearning game that supports
+foundational IELTS exam preparation for adults in order to eliminate the problems as
+sociated with limited time and lack of effective teaching methods.
+Objectives. The objectives of this project:
+• To explore the specific challenges that adult learners (aged 15-50) related to time
+constraints, psychological barriers, and tools’ engagement in the preparation of the
+IELTS exam.
+7
+• To review current applications for language learning and IELTS preparation to see
+how they meet the needs of adult learners, particularly in microlearning, gamifica
+tion, and flexibility.
+• Todevelop a mobile microlearning application for adult IELTS learners that applies
+principles of gamification through morsel-sized, flexible, and motivational content.
+1.3 Thesis Outline
+The first chapter of the document is an Introduction in which we described the aims and
+objectives of our project, as well as what led us to the idea for this project. In Chapter 2
+we reviewed previous solutions, examined related research, and identified gaps. Chapter
+3 describes our solution to this problem. And in Results and Discussion chapter, we
+discussed our application. We also conclude our conclusion in Conclusion chapter.
+8
+Chapter 2
+Literature Review
+2.1 Language Apps
+Duolingo is the widely known language-learning app that the world recognizes, meant
+to make the process of learning new languages easy and fun. With more than 30 mil
+lion users, who can freely download the app to their mobile phones, it becomes very
+accessible for all learners [10], [11], [12]. There is empirical evidence of the effectiveness
+of active skills taught by Duolingo, especially in vocabulary acquisition. For instance,
+in the study of Zholdas et al. (2024), it was found that adult learners of languages
+who were using Duolingo acquired vocabulary and grammatical skills. However, they did
+not gain the competence for practical use of the language to use it in communication [10].
+In a study by Kessler et al. (2023) is Babbel rated higher by users than Duolingo for
+grammar, speaking and pronunciation practice, and exposure to the target culture [13].
+This is a free-formed application for learners inclined toward more open discovery of the
+language [14].
+Also, Memrise is another common app that mixes fun features with useful learning
+tools. One study that used Memrise as a tool for learning French is the one by Paradhina
+et al. (2021), which actually successfully elicited positive results. However, it is imper
+ative to note that this study pertained to the French language and not to the English
+language [15].
+Busuu offers short lessons and little bits of it, which supports individual learning of a
+language [16]. According to a study by K´etyi (2016) learners using Busuu scored much
+higher than those from the controlled group, where the app was not used [17]. Busuu
+shows the value of game-like features in making users more interested and helping learn
+ing [16].
+HelloTalk is a mobile application available on both iOS and Android platforms, de
+signed to practice interactive language. According to a study by Taufan et al. (2022),
+HelloTalk supports the developmental process of languages as it connects a person to a
+native speaker so that the proficiency can be enhanced through real-time communications
+[18].
+9
+Challenges / Features Duolingo Babbel Memrise Busuu HelloTalk
+Microlearning for time
+constraints
++
++
++
++
++
+No fear of making
+mistakes
++
++
++
++
+Gamification
++
++
++
+Table 2.1: Comparative Analysis of Popular Language Learning Apps
+Also, we compared these applications to evaluate them based on factors such as no
+time limits in microlearning, no fear of making a mistake, and the use of gamification
+(See Table 2.1). Turns out Duolingo, Busuu and Memrise fit all the categories [14], [16],
+[19], [20], [21]. However, these applications are for learning languages, not for IELTS.
+2.2 IELTS Preparation Tools
+Other than the language apps, learners can take the test with the help of IELTS prepa
+ration tools. Magoosh is an online test prep company that offers courses and practice
+question for a wide range of standardized tests such as the GRE, GMAT, SAT, ACT,
+TOEFL, and IELTS [22].
+Also, the recent study indicates that adult learners can benefit from the app of British
+Council to improve their English language proficiency. Use of this app significantly en
+hanced reading abilities of the university students, as found in a study conducted by
+Ardana et al. (2024) [23].
+Challenges / Features Magoosh British
+Council
+App
+IELTS
+Practice
+Band 9
+Microlearning for time
+constraints--
+IDP App
+No fear of making
+mistakes
++
++
++
++
+Gamification--
++
+Table 2.2: Comparative Analysis of IELTS Preparation Tools
+You can see that we compare IELTS preparation tools such as Magoosh, the British
+Council app, IELTS Practice Band 9, and the IDP app (See Table 2.2). Every tool is
+made so you will not be scared to make a mistake. But none of them meets our require
+ments [24], [25], [26], [27].
+10
+2.3 Need for Adult-Centered IELTS Learning Support
+Not many studies are carried out on the specific needs of adult learners preparing for
+IELTS, though the researches on language learning applications is growing [13], [15], [17],
+[18]. Also, instead of being additional resources that adults can use along with the more
+foundational IELTS preparation courses, most aids are meant to be serve as primary
+learning platforms [22], [23].
+11
+Chapter 3
+Design and Methodology
+3.1 Our product
+To identify our product as a solution, we used the 5 W method:
+• What– What are you offering?
+A mobile Android-based microlearning game for IELTS exam preparation. Since
+there are several perceived benefits of mobile microlearning tools for adult learners
+in the context of professional development [28].
+• Who– Who uses your product?
+The people are between 15 to 50 years old and are preparing for the IELTS exam.
+This is especially for the people who want flexible and interesting learning materials.
+• Where– Where is it will be offered?
+Will be available on the Android platform (Google Play) at any time and any place.
+Since Android smartphones are more used than iPhones in developing countries [29].
+• When– When do users need this app?
+When readying themselves for the IELTS test, getting rid of the issues tied to time
+limits and ineffective study methods.
+• Why– Why should users choose your app?
+For its convenient, engaging, and bite-sized IELTS preparation designed for adult
+learners, especially when time and access to formal training are at a premium.
+Link to our project on Github: https://github.com/azikush/IELTS_APP.git
+3.2 Methodology
+We chose Agile for managing our project. We pick it for flexibility, pick it for strong
+focus on team communication. It allowed us to manage our IELTS gamification app
+through sprints, with continuous feedback and fast adaptation to changes [30]. We chose
+to work with Jira as it supports Agile methodology. It provides a very clear visualization
+through timelines, sprint boards, and backlog management. There we could also config
+ure our task by the feature (games, login, profile, etc.) and track its progress with daily
+12
+stand-ups and sprint reviews [31]. This way, the combination of Agile and Jira gave us
+the opportunity for structured yet adaptive development with full visibility for the whole
+team (See Appendix A.1).
+3.3 Implementation
+3.3.1 Design
+The design of the project was the first thing that we began to consider after producing
+the initial concept for the game we intended to create. The frameworks we selected are
+modular design framework and player-centric minimalism.
+The modular design framework was chosen because it requires every element (but
+tons, blank spaces, text etc.) to be placed in a separate block. This approach structures
+the design like a puzzle, where every block has its own place. One more benefit of this
+frameworks is that changes do not affect the overall layout and any necessary corrections
+can be made on individual blocks without disruption of any other components.
+Applying player-centric minimalism allowed to maintain focus on educational purpose
+of the game. Every element of the application serves a specific purpose, there are no dis
+tracting elements that could shift the players attention from learning. Moreover, this
+approach makes it easier for players to engage with the content and navigate the game
+smoothly.
+Color analysis
+When it came to the color choice, we wanted the color scheme to be calming and non
+intrusive to keep our users focused, which is especially important for an educational game.
+In the end, we decided to go with the purple color gradients. This would also add modern
+touch to the game. Besides, due to the high contrast of the chosen colors, the interface
+has high readability. The white and light-colored text/buttons stand out against the
+darker background, focusing the attention of the viewer in one spot.
+It is important to also address the psychology behind the color scheme, purples are
+often associated with imagination, intelligence, and achievement. Since the game is de
+signed to help users learn and improve their language skills, this color naturally supports
+the idea and the values that we put behind this game (See Figure 3.1).
+13
+Figure 3.1: Color Pallete
+Font explanation
+The process of choosing the font required research on our side. It was very important
+for us to understand what fonts are popular, readable and liked among range of differ
+ent users. Our choice fell on Roboto, this font was created by Google, it was created
+specifically for smartphone screens, which means it maintains excellent legibility even at
+smaller sizes or on low-resolution devices, which is ideal for an android app. This font
+gained its popularity in early days of Instagram, it was later adopted by Airbnb, Spotify
+specifically for android versions of the apps. Roboto is a combination of geometrically
+accurate and friendly curves [32].
+In our project, we followed a clear typographic hierarchy to structure content and im
+prove readability. We used four levels of headings to differentiate between main sections,
+subsections, and supporting details. The use of consistent font sizes and weights helped
+to create visual clarity and guide the user through the information intuitively (See Figure
+3.2).
+Figure 3.2: Font
+14
+Product user flow
+The product user flow shows how the app is going to work. The flow is a convenient way
+of showing how players are going to use our game from registration until playing each
+separate game (See Figure 3.3).
+Figure 3.3: Product user flow
+High-fidelity prototype
+• Home page;
+• Profile page;
+• See more page;
+• Leaderboard page;
+• Game 1: Fact or Opinion;
+• Game 2: Phrasal Verbs;
+• Game 3: Keywords Check;
+• Game 4: Synonyms;
+• Game 5: Essay builder;
+• Pause page;
+• Game completed page;
+• Login Page;
+• Registration Page.
+15
+The high-fidelity design for games was done in Figma because this tool is available
+for free use. Figma is also multi-user orientated, a group is allowed to participate in the
+process together which was particularly helpful for the project manager of our team who
+could be aware of the processes and front-end developers to start the process of creation
+without having to ask for design to be shared, making the team work smooth. The com
+menting function of Figma was also very helpful for our communication process, allowing
+us to leave targeted feedback directly on design elements, leading to faster revisions and
+clearer understanding [33]. Additionally, Figma’s ability to create reusable components
+and shared styles helped maintain design consistency across all game screens (See Figure
+3.4).
+16
+Figure 3.4: High-Fidelity Design
+17
+3.3.2 Back-end
+Framework
+For the backend part of our application, we used a tool from Google called Firebase. Fire
+base provides a convenient set of services that facilitate and speed up the development
+and scaling of mobile applications. Firebase was chosen because of its backend infras
+tructure, which provides a set of tools for user authentication, real-time data storage, etc
+[34]. And all of this allows us to avoid developing any server-side code.
+We used tools such as:
+• Kotlin Coroutines: allows the application to remain responsive during time-consuming
+tasks (database operations, downloading data from the Internet) [35].
+• Firebase Authentication: used to manage authentication and user credentials [36].
+• Firebase Realtime Database: used to store and synchronise data in real time [37].
+• Dagger/Hilt: automatically sets dependencies, making code more convenient and
+saving development time [38].
+• StateFlow/MutableStateFlow: needed to store and transfer data so that the inter
+face displays it immediately [39].
+These tools make Firebase effective for building the backend of mobile applications,
+ensuring performance and extensibility.
+Database
+We use the Firebase Realtime Database to store the data. It is, as the name suggests, a
+real-time database management system that provides reliability, resilience and security.
+It also allows us to store data in the cloud and locally (See Listing 3.3.2.1). Data is stored
+in JSON format.
+val database: DatabaseReference = Firebase.database.reference
+@Module
+@InstallIn(SingletonComponent::class)
+object FirebaseModule {
+@Provides
+@Singleton
+→
+fun provideDatabaseReference(): DatabaseReference =
+Firebase.database.reference
+}
+Listing 3.3.2.1: Firebase Database Connection
+18
+Models
+The data model is represented as classes in Kotlin and is created under Firebase. The
+application models include User and Game branches (See Listing 3.3.2.2). These are the
+types of models we use to interact with Firebase (See Appendix A.2).
+data class User(
+// User ID
+val id: String = "",
+// User email
+val email: String = "",
+// Displayed username
+val username: String = "",
+// User password
+val password: String = "",
+// User score
+val score: Int = 0,
+// User rank
+val rank: Int = 0
+)
+data class FirstGame(
+question identifier
+val id: Long = 0,
+The word before the jump
+val text1: String = "",
+The correct answer
+val answer: String = "",
+word after the skip
+val text2: String = ""
+)
+Listing 3.3.2.2: Data Models for User and First Game Entities
+Repositories
+Repositories in the application act as intermediaries between the Firebase database and
+the application logic [40]. Below are the main repositories with their descriptions and
+functions:
+• FirstGameRepository– repository for working with phrasal verbs:
+getRandomQuestion()– retrieves a random question from the database.
+insertInitialData()– initialises the database with initial questions.
+• SecondGameRepository– processes data for the fact and opinion game:
+getRandomQuestion()– get a random question.
+insertInitialData()– adds statements to the database.
+19
+• ThirdGameRepository– manages the content of the keyword game:
+getRandomSentence()– selects random text to parse.
+insertInitialData()– adds texts with keywords.
+• FourthGameRepository– provides access to game data with synonyms:
+getRandomWordData()– get a random set of words and synonyms.
+insertInitialData()– fills the database with words by category.
+• FifthGameRepository– works with the data for a pass-fail game:
+getRandomQuestion()– gets a random question with skips.
+insertInitialData()– adds skip questions to the database.
+• AuthRepository– responsible for the authentication process:
+register()– registers a new user.
+login()– authenticates an existing user.
+logout()– terminates the user’s session.
+getLoggedInUserId()– returns the ID of the current user.
+getCurrentUser()– get the current user object.
+• RatingRepository– manages the rating system:
+getUsersByRating()– get sorted list of users;
+updateUserRanks()– recalculate the ranks of all users;
+getUser()– get the data of a specific user.
+ViewModels
+ViewModels are the link in the application that processes data, reacts to user actions and
+controls the screen state [41]. Below are the main functions with their descriptions:
+• fun loadNewQuestion()– loads a question in random order.
+• fun checkAnswer(context: Context)– compares the user’s answer with the
+correct one.
+• fun startTimer(onNavigateToGameComplete: ()-> Unit)– starts the game
+session countdown.
+• fun togglePause()– pauses or resumes the game.
+• fun resetGame()– resets the game to the beginning.
+• fun updateUserScore()– updates the user’s score.
+• fun onAnswerChange(String)– updates the current user’s answer.
+• fun loadUser()– loads the user from the database.
+20
+• fun updateFilledGap(index: Int, word: String)– in the filled gap game,
+updates the filled gap.
+• fun register(email: String, password: String, username: String, callback)– registers the user.
+• fun login(email: String, password: String, callback)– login user with
+email and password.
+• fun logout()– logs out of the account.
+• fun getUser(userId: String)– retrieves information about a user from the
+database.
+• fun getUsersByRating()– gets a list of users sorted by rating.
+Firebase Authentication
+Security during registration and authentication is provided by Firebase Authentication.
+For registration and authentication we use email and password as this is a common way
+to perform these steps.
+• createUserWithEmailAndPassword– creates a new user with the given password
+and email.
+• signInWithEmailAndPassword– verifies the credentials and passes the authorisa
+tion.
+• signOut– ends the user session.
+• getCurrentUser– get the current user.
+• getUid– to communicate with the database, get user ID.
+Scalability
+The application architecture is written with scalability in mind.
+• The Firebase Realtime Database can scale automatically as the load increases, so
+as the number of users increases, the Firebase cloud infrastructure will be able to
+handle it without any additional customisation [42].
+• The project’s data structure allows new content to be introduced without changing
+the existing structure.
+• The modular architecture allows new modules to be added without modifying ex
+isting modules [43].
+• The coroutine approach will allow the application to remain responsive as the load
+increases.
+21
+3.3.3 Front-End
+Front-end development is a crucial aspect of building modern user interfaces and is re
+sponsible for the part of the application that the end user directly interacts with. It
+consists of visual elements such as buttons, input fields, pages, and also the interaction
+behavior of these elements. The front-end strives to provide a clear, intuitive, and aes
+thetically pleasing interface that meets the expectations and needs of the use.
+On a student exchange basis, for the purpose of developing a mobile application, the
+front-end is developed keeping in mind responsive design, interaction with the back-end,
+and demands of modern user experience (UX) [44]. All the UI parts of the app are
+coded under a component-based structure and with code-reusability focused methodolo
+gies, keeping in mind the extensibility of the project on a grand scale.
+To implement the interface, the Jetpack Compose library is utilized, which provides a
+declarative way of specifying the UI in Android applications [45]. It allows the developer
+to specify the interface as a function of the current state of the data, simplifying the
+display logic and making the code more readable. The visual look is established using
+Material Design components, which give a consistent and modern interface appearance
+[46].
+Thus, the front-end of the application not only affects the users’ visual experience of
+the platform, but it also plays an important role in affecting the usability, interaction
+speed and overall effectiveness of the digital product.
+Purpose and Tasks of the Front-End
+The main goal of the front-end part of the mobile application is to create a simple and
+intuitive interface that offers smooth navigation and easy access to the functionality of
+the platform. Users should be able to register, see practice materials, take mock tests,
+track their progress, and update their profile without needing additional instructions.
+The key tasks of the front-end within the framework of this project include:
+• Implementation of a multi-screen interface with seamless navigation between core
+sections (registration, login, practice tests, learning materials, progress tracking,
+user profile, etc.).
+• Handling user input and displaying appropriate feedback such as error messages or
+confirmation notices (e.g., during test submission or form completion).
+• Integration with the backend and Firebase to fetch and display up-to-date content,
+scores, and learning progress in real time.
+• Ensuring responsive design to support various screen sizes and resolutions.
+• Applying a modern visual style and animations to enhance user experience and
+engagement.
+22
+• Improving accessibility through features like dark mode support, scalable fonts, and
+clear UI components for better readability and comfort during long study sessions.
+The front-end is not just the "face" of the app but also a compelling aspect of the
+business logic, enabling user behavior patterns and providing instant feedback to interac
+tions. It is especially crucial in an IELTS practice app, where responsiveness, simplicity,
+and reliability are necessary to maintain user interest and to offer a seamless learning
+experience throughout each session.
+Architecture and Technologies Used
+The front-end architecture is modular and includes:
+• UI Components– screens and visual elements.
+• ViewModel– business logic and state management.
+• State– current UI data.
+• Navigation– routing between screens.
+• Data Layer– server interaction via Retrofit and Firebase.
+Technology Stack:
+• Jetpack Compose– declarative UI.
+• Material 3 (Material You).
+• Navigation Compose.
+• Firebase Authentication and Firestore.
+• Retrofit + Kotlin Coroutines– for REST API [47].
+• Room– local database storage [48].
+Implementation of the Authorization Screen
+One of the first and key screens of the application is the authorization screen. It should
+be simple, intuitive, and secure. In Compose, the interface is described declaratively,
+allowing developers to define the UI based on the current state of the data.
+23
+@Composable
+fun AuthScreen(viewModel: AuthViewModel) {
+var email by rememberSaveable { mutableStateOf("") }
+var password by rememberSaveable { mutableStateOf("") }
+var error by rememberSaveable { mutableStateOf<String?>(null) }
+Column(modifier = Modifier.padding(16.dp)) {
+→
+TextField(value = email, onValueChange = { email = it }, label = {
+Text("Email") })
+→
+TextField(value = password, onValueChange = { password = it }, label = {
+Text("Password") })
+Button(onClick = {
+if (email.isBlank() || password.length < 6) {
+error = "Please enter valid credentials"
+} else {
+viewModel.signIn(email, password)
+}
+}) {
+}
+Text("Login")
+error?.let { Text(it, color = Color.Red) }
+}
+}
+Listing 3.3.3.3: Composable Function for User Authentication Screen
+The rememberSaveable is used to save the state when the screen rotates. Simple val
+idation adds a layer of protection against input errors (See Listing 3.3.3.3).
+Navigation Between Screens
+Navigation is a fundamental component of any mobile application, specifying how users
+transition between different parts and features (See Figure 3.5). Navigation within Jet
+pack Compose comes in the form of the Navigation Compose library, which is seamlessly
+compatible with the declarative UI paradigm [45].
+24
+Figure 3.5: Front-End Architecture Using Jetpack Compose and MVVM pattern
+A navigation graph defines the structure and screen transition logic. Each screen is
+defined as a composable destination within the navigation host. We have given a simpli
+f
+ied example of how navigation can be implemented in the app (See Listing 3.3.3.4).
+NavHost(navController = navController, startDestination = "login") {
+composable("login") { LoginScreen(navController) }
+composable("register") { RegisterScreen(navController) }
+composable("home") { HomeScreen(navController) }
+}
+Listing 3.3.3.4: Navigation Graph Definition Using Navigation Compose
+Also transitions between screens are triggered using the navigate method (See 3.3.3.5).
+navController.navigate("home")
+Listing 3.3.3.5: Screen Transition Trigger Using navigate() Method
+Navigation can also pass arguments between screens and handle conditional logic,
+such as restricting access to certain areas based on authentication status.
+Adaptive Design and Theming
+Jetpack Compose supports responsive design principles out-of-the-box, enabling dynamic
+UI adjustments based on screen size, orientation, and system preferences. Theming is an
+integral part of the visual layer, particularly when implementing dark and light modes to
+match user settings [45].
+25
+@Composable
+fun MyAppTheme(content: @Composable ()-> Unit) {
+val colorScheme = if (isSystemInDarkTheme()) {
+darkColorScheme()
+} else {
+lightColorScheme()
+}
+MaterialTheme(
+colorScheme = colorScheme,
+typography = Typography,
+content = content
+)
+}
+Listing 3.3.3.6: Custom Theme Setup Using Material3 in Jetpack Compose
+Using MaterialTheme, the application adopts a consistent visual identity while allow
+ing customization across UI components such as buttons, text fields, and backgrounds
+(See Listing 3.3.3.6).
+REST API Integration
+For interacting with the backend, the application utilizes Retrofit, a popular HTTP client
+library for Android. It simplifies network operations and works well with Kotlin Corou
+tines for asynchronous data processing [47].
+interface UserService {
+@GET("users/{id}")
+suspend fun getUserProfile(@Path("id") id: String): Response<User>
+}
+Listing 3.3.3.7: Retrofit Interface for Fetching User Profile
+Network requests are executed within a ViewModel to separate logic from the UI and
+ensure proper lifecycle management (See Listing 3.3.3.8).
+viewModelScope.launch {
+val response = userService.getUserProfile(userId)
+if (response.isSuccessful) {
+_userState.value = response.body()
+}
+}
+Listing 3.3.3.8: ViewModel Coroutine for Fetching and Storing User Profile
+26
+The data retrieved from the server is displayed using Compose UI elements, ensuring
+real-time updates and responsiveness.
+State Management and ViewModel Integration
+State management is essential in declarative UI toolkits like Jetpack Compose. Each UI
+element declares the current state, and modifications to the data automatically recom
+pose the impacted parts [45]. Android Architecture Components’ ViewModel element
+gives the focal point for business logic and state management (See Listing 3.3.3.9).
+class AuthViewModel : ViewModel() {
+var loginState by mutableStateOf<LoginResult?>(null)
+fun signIn(email: String, password: String) {
+// Firebase login logic
+}
+}
+Listing 3.3.3.9: Authentication ViewModel Managing Login State
+The use of mutableStateOf allows the UI to observe and react to state changes effi
+ciently, without the need for explicit UI refreshes.
+Animations and Feedback
+User experience is enhanced through the inclusion of animations and visual feedback.
+The application employs Lottie animations to indicate important events such as success
+or error notifications.
+LottieAnimation(
+composition = rememberLottieComposition(
+LottieCompositionSpec.RawRes(R.raw.success_animation)
+),
+iterations = 1
+)
+Listing 3.3.3.10: Lottie Animation for Displaying Success Feedback
+Lottie animations improve user engagement and help convey application status clearly
+and aesthetically (See Listing 3.3.3.10).
+27
+UI Testing Basics
+UI testing is essential to ensure that user interfaces behave as expected. Jetpack Com
+pose provides built-in support for UI testing through the androidx.compose.ui.test library.
+We have given an example of a test verifying the presence of a login button (See Listing
+3.3.3.11).
+@get:Rule
+val composeTestRule = createComposeRule()
+@Test
+fun loginButtonIsVisible() {
+composeTestRule.setContent {
+LoginScreen()
+}
+composeTestRule.onNodeWithText("Login").assertIsDisplayed()
+}
+Listing 3.3.3.11: UI Test for Verifying Visibility of Login Button in Compose
+These automated tests help maintain stability as the application evolves and new
+features are introduced.
+28
+Chapter 4
+Results and Discussion
+The insights gained from the literature review clearly indicated a gap in existing tools:
+while many language apps offer gamified experiences and IELTS apps provide exam
+oriented content, very few combine both in a user-centered, time-efficient format tailored
+for adult learners. Our application attempted to address these gaps by introducing five
+distinct games targeting core IELTS language skills, designed to be completed in short,
+focused sessions.
+To check if use and the results, we did a user test on a small group with five adult
+learners aged between 15 and 50 years. All in all, the feedback proved right the main
+ideas of the project. That is a game-like, small-bit- by-small-bit IELTS app could give
+useful extra help for adult learners.
+This application does not replace the traditional preparation for IELTS examinations
+but it will be more successful as a supplementary tool that will help modern digital habits
+and the unique needs among adult learners.
+29
+Chapter 5
+Conclusion
+This project aimed to meet the actual challenges of adult learners in IELTS preparation,
+which are time management, psychological factors, and unavailability flexible learning
+aids. Analysis of the existing apps and studies revealed a big gap in the market for the
+type of mobile solution that offers gamified microlearning for adults.
+We decided to create a microlearning mobile app. It has five interactive games that
+are designed to enhance basic IELTS-related language skills. The system architecture for
+our app ensures both scalability and responsiveness whereas the user interface has clarity
+and ease of use.
+In summary, the developed app successfully meets the goals of providing an easy
+supplementary tool for adult IELTS prep, though it does not replace traditional methods
+of study, it enhances them.
+30
+References
+[1] IELTS. About IELTS. https://ielts.org/about-ielts. Accessed: 2025-04-25.
+n.d.
+[2] ExamPlanetNigeria. IELTS Academic in Nigeria– Exam Planet Nigeria. Accessed:
+2025-04-25. n.d. url: https://examplanetnigeria.com/ielts-academic-in
+nigeria.
+[3] British Council. IELTS grows to 3.5 million a year. Accessed: 2025-04-25. 2018.
+url: https://takeielts.britishcouncil.org/about/press/ielts-grows
+three-half-million-year.
+[4] IELTS. IELTS trusted by millions in 2023. Accessed: 2025-04-25. 2023. url: https:
+//ielts.org/news-and-insights/ielts-trusted-by-millions-in-2023.
+[5] Joseph Dewey. “International English Language Testing System”. In: (2024).
+[6] Natalya Brem. “Barriers In Foreign Language Acquisition In Different Periods Of
+Adulthood”. In: Dec. 2021, pp. 37–44. doi: 10.15405/epsbs.2021.12.6.
+[7] Farzaneh Mardani et al. “The Experience of Learning a Second Language as an
+Adult: A Qualitative Exploration of Motivation and Challenges”. In: International
+Journal of Education and Cognitive Sciences 5.2 (2024), pp. 16–22. issn: 3041-8828.
+doi: 10.61838/kman.ijeas.5.2.3. eprint: https://iase-ijeas.com/article_
+195616_5577ddae03e5c55c7545c4d0d2eff3e0.pdf. url: https://iase-ijeas.
+com/article_195616.html.
+[8] Yustinus Calvin Gai Mali. “ADULT LEARNERSˆa€™ EXPERIENCESINLEARN
+ING ENGLISH: A CASE STUDY OF TWO UNIVERSITY STUDENTS IN IN
+DONESIA”. In: IJOLTL (Indonesian Journal of Language Teaching and Linguis
+tics) 2.2 (Apr. 2017), pp. 131–146. doi: 10.30957/ijoltl.v2i2.280. url: https:
+//ijotl-tl.soloclcs.org/index.php/ijoltl/article/view/280.
+[9] Jesita Sani and Dianing Ratri. “Analysis of the Effectiveness of Gamification Ele
+ments in Mobile-Based English Learning Applications for Elementary School Stu
+dents”. In: IJLECR- INTERNATIONAL JOURNAL OF LANGUAGE EDUCA
+TION AND CULTURE REVIEW (2024). url: https://api.semanticscholar.
+org/CorpusID:275197304.
+[10] ShZholdas et al. “EFFECTIVENESSOFDUOLINGOINFOREIGNLANGUAGE
+LEARNING”.In: Bulletin of Toraighyrov University. Pedagogics series (Sept. 2024),
+pp. 53–61. doi: 10.48081/HCKH9551.
+[11] Herni Wulandari and Abdul Halim. “Gamified Learning: Evaluating the Impact of
+Duolingo on Language Retention and Academic Performance in Secondary School
+Students”. In: Borneo Educational Journal (Borju) 6 (Aug. 2024), pp. 160–179. doi:
+10.24903/bej.v6i2.1724.
+31
+[12] Ridha Rouabhia and Khalefa Kheder. “Using Duolingo in Teaching and Learning
+Vocabulary: A Systematic Review”. In: Indonesian Journal of English Language
+Studies (IJELS) 10 (Sept. 2024), pp. 91–107. doi: 10.24071/ijels.v10i2.8873.
+[13] MattKessler, Shawn Loewen, and Talip Gonulal. “Mobile-assisted language learning
+with Babbel and Duolingo: Comparing L2 learning gains and user experience”. In:
+Computer Assisted Language Learning (May 2023). doi: 10.1080/09588221.2023.
+2215294.
+[14] Babbel. Babbel: Learn Languages Online. Accessed: 2025-04-30. 2023. url: https:
+//www.babbel.com.
+[15] Nyi Raden Hasbya Putri Paradhina and Myrna Laksman-Huntley. “The Efficacy of
+Memrise as a Supplementary Study Material in Understanding French as a Foreign
+Language”. In: Proceedings of the International Seminar on Language, Education,
+and Culture (ISoLEC 2021). Atlantis Press, 2021, pp. 249–252. isbn: 978-94-6239
+482-7. doi: 10.2991/assehr.k.211212.046. url: https://doi.org/10.2991/
+assehr.k.211212.046.
+[16] Busuu. Gamified Language Learning with Busuu. https://business.busuu.com/
+resources/gamified-learning-with-busuu. Accessed: 2025-04-30. 2023.
+[17] Andr´as K´etyi. “From Mobile Language Learning to Gamification: an Overlook of
+Research Results with Business Management Students over a Five-Year Period”.
+In: Sept. 2016, pp. 45–59.
+[18] Gullit Tornado Taufan and Julien Arief Wicaksono. “Students’ Perspectives of Hel
+loTalk Application: A Case Study”. In: Journal of Language, Communication, and
+Tourism 1.1 (2022), pp. 1–11.
+[19] Duolingo. Duolingo: Language Lessons for Everyone. Accessed: 2025-04-30. 2023.
+url: https://www.duolingo.com.
+[20] Memrise. Memrise: Speak a New Language with Confidence. Accessed: 2025-04-30.
+2023. url: https://www.memrise.com.
+[21] IdeaUsher. Language Learning App Development like HelloTalk. https://ideausher.
+com/blog/language-learning-app-development-like-hellotalk. Accessed:
+2025-04-30. 2023.
+[22] Sarah Everett and Tony Colman. A critical analysis of selected IELTS prepara
+tion materials. Tech. rep. Accessed: 2025-05-01. IELTS Research Reports, Volume
+11, 2010. url: https://ielts.org/researchers/our-research/research
+reports/a-critical-analysis-of-selected-ielts-preparation-materials.
+[23] Aruna Ardana and Ika Rakhmawati. “The Effectiveness of English British Council
+Application on Second Semester Students’ Reading Skill at Universitas Bhinneka
+PGRI In Academic Year 2023/2024”. In: Sosial Simbiosis : Jurnal Integrasi Ilmu
+Sosial dan Politik 1 (June 2024), pp. 134–141. doi: 10.62383/sosial.v1i3.421.
+[24] Magoosh IELTS Prep App. https://magoosh.com/ielts/ielts-prep-app/.
+Accessed: 2025-04-30.
+[25] IELTS Prep App- British Council. https://takeielts.britishcouncil.org/
+take-ielts/prepare/free-mobile-apps. Accessed: 2025-04-30.
+[26] IELTS Practice Band 9 App (Android). https://play.google.com/store/apps/
+details?id=com.lt.ieltspracticetest. Accessed: 2025-04-30.
+32
+[27] IELTS by IDP: Official Prep App.https://www.ieltsidpindia.com/information/
+ielts-by-idp-app. Accessed: 2025-04-30.
+[28] Yen-Mei Lee and. “Mobile microlearning: a systematic literature review and its
+implications”. In: Interactive Learning Environments 31.7 (2023), pp. 4636–4651.
+doi: 10.1080/10494820.2021.1977964. eprint: https://doi.org/10.1080/
+10494820.2021.1977964. url: https://doi.org/10.1080/10494820.2021.
+1977964.
+[29] Farzana Anowar et al. “A Review on Diabetes Self-management Applications for
+Android Smartphones: Perspective of Developing Countries”. In: 2020 International
+Congress on Human-Computer Interaction, Optimization and Robotic Applications
+(HORA). 2020, pp. 1–5. doi: 10.1109/HORA49412.2020.9152932.
+[30] Agile Alliance. What is Agile? Accessed: 2025-05-05. n.d. url: https://www.
+agilealliance.org/agile101/.
+[31] Atlassian. Jira Software– Project Management Tool. Accessed: 2025-05-05. n.d.
+url: https://www.atlassian.com/software/jira.
+[32] Hua Shu. Reviewing Roboto: One of the First Widely Used Mobile Fonts. Accessed:
+2025-05-05. 2024. url: https://typogram.co/font-discovery/how-to-use
+roboto-font.
+[33] Figma. Figma: Collaborative Interface Design Tool. Accessed: 2025-05-05. Figma
+Inc. 2025. url: https://www.figma.com.
+[34] Firebase. Firebase Documentation. Accessed: 2025-05-05. Google. 2023. url: https:
+//firebase.google.com/docs.
+[35] Kotlin. Coroutines Guide. Accessed: 2025-05-05. JetBrains. 2023. url: https://
+kotlinlang.org/docs/coroutines-guide.html.
+[36] Firebase. Firebase Authentication. Accessed: 2025-05-05. Google. 2023. url: https:
+//firebase.google.com/docs/auth.
+[37] Firebase. Realtime Database. Accessed: 2025-05-05. Google. 2023. url: https://
+firebase.google.com/docs/database.
+[38] Google Developers. Hilt. Accessed: 2025-05-05. Android Developers. 2023. url:
+https://developer.android.com/training/dependency-injection/hilt
+android.
+[39] Kotlin. StateFlow and SharedFlow. Accessed: 2025-05-05. JetBrains. 2023. url:
+https://kotlinlang.org/docs/flow-stateflow-and-sharedflow.html.
+[40] Android Developers. Repository Pattern. Accessed: 2025-05-05. Google. 2023. url:
+https://developer.android.com/jetpack/guide#recommended-app-arch.
+[41] Android Developers. ViewModel Overview. Accessed: 2025-05-05. Google. 2023.
+url: https://developer.android.com/topic/libraries/architecture/
+viewmodel.
+[42] Firebase. Scalability. Accessed: 2025-05-05. Google. 2023. url: https://firebase.
+google.com/docs/database/usage/sharding.
+[43] Martin Fowler. Modular Architecture. Accessed: 2025-05-05. 2023. url: https:
+//martinfowler.com/articles/modular-monolith.html.
+33
+[44] Interaction Design Foundation. User Experience (UX) Design. Accessed: 2025-05
+05. n.d. url: https://www.interaction-design.org/literature/topics/ux
+design.
+[45] Android Developers. Jetpack Compose. Accessed: 2025-05-05. n.d. url: https:
+//developer.android.com/jetpack/compose.
+[46] Google. Material Design. Accessed: 2025-05-05. n.d. url: https://m3.material.
+io/.
+[47] Square. Retrofit: A type-safe HTTP client for Android. 2023. url: https://
+square.github.io/retrofit/.
+[48] Android Developers. Room Persistence Library. 2023. url: https://developer.
+android.com/jetpack/androidx/releases/room.
+34
+Appendix A
+Appendix A
+A.1 Agile Sprint Schedule in Jira
+Figure A.1: Agile Sprint Schedule of IELTS Mobile App Features in Jira
+35
+A.2 Data Models for User and Game Entities
+data class User(
+// user id
+val id: String = "",
+// user email
+val email: String = "",
+// displayed username
+val username: String = "",
+// user password
+val password: String = "",
+// user score
+val score: Int = 0,
+// user rank
+val rank: Int = 0
+)
+data class FirstGame(
+val id: Long = 0,
+val text1: String = "",
+val answer: String = "",
+val text2: String = ""
+)
+data class SecondGame(
+val id: Long = 0,
+val text: String = "",
+val answer: String = ""
+)
+data class ThirdGame(
+val id: Long = 0,
+val text: String = "",
+val answers: List<String> = emptyList()
+)
+data class FourthGame(
+val category: String = "",
+val mainWord: String = "",
+val synonyms: List<String> = emptyList(),
+val otherWords: List<String> = emptyList()
+)
+data class FifthGame(
+val id: Long = 0,
+val topic: String = "",
+val essayText: String = "",
+val gaps: List<String> = emptyList(),
+val options: List<String> = emptyList()
+)
+36

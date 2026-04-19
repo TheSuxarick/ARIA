@@ -587,6 +587,25 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- Noise Reduction -->
+                <div class="card noise-reduce-card">
+                    <div class="card-header">
+                        <span class="material-icons-round card-icon">graphic_eq</span>
+                        <h2 data-i18n="noise_reduction">Noise Reduction</h2>
+                    </div>
+                    <div class="audio-source-buttons" style="margin-bottom: 12px;">
+                        <button class="denoise-mode-btn" data-mode="off" data-i18n="nr_off">Off</button>
+                        <button class="denoise-mode-btn" data-mode="hpf" data-i18n="nr_hpf">HPF only</button>
+                        <button class="denoise-mode-btn active" data-mode="full" data-i18n="nr_full">Full</button>
+                    </div>
+                    <button id="trainNoiseBtn" class="audio-src-btn" style="width: 100%;">
+                        <span class="material-icons-round">school</span>
+                        <span id="trainNoiseLabel" data-i18n="nr_train">Train Noise (stay quiet 1s)</span>
+                    </button>
+                    <div id="noiseProfileStatus" class="wake-word-label" style="margin-top: 10px;"
+                        data-i18n="nr_profile_idle">No profile yet — press "Train" or stay quiet briefly.</div>
+                </div>
             </div>
         </section>
     </main>

@@ -27,6 +27,14 @@ from models import db, ChatMessage, User, Session, GmailAccount, EmailMessage
 
 
 def _load_env():
+    """Minimal .env loader.
+
+    Supports:
+      - KEY=VALUE
+      - Inline comments:  KEY=VALUE   # comment
+      - Optional quoting: KEY="a # b" or KEY='a # b'  (# inside quotes is kept)
+      - Blank lines and lines starting with #
+    """
     env_path = Path(__file__).resolve().parent / ".env"
     if not env_path.exists():
         return
@@ -35,9 +43,20 @@ def _load_env():
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
-            if "=" in line:
-                key, _, value = line.partition("=")
-                os.environ.setdefault(key.strip(), value.strip())
+            if "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            key = key.strip()
+            value = value.strip()
+
+            if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+                value = value[1:-1]
+            else:
+                hash_pos = value.find("#")
+                if hash_pos != -1:
+                    value = value[:hash_pos].rstrip()
+
+            os.environ.setdefault(key, value)
 
 
 _load_env()
@@ -1445,6 +1464,7 @@ def get_settings():
         **settings,
         "wake_word": _wake_word_enabled,
         "audio_source": settings.get("audio_source", "esp32"),
+        "mic_denoise": settings.get("mic_denoise", MIC_DENOISE_MODE),
         "api_keys_count": len(GEMINI_API_KEYS),
         "current_key_index": _gemini_key_index,
     })
@@ -1457,6 +1477,11 @@ def update_settings():
     for key in ("model", "language", "personality", "audio_source"):
         if key in data:
             settings[key] = data[key]
+    if "mic_denoise" in data:
+        val = str(data["mic_denoise"]).lower().strip()
+        if val in ("off", "hpf", "full"):
+            settings["mic_denoise"] = val
+            print(f"[DENOISE] mode -> {val}", flush=True)
     if "wake_word" in data:
         enabled = bool(data["wake_word"])
         if enabled and _wake_word_model is None:
@@ -1464,6 +1489,48 @@ def update_settings():
         _wake_word_enabled = enabled
         print(f"[WAKE] {'Enabled' if enabled else 'Disabled'}", flush=True)
     return jsonify({"status": "success"})
+
+
+@app.route("/api/audio/denoise/retrain", methods=["POST"])
+def audio_denoise_retrain():
+    """Block for `duration` seconds while averaging the mic stream into a fresh
+    noise profile. The caller is expected to stay quiet during that window.
+    """
+    import time as _t
+    data = request.get_json(silent=True) or {}
+    try:
+        duration = float(data.get("duration", request.args.get("duration", 1.2)))
+    except Exception:
+        duration = 1.2
+    duration = max(0.3, min(5.0, duration))
+
+    if not _audio_bridge_ok:
+        return jsonify({"error": "audio bridge not running"}), 503
+
+    before_count = _audio_recv_count
+    _mic_denoiser.start_training()
+    _t.sleep(duration)
+    frames = _mic_denoiser.finalize_training()
+    pkts = _audio_recv_count - before_count
+
+    ok = frames >= 4
+    return jsonify({
+        "status": "ok" if ok else "no_audio",
+        "duration": duration,
+        "frames_averaged": frames,
+        "packets_received": pkts,
+        "trained": ok,
+        "profile": _mic_denoiser.profile_status(),
+    }), (200 if ok else 503)
+
+
+@app.route("/api/audio/denoise/status", methods=["GET"])
+def audio_denoise_status():
+    return jsonify({
+        "mode": settings.get("mic_denoise", MIC_DENOISE_MODE),
+        "bridge": _audio_bridge_ok,
+        "profile": _mic_denoiser.profile_status(),
+    })
 
 
 @app.route("/api/memory", methods=["GET"])
@@ -2234,41 +2301,269 @@ def get_email_message(gmail_id):
 AUDIO_MIC_PORT = 12345
 AUDIO_SPK_PORT = 12346
 ESP32_MAC = os.environ.get("ESP32_MAC", "9c:9c:1f:e9:96:f4").lower().replace("-", ":")
+ESP32_IP_OVERRIDE = (os.environ.get("ESP32_IP") or "").strip() or None
 _esp32_ip_cache = None
 _esp32_ip_cache_time = 0
+_esp32_ip_source = None  # "env" | "arp-verified" | "udp" | None
 _esp32_audio_ip = None
+_esp32_resolver_running = False
+_esp32_resolver_lock = _threading.Lock()
+_ESP32_IP_TTL = 15.0       # seconds — after this we schedule a verified re-discovery
+_ESP32_SWEEP_COOLDOWN = 30.0
+_esp32_last_sweep_ts = 0.0
 
 
 def _resolve_ip_from_mac(mac):
-    """Look up an IP address by MAC in the system ARP table."""
+    """Look up an IP address by MAC in the system ARP table (first match).
+
+    NOTE: This reads the table AS-IS; the entry may be stale. Prefer
+    `_discover_esp32_ip` for the ESP32, which verifies the entry by pinging.
+    Kept for other callers (camera discovery, etc.).
+    """
     import subprocess
     try:
         out = subprocess.check_output("arp -a", shell=True, text=True, timeout=5)
-        mac_normalized = mac.lower().replace(":", "-")
-        for line in out.splitlines():
-            parts = line.split()
-            if len(parts) >= 2 and mac_normalized in parts[1].lower():
-                return parts[0]
     except Exception:
-        pass
+        return None
+
+    mac_norm = mac.lower().replace("-", ":")
+    ip_re = re.compile(r"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})")
+    mac_re = re.compile(r"([0-9a-f]{2}[:-]){5}[0-9a-f]{2}", re.IGNORECASE)
+    for line in out.splitlines():
+        m_mac = mac_re.search(line)
+        if not m_mac:
+            continue
+        if m_mac.group(0).lower().replace("-", ":") != mac_norm:
+            continue
+        m_ip = ip_re.search(line)
+        if m_ip:
+            return m_ip.group(1)
     return None
 
 
+def _arp_candidates_for_mac(mac):
+    """Return ALL IPs currently mapped to `mac` in the ARP table (may be stale)."""
+    import subprocess
+    try:
+        out = subprocess.check_output("arp -a", shell=True, text=True, timeout=5)
+    except Exception:
+        return []
+    mac_norm = mac.lower().replace("-", ":")
+    ip_re = re.compile(r"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})")
+    mac_re = re.compile(r"([0-9a-f]{2}[:-]){5}[0-9a-f]{2}", re.IGNORECASE)
+    ips = []
+    for line in out.splitlines():
+        m_mac = mac_re.search(line)
+        m_ip = ip_re.search(line)
+        if not (m_mac and m_ip):
+            continue
+        if m_mac.group(0).lower().replace("-", ":") != mac_norm:
+            continue
+        ip = m_ip.group(1)
+        if ip not in ips:
+            ips.append(ip)
+    return ips
+
+
+def _arp_mac_for_ip(ip):
+    """Return the MAC currently bound to `ip` in ARP, or None."""
+    import subprocess
+    try:
+        out = subprocess.check_output("arp -a", shell=True, text=True, timeout=5)
+    except Exception:
+        return None
+    mac_re = re.compile(r"([0-9a-f]{2}[:-]){5}[0-9a-f]{2}", re.IGNORECASE)
+    ip_token = " " + ip + " "
+    for line in out.splitlines():
+        if ip not in line:
+            continue
+        # Guard against substring collisions (e.g. 192.168.1.10 inside 192.168.1.100)
+        padded = " " + line + " "
+        if ip_token not in padded and not padded.startswith(" " + ip + " "):
+            continue
+        m = mac_re.search(line)
+        if m:
+            return m.group(0).lower().replace("-", ":")
+    return None
+
+
+def _ping_once(ip, timeout_ms=500):
+    """Single ICMP ping; returns True if the host replied."""
+    import subprocess
+    try:
+        if os.name == "nt":
+            cmd = ["ping", "-n", "1", "-w", str(timeout_ms), ip]
+        else:
+            cmd = ["ping", "-c", "1", "-W", str(max(1, timeout_ms // 1000)), ip]
+        result = subprocess.run(
+            cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=(timeout_ms + 500) / 1000.0,
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+
+
+def _get_local_subnet_prefix():
+    try:
+        s = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)
+        try:
+            s.connect(("8.8.8.8", 80))
+            local_ip = s.getsockname()[0]
+        finally:
+            s.close()
+        return ".".join(local_ip.split(".")[:3])
+    except Exception:
+        return None
+
+
+def _quick_ping_sweep():
+    """Fire-and-forget pings across the /24 to repopulate ARP. ~2–4s total."""
+    global _esp32_last_sweep_ts
+    import time as _t
+    now = _t.time()
+    if now - _esp32_last_sweep_ts < _ESP32_SWEEP_COOLDOWN:
+        return
+    _esp32_last_sweep_ts = now
+
+    prefix = _get_local_subnet_prefix()
+    if not prefix:
+        return
+    print(f"[AUDIO] ARP sweep {prefix}.1-254 (refreshing cache)", flush=True)
+    procs = []
+    for i in range(1, 255):
+        try:
+            if os.name == "nt":
+                cmd = ["ping", "-n", "1", "-w", "250", f"{prefix}.{i}"]
+            else:
+                cmd = ["ping", "-c", "1", "-W", "1", f"{prefix}.{i}"]
+            procs.append(subprocess.Popen(
+                cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            ))
+        except Exception:
+            pass
+    for p in procs:
+        try:
+            p.wait(timeout=4)
+        except Exception:
+            try:
+                p.kill()
+            except Exception:
+                pass
+
+
+def _discover_esp32_ip():
+    """Find ESP32's actual current IP — verified, not stale.
+
+    Algorithm:
+      1. For each ARP entry mapped to our MAC, ping it. The ping forces
+         a fresh ARP resolution: if the device moved, ARP gets updated
+         (or the entry disappears). After the ping, re-read ARP and keep
+         only IPs where our MAC is STILL bound.
+      2. If none pass verification, run a /24 ping sweep to populate ARP
+         with every live host, then repeat step 1.
+    """
+    def _verify(ip):
+        if not _ping_once(ip, 600):
+            return False
+        return _arp_mac_for_ip(ip) == ESP32_MAC
+
+    for ip in _arp_candidates_for_mac(ESP32_MAC):
+        if _verify(ip):
+            return ip
+
+    _quick_ping_sweep()
+
+    for ip in _arp_candidates_for_mac(ESP32_MAC):
+        if _verify(ip):
+            return ip
+
+    return None
+
+
+def _esp32_resolver_refresh(sync=False):
+    """Re-discover the ESP32's IP in a background thread (single-flight).
+
+    If `sync=True`, runs inline (used at startup for the first resolve).
+    """
+    global _esp32_resolver_running, _esp32_ip_cache, _esp32_ip_cache_time, _esp32_ip_source
+
+    def _run():
+        global _esp32_resolver_running, _esp32_ip_cache, _esp32_ip_cache_time, _esp32_ip_source
+        try:
+            ip = _discover_esp32_ip()
+            import time as _t
+            now = _t.time()
+            if ip:
+                if ip != _esp32_ip_cache:
+                    print(f"[AUDIO] ESP32 discovered: {ip} (verified by ping + ARP)", flush=True)
+                _esp32_ip_cache = ip
+                _esp32_ip_cache_time = now
+                _esp32_ip_source = "arp-verified"
+            elif _esp32_audio_ip:
+                if _esp32_ip_cache != _esp32_audio_ip:
+                    print(f"[AUDIO] ESP32 IP fallback to UDP source: {_esp32_audio_ip}", flush=True)
+                _esp32_ip_cache = _esp32_audio_ip
+                _esp32_ip_cache_time = now
+                _esp32_ip_source = "udp"
+        finally:
+            with _esp32_resolver_lock:
+                globals()["_esp32_resolver_running"] = False
+
+    with _esp32_resolver_lock:
+        if _esp32_resolver_running:
+            return
+        _esp32_resolver_running = True
+
+    if sync:
+        _run()
+    else:
+        _threading.Thread(target=_run, daemon=True, name="esp32-resolver").start()
+
+
+def _esp32_bg_resolver_loop():
+    """Periodic background refresher so the cache never goes stale for long."""
+    import time as _t
+    while True:
+        try:
+            _t.sleep(_ESP32_IP_TTL)
+            if ESP32_IP_OVERRIDE:
+                continue
+            _esp32_resolver_refresh(sync=False)
+        except Exception:
+            continue
+
+
 def _esp32_send_ip():
-    """Resolve ESP32 IP from its MAC address (cached 30s). Falls back to UDP source IP."""
-    global _esp32_ip_cache, _esp32_ip_cache_time
-    import time
-    now = time.time()
-    if _esp32_ip_cache and now - _esp32_ip_cache_time < 30:
+    """Return the best known ESP32 IP without ever blocking the caller.
+
+    Priority: env override > last verified ARP cache > last UDP source.
+    A background re-discovery is kicked off when the cache is stale.
+    """
+    global _esp32_ip_cache, _esp32_ip_source
+    import time as _t
+
+    if ESP32_IP_OVERRIDE:
+        if _esp32_ip_cache != ESP32_IP_OVERRIDE:
+            print(f"[AUDIO] ESP32 IP from env: {ESP32_IP_OVERRIDE}", flush=True)
+            _esp32_ip_cache = ESP32_IP_OVERRIDE
+        _esp32_ip_source = "env"
+        return ESP32_IP_OVERRIDE
+
+    now = _t.time()
+    stale = (not _esp32_ip_cache) or (now - _esp32_ip_cache_time >= _ESP32_IP_TTL)
+    if stale:
+        _esp32_resolver_refresh(sync=False)
+
+    if _esp32_ip_cache:
         return _esp32_ip_cache
-    ip = _resolve_ip_from_mac(ESP32_MAC)
-    if ip:
-        if ip != _esp32_ip_cache:
-            print(f"[AUDIO] ESP32 MAC {ESP32_MAC} -> IP {ip}", flush=True)
-        _esp32_ip_cache = ip
-        _esp32_ip_cache_time = now
-        return ip
-    return _esp32_ip_cache or _esp32_audio_ip
+    if _esp32_audio_ip:
+        _esp32_ip_source = "udp"
+        return _esp32_audio_ip
+    _esp32_ip_source = None
+    return None
 _audio_listeners = 0
 _audio_bridge_ok = False
 _udp_recv = None
@@ -2335,6 +2630,360 @@ def _wake_word_feed(pcm_bytes):
     return triggered
 
 
+# ── Mic denoiser (server-side, firmware-free) ────────────────────────────────
+#
+# The INMP441 on the ESP32 sends raw 16-bit PCM @ 16 kHz with no processing.
+# Typical artefacts: DC offset, <100 Hz rumble, 50/60 Hz mains hum, stationary
+# hiss. We clean the stream BEFORE it fans out to browser listen / wake word /
+# robot STT, so every consumer sees clean audio.
+#
+# Stages:
+#   1. 2nd-order Butterworth high-pass at MIC_HPF_HZ (default 120 Hz).
+#   2. Overlap-add spectral gate (50% overlap Hann, STFT size = 2 * chunk).
+#      Learns a noise floor from low-RMS frames and from the first ~0.6 s.
+
+def _env_float(name: str, default: float) -> float:
+    """Read a float from env, tolerating inline comments and whitespace."""
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    cleaned = raw.split("#", 1)[0].strip()
+    if not cleaned:
+        return default
+    try:
+        return float(cleaned)
+    except ValueError:
+        print(f"[ENV] bad float for {name}={raw!r}; using default {default}", flush=True)
+        return default
+
+
+MIC_DENOISE_MODE = (os.environ.get("MIC_DENOISE", "full").split("#", 1)[0].lower().strip() or "full")  # off | hpf | full
+MIC_HPF_HZ = _env_float("MIC_HPF_HZ", 120.0)
+MIC_GATE_OVERSUB = _env_float("MIC_GATE_OVERSUB", 2.0)
+MIC_GATE_FLOOR = _env_float("MIC_GATE_FLOOR", 0.02)
+MIC_GATE_TIME_SMOOTH = _env_float("MIC_GATE_TIME_SMOOTH", 0.6)  # 0..1 (higher = smoother mask, less musical noise)
+MIC_NOISE_MARGIN = _env_float("MIC_NOISE_MARGIN", 1.35)  # multiply learned profile by this (>=1); compensates for
+                                                        # instantaneous noise exceeding the mean magnitude.
+MIC_NOISE_TRACK_RMS = _env_float("MIC_NOISE_TRACK_RMS", 0.04)  # update profile only when frame RMS < this.
+MIC_NOISE_TRACK_ALPHA = _env_float("MIC_NOISE_TRACK_ALPHA", 0.985)  # EMA: new = alpha*old + (1-alpha)*current.
+
+
+class MicDenoiser:
+    """Real-time mic cleanup: HPF + overlap-add spectral mask. Pure numpy, stateful.
+
+    The spectral gate multiplies the complex spectrum by a per-bin gain mask
+    derived from the SNR vs. a learned noise magnitude profile. The mask is
+    smoothed in time (and optionally frequency) to avoid "musical noise".
+
+    The profile is either:
+      - trained explicitly via start_training / finalize_training (best), or
+      - auto-learned from the first few quiet frames (fallback).
+
+    Until a profile exists, the gate is pass-through — so we never subtract
+    the first frame's contents (which could be mid-speech) from everything.
+    """
+
+    AUTO_LEARN_RMS_THRESHOLD = 0.05
+    AUTO_LEARN_FRAMES_NEEDED = 12   # ~0.4 s at 32 ms / frame
+
+    def __init__(self, sample_rate=16000, hpf_hz=120.0, gate=True,
+                 gate_oversub=2.0, gate_floor=0.02, time_smooth=0.6,
+                 freq_smooth=True, noise_margin=1.35,
+                 track_rms=0.04, track_alpha=0.985):
+        import numpy as _np
+        import math as _math
+        self._np = _np
+        self.sr = sample_rate
+        self.gate_on = gate
+        self.oversub = gate_oversub
+        self.floor = gate_floor
+        self.time_smooth = max(0.0, min(0.95, time_smooth))
+        self.freq_smooth = freq_smooth
+        self.noise_margin = max(1.0, float(noise_margin))
+        self.track_rms = max(0.0, float(track_rms))
+        self.track_alpha = max(0.5, min(0.9995, float(track_alpha)))
+
+        Q = 1.0 / _math.sqrt(2.0)
+        w0 = 2 * _math.pi * hpf_hz / sample_rate
+        cw, sw = _math.cos(w0), _math.sin(w0)
+        alpha = sw / (2 * Q)
+        a0 = 1 + alpha
+        self._b0 = (1 + cw) / 2 / a0
+        self._b1 = -(1 + cw) / a0
+        self._b2 = (1 + cw) / 2 / a0
+        self._a1 = -2 * cw / a0
+        self._a2 = (1 - alpha) / a0
+        self._z1 = 0.0
+        self._z2 = 0.0
+
+        self._have_scipy = False
+        try:
+            from scipy.signal import lfilter  # noqa: F401
+            self._lfilter = lfilter
+            self._b = _np.array([self._b0, self._b1, self._b2], dtype=_np.float32)
+            self._a = _np.array([1.0, self._a1, self._a2], dtype=_np.float32)
+            self._zi = _np.zeros(2, dtype=_np.float32)
+            self._have_scipy = True
+        except Exception:
+            pass
+
+        self._prev_in_half = None
+        self._prev_out_half = None
+        self._prev_gain = None
+
+        self._noise_mag = None
+        self._auto_accum = None
+        self._auto_count = 0
+
+        self._training = False
+        self._train_accum = None
+        self._train_count = 0
+        self._train_prev = None
+
+    def _hpf(self, x):
+        if self._have_scipy:
+            y, self._zi = self._lfilter(self._b, self._a, x, zi=self._zi)
+            return y
+        np = self._np
+        y = np.empty_like(x)
+        z1, z2 = self._z1, self._z2
+        b0, b1, b2 = self._b0, self._b1, self._b2
+        a1, a2 = self._a1, self._a2
+        for i in range(len(x)):
+            xi = float(x[i])
+            yi = b0 * xi + z1
+            z1 = b1 * xi + z2 - a1 * yi
+            z2 = b2 * xi - a2 * yi
+            y[i] = yi
+        self._z1, self._z2 = z1, z2
+        return y
+
+    def _try_auto_learn(self, mag, rms):
+        """Accumulate magnitudes from quiet frames until we have enough."""
+        np = self._np
+        if rms > self.AUTO_LEARN_RMS_THRESHOLD:
+            return
+        if self._auto_accum is None:
+            self._auto_accum = mag.copy()
+            self._auto_count = 1
+        else:
+            self._auto_accum += mag
+            self._auto_count += 1
+        if self._auto_count >= self.AUTO_LEARN_FRAMES_NEEDED:
+            mean = self._auto_accum / float(self._auto_count)
+            self._noise_mag = (mean * self.noise_margin).astype(np.float32)
+            print(
+                f"[DENOISE] auto-learned noise profile from "
+                f"{self._auto_count} quiet frames (rms<{self.AUTO_LEARN_RMS_THRESHOLD}, "
+                f"margin={self.noise_margin:.2f}x)",
+                flush=True,
+            )
+            self._auto_accum = None
+            self._auto_count = 0
+
+    def _spec_gate(self, x):
+        np = self._np
+        N = len(x)
+        if N < 64:
+            return x
+
+        if self._prev_in_half is None or len(self._prev_in_half) != N:
+            self._prev_in_half = x.astype(np.float32).copy()
+            self._prev_out_half = np.zeros(N, dtype=np.float32)
+            self._prev_gain = None
+            return x
+
+        frame = np.concatenate([self._prev_in_half, x]).astype(np.float32)
+        win = np.hanning(2 * N).astype(np.float32)
+        X = np.fft.rfft(frame * win)
+        mag = np.abs(X).astype(np.float32) + 1e-9
+
+        rms = float(np.sqrt(np.mean(frame * frame) + 1e-9))
+        if self._noise_mag is None:
+            self._try_auto_learn(mag, rms)
+            self._prev_in_half = x.astype(np.float32).copy()
+            return x
+
+        # Slow background tracking: when the current frame is clearly quieter
+        # than anything speech-like, blend its magnitude into the profile so
+        # we follow slow drift (amp warm-up, fan speeding up, etc.) without
+        # ever polluting the profile with speech.
+        if rms < self.track_rms:
+            a = self.track_alpha
+            self._noise_mag = (a * self._noise_mag + (1.0 - a) * mag).astype(np.float32)
+
+        snr = mag / (self._noise_mag + 1e-9)
+        gain = 1.0 - self.oversub / np.maximum(snr, 1e-9)
+        gain = np.clip(gain, self.floor, 1.0).astype(np.float32)
+
+        if self._prev_gain is None or self._prev_gain.shape != gain.shape:
+            self._prev_gain = gain.copy()
+        else:
+            a = self.time_smooth
+            gain = a * self._prev_gain + (1.0 - a) * gain
+            self._prev_gain = gain
+
+        if self.freq_smooth and gain.size >= 3:
+            pad = np.concatenate([[gain[0]], gain, [gain[-1]]])
+            gain = ((pad[:-2] + pad[1:-1] + pad[2:]) / 3.0).astype(np.float32)
+
+        Y = X * gain
+        y_full = np.fft.irfft(Y, n=2 * N).astype(np.float32)
+
+        out_first = y_full[:N] + self._prev_out_half
+        self._prev_out_half = y_full[N:].copy()
+        self._prev_in_half = x.astype(np.float32).copy()
+        return out_first
+
+    def _feed_training(self, x_hpf):
+        """Accumulate magnitude spectra into the active training profile.
+
+        Uses the same overlap-add geometry as runtime, so the learned
+        profile matches exactly what the gate will compare against.
+        """
+        np = self._np
+        N = len(x_hpf)
+        if self._train_prev is None or len(self._train_prev) != N:
+            self._train_prev = x_hpf.astype(np.float32).copy()
+            return
+        frame = np.concatenate([self._train_prev, x_hpf]).astype(np.float32)
+        win = np.hanning(2 * N).astype(np.float32)
+        mag = np.abs(np.fft.rfft(frame * win)).astype(np.float32)
+        if self._train_accum is None:
+            self._train_accum = mag.copy()
+            self._train_count = 1
+        else:
+            self._train_accum += mag
+            self._train_count += 1
+        self._train_prev = x_hpf.astype(np.float32).copy()
+
+    def _pcm_to_f32(self, pcm_bytes):
+        return self._np.frombuffer(pcm_bytes, dtype=self._np.int16).astype(
+            self._np.float32
+        ) * (1.0 / 32768.0)
+
+    def _f32_to_pcm(self, x):
+        np = self._np
+        x = np.clip(x, -1.0, 1.0)
+        return (x * 32767.0).astype(np.int16).tobytes()
+
+    def process_pcm_bytes(self, pcm_bytes, mode="full"):
+        if mode == "off" or len(pcm_bytes) < 4:
+            return pcm_bytes
+        try:
+            x = self._pcm_to_f32(pcm_bytes)
+            x = self._hpf(x)
+
+            if self._training:
+                self._feed_training(x)
+                return self._f32_to_pcm(x)
+
+            if mode == "full" and self.gate_on:
+                x = self._spec_gate(x)
+            return self._f32_to_pcm(x)
+        except Exception as e:
+            print(f"[DENOISE] error: {e} (passing raw)", flush=True)
+            return pcm_bytes
+
+    def process_pcm_bytes_split(self, pcm_bytes, mode="full"):
+        """Single-pass version that returns (listen_bytes, stt_bytes).
+
+        - listen_bytes: what humans should hear (full gate if mode=='full').
+        - stt_bytes:    HPF-only output (good for Whisper / OpenWakeWord).
+
+        Shares one HPF pass so the filter's internal state advances exactly once.
+        """
+        if mode == "off" or len(pcm_bytes) < 4:
+            return pcm_bytes, pcm_bytes
+        try:
+            x = self._pcm_to_f32(pcm_bytes)
+            x_hpf = self._hpf(x)
+
+            if self._training:
+                self._feed_training(x_hpf)
+                out = self._f32_to_pcm(x_hpf)
+                return out, out
+
+            stt_bytes = self._f32_to_pcm(x_hpf)
+            if mode == "full" and self.gate_on:
+                x_gated = self._spec_gate(x_hpf)
+                listen_bytes = self._f32_to_pcm(x_gated)
+            else:
+                listen_bytes = stt_bytes
+            return listen_bytes, stt_bytes
+        except Exception as e:
+            print(f"[DENOISE] split error: {e} (passing raw)", flush=True)
+            return pcm_bytes, pcm_bytes
+
+    def start_training(self):
+        self._train_accum = None
+        self._train_count = 0
+        self._train_prev = None
+        self._training = True
+        print("[DENOISE] training started — collecting noise profile...", flush=True)
+
+    def finalize_training(self):
+        self._training = False
+        count = self._train_count
+        if self._train_accum is not None and count >= 4:
+            mean = self._train_accum / float(count)
+            self._noise_mag = (mean * self.noise_margin).astype(self._np.float32)
+            self._prev_gain = None
+            print(
+                f"[DENOISE] training complete: averaged {count} frames "
+                f"(margin={self.noise_margin:.2f}x) into new noise profile",
+                flush=True,
+            )
+        else:
+            print(
+                f"[DENOISE] training aborted: only {count} frames — no profile "
+                f"update (is the ESP32 actually streaming?)",
+                flush=True,
+            )
+        self._train_accum = None
+        self._train_count = 0
+        self._train_prev = None
+        return count
+
+    def reset_noise_profile(self):
+        self._noise_mag = None
+        self._prev_gain = None
+        self._auto_accum = None
+        self._auto_count = 0
+
+    def profile_status(self):
+        return {
+            "trained": self._noise_mag is not None,
+            "auto_learn_progress": self._auto_count,
+            "auto_learn_needed": self.AUTO_LEARN_FRAMES_NEEDED,
+            "training_now": self._training,
+            "oversub": self.oversub,
+            "floor": self.floor,
+            "time_smooth": self.time_smooth,
+        }
+
+
+_mic_denoiser = MicDenoiser(
+    sample_rate=16000,
+    hpf_hz=MIC_HPF_HZ,
+    gate=True,
+    gate_oversub=MIC_GATE_OVERSUB,
+    gate_floor=MIC_GATE_FLOOR,
+    time_smooth=MIC_GATE_TIME_SMOOTH,
+    freq_smooth=True,
+    noise_margin=MIC_NOISE_MARGIN,
+    track_rms=MIC_NOISE_TRACK_RMS,
+    track_alpha=MIC_NOISE_TRACK_ALPHA,
+)
+print(
+    f"[DENOISE] MicDenoiser ready: mode={MIC_DENOISE_MODE}, hpf={MIC_HPF_HZ:.0f}Hz, "
+    f"oversub={MIC_GATE_OVERSUB}, floor={MIC_GATE_FLOOR}, time_smooth={MIC_GATE_TIME_SMOOTH}, "
+    f"margin={MIC_NOISE_MARGIN}, track_rms={MIC_NOISE_TRACK_RMS}, "
+    f"scipy={'yes' if _mic_denoiser._have_scipy else 'no (python biquad)'}",
+    flush=True,
+)
+
+
 # ── Audio bridge ─────────────────────────────────────────────────────────────
 
 def _init_audio_bridge():
@@ -2353,19 +3002,36 @@ def _init_audio_bridge():
             _last_log = _time.time()
             while True:
                 try:
-                    data, addr = _udp_recv.recvfrom(4096)
+                    raw, addr = _udp_recv.recvfrom(4096)
                     _esp32_audio_ip = addr[0]
                     _audio_recv_count += 1
+
+                    mode = settings.get("mic_denoise", MIC_DENOISE_MODE)
+                    if mode not in ("off", "hpf", "full"):
+                        mode = "full"
+
+                    # Two parallel streams out of ONE HPF pass:
+                    #   listen_data -> what humans hear (full spectral gate if enabled)
+                    #   stt_data    -> what Whisper / OpenWakeWord see (HPF only)
+                    # Aggressive spectral gating wrecks STT/wake-word accuracy
+                    # (mask artifacts + clipped fricatives), so we never feed the
+                    # gate output to them.
+                    listen_data, stt_data = _mic_denoiser.process_pcm_bytes_split(raw, mode=mode)
+
                     if _robot_recording:
-                        _robot_buffer.append(data)
-                    elif _wake_word_enabled and _wake_word_feed(data):
+                        _robot_buffer.append(stt_data)
+                    elif _wake_word_enabled and _wake_word_feed(stt_data):
                         socketio.emit("robot_status", {"state": "wake_word", "detail": "Computer"}, namespace="/audio")
                         _threading.Thread(target=_robot_pipeline, daemon=True).start()
-                    socketio.emit("esp_audio", data, namespace="/audio")
+                    socketio.emit("esp_audio", listen_data, namespace="/audio")
                     _audio_emit_count += 1
                     now = _time.time()
                     if now - _last_log >= 5.0:
-                        print(f"[AUDIO] recv={_audio_recv_count} emit={_audio_emit_count} listeners={_audio_listeners} from={addr[0]}", flush=True)
+                        print(
+                            f"[AUDIO] recv={_audio_recv_count} emit={_audio_emit_count} "
+                            f"listeners={_audio_listeners} from={addr[0]} denoise={mode}",
+                            flush=True,
+                        )
                         _last_log = now
                 except Exception as e:
                     print(f"[AUDIO] recv error: {e}", flush=True)
@@ -2373,8 +3039,27 @@ def _init_audio_bridge():
 
         _threading.Thread(target=_recv_loop, daemon=True).start()
         _audio_bridge_ok = True
+
+        if not ESP32_IP_OVERRIDE:
+            _threading.Thread(
+                target=_esp32_resolver_refresh,
+                kwargs={"sync": False},
+                daemon=True,
+                name="esp32-resolver-initial",
+            ).start()
+            _threading.Thread(
+                target=_esp32_bg_resolver_loop,
+                daemon=True,
+                name="esp32-resolver-loop",
+            ).start()
+
         resolved = _esp32_send_ip()
-        print(f"[AUDIO] Bridge active on UDP port {AUDIO_MIC_PORT} | ESP32 MAC={ESP32_MAC} -> IP={resolved or 'pending'}", flush=True)
+        print(
+            f"[AUDIO] Bridge active on UDP port {AUDIO_MIC_PORT} | "
+            f"ESP32 MAC={ESP32_MAC} -> IP={resolved or 'discovering...'} "
+            f"(source={_esp32_ip_source or 'none'})",
+            flush=True,
+        )
     except OSError as e:
         print(f"[AUDIO] Port 12345 in use -- audio bridge disabled: {e}", flush=True)
 
@@ -2396,23 +3081,104 @@ def _on_audio_disconnect():
     print(f"[AUDIO] Client disconnected ({_audio_listeners} listeners)", flush=True)
 
 
+_browser_audio_stats = {
+    "pkts_ok": 0,
+    "pkts_no_ip": 0,
+    "pkts_err": 0,
+    "last_err": "",
+    "last_no_ip_log": 0.0,
+    "last_err_log": 0.0,
+    "first_ok_logged": False,
+}
+
+
 @socketio.on("browser_audio", namespace="/audio")
 def _on_browser_audio(data):
-    if _esp32_send_ip() and _udp_send:
-        try:
-            _udp_send.sendto(data, (_esp32_send_ip(), AUDIO_SPK_PORT))
-        except Exception:
-            pass
+    import time as _t
+    st = _browser_audio_stats
+
+    if not _udp_send:
+        return
+
+    ip = _esp32_send_ip()
+    now = _t.time()
+
+    if not ip:
+        st["pkts_no_ip"] += 1
+        if now - st["last_no_ip_log"] >= 3.0:
+            print(
+                f"[AUDIO] browser_audio dropped: ESP32 IP not resolved "
+                f"(mac={ESP32_MAC}, env_override={ESP32_IP_OVERRIDE or 'unset'}, "
+                f"udp_src={_esp32_audio_ip or 'none'}, dropped={st['pkts_no_ip']}). "
+                f"Set ESP32_IP in .env or ping the device so it appears in `arp -a`.",
+                flush=True,
+            )
+            st["last_no_ip_log"] = now
+        return
+
+    try:
+        shaped = _speaker_shaper.process(data)
+        _udp_send.sendto(shaped, (ip, AUDIO_SPK_PORT))
+        st["pkts_ok"] += 1
+        if not st["first_ok_logged"]:
+            print(
+                f"[AUDIO] browser -> ESP32 OK: {ip}:{AUDIO_SPK_PORT} "
+                f"(source={_esp32_ip_source}, first packet {len(data)}B)",
+                flush=True,
+            )
+            st["first_ok_logged"] = True
+    except Exception as e:
+        st["pkts_err"] += 1
+        st["last_err"] = str(e)
+        if now - st["last_err_log"] >= 3.0:
+            print(
+                f"[AUDIO] browser_audio sendto({ip}:{AUDIO_SPK_PORT}) "
+                f"failed: {e} (errs={st['pkts_err']})",
+                flush=True,
+            )
+            st["last_err_log"] = now
 
 
 @app.route("/api/audio/status", methods=["GET"])
 def audio_status():
+    import time as _t
+    send_ip = _esp32_send_ip()
+    st = _browser_audio_stats
+    age = (_t.time() - _esp32_ip_cache_time) if _esp32_ip_cache_time else None
     return jsonify({
         "bridge": _audio_bridge_ok,
-        "esp32_ip": _esp32_audio_ip,
+        "esp32_mac": ESP32_MAC,
+        "esp32_ip_env": ESP32_IP_OVERRIDE,
+        "esp32_ip_udp_source": _esp32_audio_ip,
+        "esp32_send_ip": send_ip,
+        "esp32_send_ip_source": _esp32_ip_source,
+        "esp32_ip_age_seconds": round(age, 1) if age is not None else None,
+        "esp32_resolver_running": _esp32_resolver_running,
+        "spk_port": AUDIO_SPK_PORT,
+        "mic_port": AUDIO_MIC_PORT,
         "listeners": _audio_listeners,
         "recv_count": _audio_recv_count,
         "emit_count": _audio_emit_count,
+        "browser_audio": {
+            "pkts_ok": st["pkts_ok"],
+            "pkts_no_ip": st["pkts_no_ip"],
+            "pkts_err": st["pkts_err"],
+            "last_err": st["last_err"],
+        },
+    })
+
+
+@app.route("/api/audio/refresh-esp32", methods=["POST"])
+def audio_refresh_esp32():
+    """Force a fresh (verified) re-discovery of the ESP32's IP."""
+    global _esp32_ip_cache, _esp32_ip_cache_time, _esp32_last_sweep_ts
+    _esp32_ip_cache = None
+    _esp32_ip_cache_time = 0
+    _esp32_last_sweep_ts = 0
+    _esp32_resolver_refresh(sync=True)
+    return jsonify({
+        "esp32_send_ip": _esp32_ip_cache,
+        "source": _esp32_ip_source,
     })
 
 
@@ -2431,7 +3197,8 @@ def _get_whisper(size="tiny"):
         from faster_whisper import WhisperModel
         try:
             print(f"[ROBOT] Loading Whisper model ({size})...", flush=True)
-            _whisper_models[size] = WhisperModel(size, device="cpu", compute_type="int8")
+            # _whisper_models[size] = WhisperModel(size, device="cpu", compute_type="int8")
+            _whisper_models[size] = WhisperModel(size, device="cuda", compute_type="float16")
             print(f"[ROBOT] Whisper model ({size}) loaded.", flush=True)
         except Exception as e:
             print(f"[ROBOT] Failed to load Whisper ({size}): {e}", flush=True)
@@ -2618,15 +3385,23 @@ def _send_pcm_to_esp32(pcm_bytes, sample_rate=16000):
     if not _esp32_send_ip() or not _udp_send:
         return
     import time
-    chunk_size = 1024
+    chunk_size = 512
     bytes_per_sec = sample_rate * 2
+    chunk_dur = chunk_size / bytes_per_sec
+    start = time.time()
+    i = 0
     for offset in range(0, len(pcm_bytes), chunk_size):
         chunk = pcm_bytes[offset:offset + chunk_size]
+        chunk = _speaker_shaper.process(chunk)
         try:
             _udp_send.sendto(chunk, (_esp32_send_ip(), AUDIO_SPK_PORT))
         except Exception:
             pass
-        time.sleep(chunk_size / bytes_per_sec * 0.9)
+        i += 1
+        deadline = start + i * chunk_dur * 0.98
+        delay = deadline - time.time()
+        if delay > 0:
+            time.sleep(delay)
 
 
 def _pcm_buffer_to_wav(pcm_bytes, sample_rate=16000):
@@ -2748,10 +3523,19 @@ def _whisper_stt(wav_buf, whisper_lang):
     t_load = time.time() - t0
     t1 = time.time()
     wav_buf.seek(0)
+    # NOTE: vad_filter=False on purpose. We already do our own silence detection
+    # in _robot_pipeline (SILENCE_THRESHOLD / SILENCE_DURATION). Silero VAD
+    # inside faster-whisper tends to reject HPF'd / slightly-denoised speech
+    # (especially lower-pitched male voices, because 120 Hz HPF clips part of
+    # the vocal fundamental), which made the pipeline return "Could not
+    # understand speech" even when the audio was perfectly intelligible.
     segments, info = model.transcribe(
         wav_buf, beam_size=5,
         language=whisper_lang,
-        vad_filter=True,
+        vad_filter=False,
+        condition_on_previous_text=False,
+        temperature=0.0,
+        no_speech_threshold=0.8,
     )
     text = " ".join(seg.text for seg in segments).strip()
     t_transcribe = time.time() - t1
@@ -2803,6 +3587,175 @@ _TTS_VOICE_FALLBACKS = {
 
 TTS_RATE = os.environ.get("TTS_RATE", "+18%")
 
+# ── ESP32 speaker safety pipeline ────────────────────────────────────────────
+#
+# The ESP32 firmware multiplies every sample by ~2.0x before writing to the
+# MAX98357A amp, then hard-clips at int16 bounds. Any peak > 0.5 coming out of
+# the server therefore becomes a full-scale clipped peak at the amp. Full-scale
+# peaks on a tiny amp like the MAX98357A draw 0.5-1 A for a few ms; on an
+# underpowered USB/PSU this trips the amp's undervoltage lockout, muting the
+# speaker for 2-4 seconds ("speaker stops working on loud sounds").
+#
+# We counter this on the server with:
+#   1. A high-pass at ~150 Hz. Sub-150 Hz content draws disproportionate amp
+#      current (speaker impedance ~= DC resistance at low frequencies) while
+#      contributing almost nothing to speech intelligibility on this driver.
+#   2. A stateful soft peak limiter that caps the amplitude at a ceiling
+#      chosen to account for the firmware's 2x gain.
+#
+# Effective amp input peak ≈ SPK_PEAK_CEILING * ESP32_FIRMWARE_GAIN.
+ESP32_FIRMWARE_GAIN = _env_float("ESP32_FIRMWARE_GAIN", 2.0)
+SPK_PEAK_CEILING = _env_float("TTS_PEAK_CEILING", 0.25)  # backwards compat: old name still reads
+SPK_HPF_HZ = _env_float("SPK_HPF_HZ", 150.0)
+
+
+class SpeakerShaper:
+    """Stateful HPF + soft peak limiter applied to every int16 PCM chunk bound
+    for the ESP32 speaker. Shared across all paths (TTS, beeps, browser mic)."""
+
+    def __init__(self, sample_rate=16000, hpf_hz=150.0, ceiling=0.35):
+        import numpy as _np
+        import math as _math
+        self._np = _np
+        self.sr = sample_rate
+        self.ceiling = max(0.05, min(0.99, float(ceiling)))
+
+        Q = 1.0 / _math.sqrt(2.0)
+        w0 = 2 * _math.pi * hpf_hz / sample_rate
+        cw, sw = _math.cos(w0), _math.sin(w0)
+        alpha = sw / (2 * Q)
+        a0 = 1 + alpha
+        self._b0 = (1 + cw) / 2 / a0
+        self._b1 = -(1 + cw) / a0
+        self._b2 = (1 + cw) / 2 / a0
+        self._a1 = -2 * cw / a0
+        self._a2 = (1 - alpha) / a0
+
+        self._have_scipy = False
+        try:
+            from scipy.signal import lfilter  # noqa: F401
+            self._lfilter = lfilter
+            self._b = _np.array([self._b0, self._b1, self._b2], dtype=_np.float32)
+            self._a = _np.array([1.0, self._a1, self._a2], dtype=_np.float32)
+            self._zi = _np.zeros(2, dtype=_np.float32)
+            self._have_scipy = True
+        except Exception:
+            self._z1 = 0.0
+            self._z2 = 0.0
+
+        self._gain = 1.0
+        self._lock = _threading.Lock()
+
+    def reset_state(self):
+        """Clear filter state and restore gain. Call at the start of an utterance
+        so a long pause doesn't leave the HPF with stale state."""
+        with self._lock:
+            if self._have_scipy:
+                self._zi = self._np.zeros(2, dtype=self._np.float32)
+            else:
+                self._z1 = 0.0
+                self._z2 = 0.0
+            self._gain = 1.0
+
+    def _hpf(self, x):
+        if self._have_scipy:
+            y, self._zi = self._lfilter(self._b, self._a, x, zi=self._zi)
+            return y
+        np = self._np
+        y = np.empty_like(x)
+        z1, z2 = self._z1, self._z2
+        b0, b1, b2 = self._b0, self._b1, self._b2
+        a1, a2 = self._a1, self._a2
+        for i in range(len(x)):
+            xi = float(x[i])
+            yi = b0 * xi + z1
+            z1 = b1 * xi + z2 - a1 * yi
+            z2 = b2 * xi - a2 * yi
+            y[i] = yi
+        self._z1, self._z2 = z1, z2
+        return y
+
+    def process(self, pcm_bytes):
+        """Fast-attack, slow-release peak limiter with a brick-wall safety clip.
+
+        Previously this used a single linear ramp from the previous chunk's gain
+        to the target gain, spread across the whole chunk. That meant peaks near
+        the start of a chunk could pass through at near-full amplitude (first
+        sample saw old gain, the reduction only finished ~16 ms later). For TTS,
+        where every word onset is a large peak, that caused repeated full-scale
+        spikes into the amp and tripped its UVLO / the PSU's OCP.
+
+        New behaviour:
+          - ATTACK (peak too loud): drop to the target gain essentially at once
+            (~0.5 ms linear ramp just to avoid a click) and hold it for the rest
+            of the chunk.
+          - RELEASE (no peak): gently rise toward 1.0 across the whole chunk.
+          - BRICK WALL: a hard clip at ±ceiling catches anything that might
+            slip through during the 0.5 ms attack window or floating-point
+            edge cases. Very brief hard-clips are inaudible on speech.
+        """
+        if len(pcm_bytes) < 4:
+            return pcm_bytes
+        try:
+            np = self._np
+            with self._lock:
+                x = np.frombuffer(pcm_bytes, dtype=np.int16).astype(np.float32) * (1.0 / 32768.0)
+                x = self._hpf(x)
+                if x.size == 0:
+                    return pcm_bytes
+
+                peak = float(np.max(np.abs(x)))
+                g0 = self._gain
+
+                if peak > self.ceiling:
+                    g_this_max = self.ceiling / peak   # keeps this chunk's peak at ceiling
+                else:
+                    g_this_max = 1.0
+
+                if g_this_max < g0:
+                    # Fast attack: very short ramp (~0.5 ms) from g0 down to the
+                    # target, then hold. Peaks located AFTER the ramp are fully
+                    # clamped. Peaks WITHIN the ramp are caught by the brick
+                    # wall below.
+                    attack_samples = min(8, x.size)
+                    envelope = np.full(x.size, g_this_max, dtype=np.float32)
+                    if attack_samples > 1:
+                        envelope[:attack_samples] = np.linspace(g0, g_this_max, attack_samples)
+                    g_end = g_this_max
+                else:
+                    # Gentle release toward unity (~0.3 s full release)
+                    g_end = min(1.0, g0 + 0.05)
+                    envelope = np.linspace(g0, g_end, x.size, dtype=np.float32)
+
+                y = x * envelope
+                # Brick wall. Critical: this is what actually guarantees no
+                # sample ever exceeds the ceiling, regardless of attack-window
+                # leakage or the previous chunk's tail.
+                np.clip(y, -self.ceiling, self.ceiling, out=y)
+
+                self._gain = float(g_end)
+
+            return (y * 32767.0).astype(np.int16).tobytes()
+        except Exception as e:
+            print(f"[SPK] shaper error: {e} (passing raw)", flush=True)
+            return pcm_bytes
+
+
+_speaker_shaper = SpeakerShaper(
+    sample_rate=16000,
+    hpf_hz=SPK_HPF_HZ,
+    ceiling=SPK_PEAK_CEILING,
+)
+print(
+    f"[SPK] SpeakerShaper ready: hpf={SPK_HPF_HZ:.0f}Hz, "
+    f"ceiling={SPK_PEAK_CEILING:.2f} "
+    f"(effective peak at amp ~= {SPK_PEAK_CEILING * ESP32_FIRMWARE_GAIN:.2f} "
+    f"after firmware {ESP32_FIRMWARE_GAIN}x gain), "
+    f"scipy={'yes' if _speaker_shaper._have_scipy else 'no (python biquad)'}",
+    flush=True,
+)
+
+
 def _tts_stream_to_esp32(text, lang="en"):
     """Stream Edge TTS -> ffmpeg (mp3->pcm) -> UDP to ESP32, true streaming."""
     import edge_tts
@@ -2819,11 +3772,19 @@ def _tts_stream_to_esp32(text, lang="en"):
 
     t0 = time.time()
     sample_rate = 16000
-    bytes_per_sec = sample_rate * 2
-    chunk_size = 1024
+    bytes_per_sec = sample_rate * 2   # 32000 B/s
+    # 512 B = 16 ms at 16 kHz mono. Matches the ESP32 I2S DMA depth much better
+    # than 32 ms chunks, so i2s_write never blocks long enough to let the UDP
+    # queue fill. Keeps playback smooth on the speaker side.
+    chunk_size = 512
+    chunk_dur = chunk_size / bytes_per_sec           # seconds per chunk
+    # Lead factor < 1.0 means "send slightly ahead of playback" — primes the
+    # ESP32 buffer without overrunning it. Keep this conservative.
+    lead = 0.98
     total_mp3 = 0
     total_pcm = 0
     chunks_sent = 0
+    drops = 0
     first_audio_at = None
 
     ffmpeg_proc = subprocess.Popen(
@@ -2835,21 +3796,35 @@ def _tts_stream_to_esp32(text, lang="en"):
         bufsize=8192,
     )
 
+    _speaker_shaper.reset_state()
+
     def _pcm_sender():
-        nonlocal total_pcm, chunks_sent, first_audio_at
+        nonlocal total_pcm, chunks_sent, first_audio_at, drops
+        # Absolute deadline schedule: the i-th chunk goes out at start + i*dt.
+        # Using time.sleep(dt) inside the loop accumulates drift (we'd run
+        # ~18% fast like the old code did), which overflows the ESP32's small
+        # UDP queue → the chopped "Sorr... API... expired..." effect.
+        start = None
+        i = 0
         while True:
             pcm = ffmpeg_proc.stdout.read(chunk_size)
             if not pcm:
                 break
+            pcm = _speaker_shaper.process(pcm)
             if first_audio_at is None:
                 first_audio_at = time.time()
+                start = first_audio_at
             total_pcm += len(pcm)
             try:
                 _udp_send.sendto(pcm, (send_ip, AUDIO_SPK_PORT))
             except Exception:
-                pass
+                drops += 1
             chunks_sent += 1
-            time.sleep(chunk_size / bytes_per_sec * 0.85)
+            i += 1
+            deadline = start + i * chunk_dur * lead
+            delay = deadline - time.time()
+            if delay > 0:
+                time.sleep(delay)
 
     sender_thread = _threading.Thread(target=_pcm_sender, daemon=True)
     sender_thread.start()
@@ -2888,7 +3863,7 @@ def _tts_stream_to_esp32(text, lang="en"):
 
     print(f"[ROBOT] TTS: {voice} rate={TTS_RATE} | "
           f"gen={tts_latency:.2f}s | play={playback_time:.2f}s ({audio_secs:.1f}s audio) | "
-          f"{total_mp3}B mp3 -> {total_pcm}B pcm | {chunks_sent} chunks",
+          f"{total_mp3}B mp3 -> {total_pcm}B pcm | {chunks_sent} chunks | drops={drops}",
           flush=True)
     return tts_latency
 

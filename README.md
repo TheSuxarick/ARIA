@@ -19,11 +19,14 @@ ARIA is a **local smart-home assistant** that combines a **Python/Flask web serv
 | `Diploma.tex` | LaTeX thesis source |
 | `To_Delete_Later/` | Legacy experiments (not part of the main product) |
 
-**Figures for the thesis / docs** (place next to `Diploma.tex` or set `\graphicspath`):
+**Figures for the thesis / docs** (place next to `Diploma.tex` in Overleaf or set `\graphicspath`):
 
 - `sdu_logo.png`
 - `esp32-cam_connection_sheme.png`
 - `esp-32-wroom_connection_scheme.png`
+- `final_physical_look.png` — assembled black prototype + PSU
+- `3dmodel_front.png`, `3dmodel_bottom_back.png`, `3dmodel_see_through.png` — CAD views
+- `ui_dashboard.png`, `ui_camera.png`, `ui_functions.png`, `ui_settings.png` — web UI screenshots (export from browser at a consistent window width)
 
 ---
 
@@ -34,7 +37,7 @@ ARIA is a **local smart-home assistant** that combines a **Python/Flask web serv
 - **Gmail** — OAuth2; cached messages in `EmailMessage` for assistant context.
 - **Weather** — OpenWeatherMap-style integration via `app.py` (`/api/weather`, `/api/forecast`).
 - **Music** — YouTube search → embed playback (`/api/play-music`).
-- **Yeelight** — On/off, brightness, named colors, warm/cool, RGB cycle; discovery via ARP/MAC (`LAMP_MAC` in env).
+- **Yeelight** — On/off, brightness, named colors, warm/cool, RGB cycle; discovery via ARP/MAC (`LAMP_MAC` in env). **Tested lamp:** Yeelight Smart LED Bulb W3 (Multicolor), model **YLDP005** — 100–240 V 50/60 Hz, 0.07 A, 900 lm, 1700–6500 K, 8 W.
 - **Voice (robot mode)** — ESP32 mic UDP → PC; **faster-whisper** STT; **edge-tts**; optional **openWakeWord** (`models/computer_v2.onnx`); Socket.IO namespace `/audio` for browser streaming.
 
 See `ARIA website/SETUP_INSTRUCTIONS.md` and `.env.example` for configuration.
