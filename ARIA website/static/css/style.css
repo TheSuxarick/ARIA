@@ -1202,26 +1202,73 @@ hr {
     .sidebar.open { transform: translateX(0); }
     .main-content { margin-left: 0; }
     .menu-toggle { display: flex; }
+
+    /* Dashboard: let the page scroll naturally and free cards from
+       the desktop "fill viewport" height/overflow constraints so all
+       lamp controls and chat messages are visible. */
+    #page-dashboard.page.active {
+        display: block;
+        flex: 1 1 auto;
+        min-height: 0;
+        height: auto;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
     .dashboard-grid {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto;
-        grid-template-areas:
-            "lamp"
-            "robot"
-            "chat";
+        display: flex;
+        flex-direction: column;
+        grid-template-columns: none;
+        grid-template-rows: none;
+        grid-template-areas: none;
         flex: none;
+        height: auto;
+        min-height: 0;
+        max-height: none;
+        overflow: visible;
+        gap: 16px;
+    }
+    .dashboard-grid .quick-actions-card,
+    .dashboard-grid .robot-card,
+    .dashboard-grid .chat-card {
+        height: auto;
+        min-height: 0;
         max-height: none;
         overflow: visible;
     }
-    #page-dashboard.page.active {
-        overflow-y: auto;
+    .dashboard-grid .lamp-scroll {
+        flex: 0 0 auto;
+        max-height: none;
+        overflow: visible;
+        padding-right: 0;
     }
     .dashboard-grid .chat-card .chat-messages {
-        max-height: min(380px, 50vh);
+        flex: 0 0 auto;
+        min-height: 220px;
+        max-height: min(420px, 55vh);
+        overflow-y: auto;
     }
-    .functions-grid { grid-template-columns: 1fr; }
-    .weather-card { grid-column: span 1; grid-row: auto; }
-    .functions-grid .email-card { grid-column: 1; grid-row: auto; }
+
+    /* Functions: stack music -> weather -> email vertically.
+       Override email-card's inline `grid-column: 1 / 3` with !important. */
+    .functions-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .functions-grid > .card,
+    .functions-grid .card:first-child,
+    .functions-grid .weather-card,
+    .functions-grid .email-card {
+        grid-column: auto !important;
+        grid-row: auto !important;
+        width: 100%;
+        min-width: 0;
+    }
+    .functions-grid .card:first-child { order: 1; }
+    .functions-grid .weather-card     { order: 2; }
+    .functions-grid .email-card       { order: 3; }
+
     .wx-grid { grid-template-columns: 1fr 1fr; }
     .wx-hero { flex-direction: column; align-items: flex-start; gap: 12px; }
     .wx-hero-right { text-align: left; }
@@ -1245,6 +1292,33 @@ hr {
     .page { padding: 16px; }
     .actions-grid { grid-template-columns: 1fr; }
     .server-badge { display: none; }
+
+    /* Tighten card padding so headers/content don't get clipped on phones */
+    .card { padding: 16px; }
+    .card-header { gap: 8px; margin-bottom: 14px; }
+    .card-header h2 { font-size: 0.95rem; }
+
+    /* Chat: reduce inner horizontal padding so input + send fit cleanly */
+    .dashboard-grid .chat-card .chat-messages {
+        padding-left: 4px;
+        padding-right: 4px;
+    }
+    .chat-input-wrap { gap: 8px; margin-top: 12px; }
+    .chat-input-wrap input { padding: 10px 14px; font-size: 0.875rem; }
+    .chat-send-btn { width: 40px; height: 40px; }
+
+    /* Dashboard cards: a touch less internal padding */
+    .dashboard-grid .robot-card { padding: 14px; }
+
+    /* Email card pagination: prevent overflow */
+    #emailPaginationContainer { padding: 12px !important; }
+}
+
+@media (max-width: 380px) {
+    .card { padding: 14px; }
+    .lamp-preset-btn { font-size: 0.72rem; padding: 6px 4px; }
+    .lamp-color-btn { width: 28px; height: 28px; }
+    .wx-temp { font-size: 1.8rem; }
 }
 .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999; }
 .sidebar-overlay.show { display: block; }
