@@ -56,13 +56,96 @@ document.addEventListener("DOMContentLoaded", () => {
         return query ? query : "__DEFAULT__";
     }
 
+    // Music output target: "device" (ESP32 speaker) or "browser" (YouTube iframe).
+    // Persisted in localStorage so the user's preference survives reloads.
+    let _musicOutput = (() => {
+        try { return localStorage.getItem("aria_music_output") || "device"; }
+        catch (e) { return "device"; }
+    })();
+
+    function _setMusicOutput(mode) {
+        _musicOutput = (mode === "browser") ? "browser" : "device";
+        try { localStorage.setItem("aria_music_output", _musicOutput); } catch (e) { /* */ }
+        const btnD = document.getElementById("musicOutDevice");
+        const btnB = document.getElementById("musicOutBrowser");
+        if (btnD && btnB) {
+            const onStyle = "background:var(--accent-color, #4a90e2); color:#fff;";
+            const offStyle = "background:transparent; color:var(--text-primary);";
+            btnD.style.cssText = btnD.style.cssText.replace(/background:[^;]+;?\s*color:[^;]+;?/i, "") + (_musicOutput === "device" ? onStyle : offStyle);
+            btnB.style.cssText = btnB.style.cssText.replace(/background:[^;]+;?\s*color:[^;]+;?/i, "") + (_musicOutput === "browser" ? onStyle : offStyle);
+            btnD.classList.toggle("active", _musicOutput === "device");
+            btnB.classList.toggle("active", _musicOutput === "browser");
+        }
+    }
+
+    function _resetMusicCover() {
+        const coverImage = document.getElementById("coverImage");
+        const coverIcon = document.getElementById("coverIcon");
+        if (coverImage) { coverImage.src = ""; coverImage.style.display = "none"; }
+        if (coverIcon) coverIcon.style.display = "block";
+    }
+
+    function _setMusicCover(thumb) {
+        if (!thumb) return;
+        const coverImage = document.getElementById("coverImage");
+        const coverIcon = document.getElementById("coverIcon");
+        if (coverImage) { coverImage.src = thumb; coverImage.style.display = "block"; }
+        if (coverIcon) coverIcon.style.display = "none";
+    }
+
     async function playMusicByQuery(query) {
         if (!query) return;
         if (query === "__DEFAULT__") query = "lofi hip hop";
         musicError.style.display = "none";
         musicTitle.textContent = "Поиск музыки...";
         try {
-            // Ensure player exists before loading video
+            // Search YouTube for an embeddable video. /api/play-music does the
+            // search; we then route playback either to the ESP32 (default) or
+            // to the in-browser iframe player based on the output toggle.
+            const resp = await fetch("/api/play-music", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ query })
+            });
+            const data = await resp.json();
+            if (!resp.ok || !data.videoId) {
+                musicTitle.textContent = "Выберите трек или скажите команду";
+                musicError.style.display = "block";
+                musicError.textContent = data.error || "Видео не найдено";
+                _resetMusicCover();
+                return;
+            }
+
+            _setMusicCover(data.thumbnail);
+            musicTitle.textContent = data.title || query;
+
+            if (_musicOutput === "device") {
+                // Play on ESP32 speaker — server streams audio over UDP.
+                // First, make sure any in-browser playback is paused so we
+                // don't have two copies playing at once.
+                try { if (player && typeof player.pauseVideo === "function") player.pauseVideo(); } catch (e) { /* */ }
+
+                const playResp = await fetch("/api/music/play", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        videoId: data.videoId,
+                        title: data.title || query,
+                        thumbnail: data.thumbnail || "",
+                    })
+                });
+                const playData = await playResp.json().catch(() => ({}));
+                if (!playResp.ok) {
+                    musicError.style.display = "block";
+                    musicError.textContent = playData.error || "Не удалось запустить на устройстве";
+                    return;
+                }
+                isPlaying = true;
+                if (playPauseIcon) playPauseIcon.textContent = "pause";
+                return;
+            }
+
+            // Browser mode — load via YouTube iframe API as before.
             if (!player || typeof player.loadVideoById !== "function") {
                 _pendingMusicQuery = query;
                 await ytReady;
@@ -70,60 +153,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (_pendingMusicQuery && _pendingMusicQuery !== query) return;
                 _pendingMusicQuery = null;
             }
-
-            const resp = await fetch("/api/play-music", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ query })
-            });
-            const data = await resp.json();
-            if (resp.ok && data.videoId) {
-                // Load video
-                if (player && typeof player.loadVideoById === "function") {
-                    // Set autoplay flag
-                    shouldAutoPlay = true;
-
-                    player.loadVideoById(data.videoId);
-                    // Some browsers block autoplay; try immediately as well.
-                    try { player.playVideo(); } catch (e) { /* ignore */ }
-
-                    // Show cover image
-                    if (data.thumbnail) {
-                        const coverImage = document.getElementById("coverImage");
-                        const coverIcon = document.getElementById("coverIcon");
-                        coverImage.src = data.thumbnail;
-                        coverImage.style.display = "block";
-                        coverIcon.style.display = "none";
-                    }
-
-                    // Update title
-                    setTimeout(() => {
-                        musicTitle.textContent = data.title || query;
-                    }, 500);
-                }
-            } else {
-                musicTitle.textContent = "Выберите трек или скажите команду";
-                musicError.style.display = "block";
-                musicError.textContent = data.error || "Видео не найдено";
-
-                // Reset cover image
-                const coverImage = document.getElementById("coverImage");
-                const coverIcon = document.getElementById("coverIcon");
-                coverImage.src = "";
-                coverImage.style.display = "none";
-                coverIcon.style.display = "block";
-            }
+            shouldAutoPlay = true;
+            player.loadVideoById(data.videoId);
+            try { player.playVideo(); } catch (e) { /* ignore */ }
+            setTimeout(() => { musicTitle.textContent = data.title || query; }, 500);
         } catch (e) {
             musicTitle.textContent = "Выберите трек или скажите команду";
             musicError.style.display = "block";
             musicError.textContent = "Ошибка поиска видео: " + e.message;
-
-            // Reset cover image
-            const coverImage = document.getElementById("coverImage");
-            const coverIcon = document.getElementById("coverIcon");
-            coverImage.src = "";
-            coverImage.style.display = "none";
-            coverIcon.style.display = "block";
+            _resetMusicCover();
         }
     }
     // Global function for chat integration
@@ -246,22 +284,91 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (playPauseBtn && youtubePlayerContainer) {
         loadYouTubeAPI();
-        playPauseBtn.addEventListener("click", () => {
+
+        // Initialise output-target toggle UI + handlers
+        _setMusicOutput(_musicOutput);
+        const btnOutDev = document.getElementById("musicOutDevice");
+        const btnOutBrowse = document.getElementById("musicOutBrowser");
+        if (btnOutDev) {
+            btnOutDev.addEventListener("click", async () => {
+                if (_musicOutput === "device") return;
+                // Switching browser -> device: pause iframe, restart on device
+                // if we know the current videoId; otherwise just toggle.
+                try { if (player && typeof player.pauseVideo === "function") player.pauseVideo(); } catch (e) { /* */ }
+                _setMusicOutput("device");
+            });
+        }
+        if (btnOutBrowse) {
+            btnOutBrowse.addEventListener("click", async () => {
+                if (_musicOutput === "browser") return;
+                // Switching device -> browser: stop the device stream so the
+                // ESP32 isn't left playing in the background.
+                try { await fetch("/api/music/stop", { method: "POST" }); } catch (e) { /* */ }
+                isPlaying = false;
+                if (playPauseIcon) playPauseIcon.textContent = "play_arrow";
+                _setMusicOutput("browser");
+            });
+        }
+
+        playPauseBtn.addEventListener("click", async () => {
+            if (_musicOutput === "device") {
+                // Device mode: hit /api/music/pause or /api/music/resume.
+                try {
+                    if (isPlaying) {
+                        await fetch("/api/music/pause", { method: "POST" });
+                        isPlaying = false;
+                        if (playPauseIcon) playPauseIcon.textContent = "play_arrow";
+                    } else {
+                        await fetch("/api/music/resume", { method: "POST" });
+                        isPlaying = true;
+                        if (playPauseIcon) playPauseIcon.textContent = "pause";
+                    }
+                } catch (e) { /* */ }
+                return;
+            }
             if (isPlaying) pauseTrack();
             else playTrack();
         });
 
-        // Rewind 10s button
+        // Rewind 10s button (only meaningful in browser mode — device mode
+        // can't seek a live UDP stream without reloading from yt-dlp).
         const rewindBtn = document.getElementById("rewindBtn");
         if (rewindBtn) {
-            rewindBtn.addEventListener("click", rewind10s);
+            rewindBtn.addEventListener("click", () => {
+                if (_musicOutput === "device") return; // no-op on device
+                rewind10s();
+            });
         }
 
-        // Forward 10s button
+        // Forward 10s button (browser mode only — see rewind button comment)
         const forwardBtn = document.getElementById("forwardBtn");
         if (forwardBtn) {
-            forwardBtn.addEventListener("click", forward10s);
+            forwardBtn.addEventListener("click", () => {
+                if (_musicOutput === "device") return;
+                forward10s();
+            });
         }
+
+        // Periodically reflect device-side state into the UI so manual /api
+        // calls (or song-end on the server) update the play/pause icon.
+        setInterval(async () => {
+            if (_musicOutput !== "device") return;
+            try {
+                const r = await fetch("/api/music/state");
+                const s = await r.json();
+                if (!s) return;
+                if (s.state === "playing") {
+                    isPlaying = true;
+                    if (playPauseIcon) playPauseIcon.textContent = "pause";
+                } else if (s.state === "paused" || s.state === "suspended") {
+                    isPlaying = false;
+                    if (playPauseIcon) playPauseIcon.textContent = "play_arrow";
+                } else if (s.state === "idle") {
+                    isPlaying = false;
+                    if (playPauseIcon) playPauseIcon.textContent = "play_arrow";
+                }
+            } catch (e) { /* */ }
+        }, 2000);
     }
     const navLinks = document.querySelectorAll(".nav-link");
     const pages = document.querySelectorAll(".page");
@@ -736,11 +843,10 @@ document.addEventListener("DOMContentLoaded", () => {
         chatInput.value = "";
         showTyping();
 
-        // Check for music play command (typed chat)
-        const extracted = extractMusicQuery(text);
-        if (extracted) {
-            playMusicByQuery(extracted);
-        }
+        // Music commands are now intercepted SERVER-SIDE in /api/chat.
+        // The server starts playback and returns a "music" field in the
+        // response so we can update the cover/title without doing a second
+        // YouTube search ourselves. See the response handler below.
 
         // Check for email sync command
         const syncKeywords = ["sync mail", "sync email", "sync all mail", "sync all email",
@@ -803,10 +909,70 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const resp = await fetch("/api/chat", { method: "POST", headers: chatHeaders, body: JSON.stringify(payload) });
             removeTyping();
-            if (resp.ok) { const data = await resp.json(); addChatBubble("assistant", data.reply); if (data.lamp) updateLampUI(data.lamp); }
+            if (resp.ok) {
+                const data = await resp.json();
+                addChatBubble("assistant", data.reply);
+                if (data.lamp) updateLampUI(data.lamp);
+                if (data.music) handleMusicEvent(data.music);
+            }
             else addChatBubble("assistant", t("chat_error"));
         } catch { removeTyping(); addChatBubble("assistant", t("chat_no_server")); }
     }
+
+    /**
+     * React to a server-side music event (returned from /api/chat or
+     * broadcast on the /audio socket as "music_started").
+     *
+     * Server has already started/paused/stopped the music on the device.
+     * Our job here is purely UI: update the cover/title and, if the user
+     * is in BROWSER output mode, mirror the playback into the iframe so
+     * they hear it where they expected.
+     */
+    function handleMusicEvent(info) {
+        if (!info) return;
+        const action = info.action;
+        if (action === "stop") {
+            isPlaying = false;
+            if (playPauseIcon) playPauseIcon.textContent = "play_arrow";
+            musicTitle.textContent = "Выберите трек или скажите команду";
+            _resetMusicCover();
+            return;
+        }
+        if (action === "pause") {
+            isPlaying = false;
+            if (playPauseIcon) playPauseIcon.textContent = "play_arrow";
+            return;
+        }
+        if (action === "resume") {
+            isPlaying = true;
+            if (playPauseIcon) playPauseIcon.textContent = "pause";
+            return;
+        }
+        if (action === "play") {
+            if (info.error) {
+                musicError.style.display = "block";
+                musicError.textContent = info.error === "not_found" ? "Видео не найдено" : "Ошибка воспроизведения";
+                return;
+            }
+            musicError.style.display = "none";
+            if (info.thumbnail) _setMusicCover(info.thumbnail);
+            if (info.title) musicTitle.textContent = info.title;
+            isPlaying = true;
+            if (playPauseIcon) playPauseIcon.textContent = "pause";
+            // Browser-mode mirror: server is streaming to the device, but
+            // user picked browser output — load the same video into the
+            // iframe so they hear it locally too. The toggle handler that
+            // switches modes already calls /api/music/stop, so no double-
+            // playback risk in steady state.
+            if (_musicOutput === "browser" && info.videoId) {
+                if (player && typeof player.loadVideoById === "function") {
+                    shouldAutoPlay = true;
+                    try { player.loadVideoById(info.videoId); player.playVideo(); } catch (e) { /* */ }
+                }
+            }
+        }
+    }
+    window.handleMusicEvent = handleMusicEvent;
 
     chatSend.addEventListener("click", sendMessage);
     chatInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); sendMessage(); } });
@@ -1013,6 +1179,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 const wakeToggle = document.getElementById("wakeWordToggle");
                 if (wakeToggle && d.wake_word !== undefined) {
                     wakeToggle.checked = d.wake_word;
+                    if (typeof window._ensureWakeWordSocket === "function") {
+                        window._ensureWakeWordSocket(!!d.wake_word);
+                    }
                 }
                 if (d.audio_source) {
                     document.querySelectorAll(".audio-src-btn").forEach(b => {
@@ -1046,15 +1215,43 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ─── Wake Word Toggle ───
     const wakeWordToggle = document.getElementById("wakeWordToggle");
+    let _wakeWordPersistentSocket = false;
+    function _ensureWakeWordSocket(enabled) {
+        // Keep the /audio socket open while wake-word listening is on so
+        // that server-side voice events (music_started, lamp_update,
+        // robot_transcription, ...) reach the UI even when the user never
+        // clicks the robot button. We register the same handlers btnRobot
+        // would so chat bubbles still appear for wake-word conversations.
+        if (enabled) {
+            const sock = _ensureAudioSocket();
+            if (!_wakeWordPersistentSocket) {
+                _wakeWordPersistentSocket = true;
+                sock.on("robot_status", (data) => {
+                    if (typeof setRobotState === "function") setRobotState(data.state, data.error);
+                });
+                sock.on("robot_transcription", (data) => {
+                    addChatBubble("user", data.text);
+                });
+                sock.on("robot_response", (data) => {
+                    addChatBubble("assistant", data.text);
+                });
+            }
+        } else {
+            _wakeWordPersistentSocket = false;
+            _maybeCloseSocket();
+        }
+    }
     if (wakeWordToggle) {
         wakeWordToggle.addEventListener("change", async () => {
             const enabled = wakeWordToggle.checked;
             showToast(enabled ? t("wake_word_on") : t("wake_word_off"), "info");
+            _ensureWakeWordSocket(enabled);
             try {
                 await fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wake_word: enabled }) });
             } catch { }
         });
     }
+    window._ensureWakeWordSocket = _ensureWakeWordSocket;
 
     // ─── Audio Source ───
     document.querySelectorAll(".audio-src-btn").forEach(btn => {
@@ -1493,11 +1690,22 @@ document.addEventListener("DOMContentLoaded", () => {
         _aSocket.on("connect", () => console.log("[AUDIO] Socket connected to /audio"));
         _aSocket.on("connect_error", (err) => console.error("[AUDIO] Connection error:", err.message));
         _aSocket.on("lamp_update", (state) => updateLampUI(state));
+        // music_started is broadcast by the server every time it intercepts
+        // a music command from voice (wake word OR btnRobot) or typed chat.
+        // Registering it here (rather than inside the btnRobot click
+        // handler) lets the wake-word path update the music card UI even
+        // when the user never opened the robot panel themselves.
+        _aSocket.on("music_started", (info) => {
+            try { if (typeof handleMusicEvent === "function") handleMusicEvent(info); } catch (e) { /* */ }
+        });
         return _aSocket;
     }
     let _robotActive = false;
     function _maybeCloseSocket() {
-        if (!listenActive && !micActive && !_robotActive && _aSocket) {
+        // Wake-word listening keeps the socket alive so server-pushed
+        // voice events (music_started, transcription, ...) still reach
+        // the UI without the user holding the robot button.
+        if (!listenActive && !micActive && !_robotActive && !_wakeWordPersistentSocket && _aSocket) {
             _aSocket.disconnect();
             _aSocket = null;
         }
@@ -1690,11 +1898,10 @@ document.addEventListener("DOMContentLoaded", () => {
             sock.on("robot_transcription", (data) => {
                 addChatBubble("user", data.text);
                 navigateTo("dashboard");
-                // Trigger YouTube player automatically from voice commands too
-                const extracted = extractMusicQuery(data.text);
-                if (extracted) {
-                    playMusicByQuery(extracted);
-                }
+                // NB: music intent is intercepted SERVER-SIDE now (see
+                // _handle_music_command in app.py). The server emits a
+                // "music_started" socket event we already listen for, so
+                // we do NOT trigger a second YouTube search here.
             });
 
             sock.on("robot_response", (data) => {
@@ -1860,7 +2067,14 @@ document.addEventListener("DOMContentLoaded", () => {
             if (syncResp.ok) {
                 // Re-run full inbox pipeline (classification + mocks) — skip nested sync
                 await loadEmails(mode, true);
-                updateUnreadBadge();
+                // updateUnreadBadge() is defined inside initEmailService's
+                // inner scope; if we're called before it's been bound to
+                // the window we just skip — loadEmails() above will have
+                // rebuilt the list and the badge gets refreshed by the
+                // setInterval poll anyway.
+                if (typeof window.updateUnreadBadge === "function") {
+                    window.updateUnreadBadge();
+                }
             }
         } catch (e) {
             console.error('Background sync error:', e);
@@ -2203,6 +2417,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 } catch (e) { /* ignore */ }
             }
+            // Expose to outer-scope callers (e.g. syncEmailsBackground)
+            // since updateUnreadBadge lives in this nested closure.
+            window.updateUnreadBadge = updateUnreadBadge;
 
             // Opening email detail in in-place view
             function openEmailDetail(email) {

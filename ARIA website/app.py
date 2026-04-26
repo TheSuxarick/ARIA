@@ -232,6 +232,41 @@ PERSONALITY_PROMPTS = {
     ),
 }
 
+# ── Language directive ───────────────────────────────────────────────────
+# The personality prompts above only define tone/style. The language the
+# bot should answer in is layered on top via this directive, driven by
+# settings["language"] (set from the UI's language buttons -> /api/settings).
+#
+# Without this, Gemini mirrors whatever language the user happened to type
+# the last word in, and almost always drifts to English because the
+# personality prompts themselves are in English.
+LANGUAGE_NAMES = {
+    "EN": "English",
+    "RU": "Russian (Русский)",
+    "KZ": "Kazakh (Қазақ тілі)",
+}
+
+
+def _apply_language_directive(system_text: str, language_code: str | None = None) -> str:
+    """Append a strong language directive to ``system_text``.
+
+    The directive is attached at the END of the prompt because instructions
+    placed last carry the most weight in Gemini's behaviour.
+    """
+    code = (language_code or settings.get("language") or "EN").upper()
+    name = LANGUAGE_NAMES.get(code, "English")
+    directive = (
+        f"\n\n=== LANGUAGE ===\n"
+        f"You MUST respond ONLY in {name}, regardless of the language the "
+        f"user wrote in or the language of any system text above. "
+        f"Every word of every reply, including greetings, jokes, slang, "
+        f"and explanations, must be in {name}. "
+        f"If the user writes in a different language, still answer in {name}. "
+        f"Translate any personality-specific slang into natural {name} equivalents — "
+        f"do not leave English filler words in a non-English reply.\n"
+    )
+    return system_text + directive
+
 # ═══════════════════════════════════════════════════════════════════════════
 # LAMP CONTROL — Yeelight
 # ═══════════════════════════════════════════════════════════════════════════
@@ -454,29 +489,268 @@ def _format_lamp_reply(state: dict, lang: str) -> str:
 
     if lang == "ru":
         if power == "off":
-            return "Лампа выключена. 💡"
+            return "Лампа выключена. "
         if mode == "rgb":
-            return f"RGB-цикл запущен! 🌈 Яркость: {brightness}%"
+            return f"RGB-цикл запущен! Яркость: {brightness}%"
         if mode == "color" and color:
             return f"Цвет: {COLOR_RU.get(color, color)}, яркость {brightness}%. 🎨"
         temp_str = f"{color_temp}K"
         return f"Лампа включена. Яркость: {brightness}%, температура: {temp_str}. 💡"
     if lang == "kz":
         if power == "off":
-            return "Шам өшірілді. 💡"
+            return "Шам өшірілді."
         if mode == "rgb":
-            return f"RGB-цикл іске қосылды! 🌈 Жарықтық: {brightness}%"
+            return f"RGB-цикл іске қосылды! Жарықтық: {brightness}%"
         if mode == "color" and color:
             return f"Түс: {COLOR_KZ.get(color, color)}, жарықтық {brightness}%. 🎨"
         return f"Шам жағылды. Жарықтық: {brightness}%. 💡"
     # EN
     if power == "off":
-        return "Light turned off. 💡"
+        return "Light turned off."
     if mode == "rgb":
-        return f"RGB cycle started! 🌈 Brightness: {brightness}%"
+        return f"RGB cycle started! Brightness: {brightness}%"
     if mode == "color" and color:
         return f"Color set to {color}, brightness {brightness}%. 🎨"
     return f"Light on. Brightness: {brightness}%, color temp: {color_temp}K. 💡"
+
+
+def _extract_music_query(text: str):
+    """Mirror of the frontend's extractMusicQuery() in app.js.
+
+    Returns one of:
+      - (action, query)  -> "play"  with a non-empty query, or "play" with
+                            None (meaning "any music")
+      - ("stop", None)   -> stop currently playing music
+      - ("pause", None)  -> pause
+      - ("resume", None) -> resume
+      - None             -> not a music command at all
+
+    Detection is intentionally simple: prefix-based matching in EN/RU/KZ.
+    The wake word adds "computer" and "компьютер" as conversational opener
+    that we strip before matching.
+    """
+    if not text:
+        return None
+    t = text.strip().lower()
+    if not t:
+        return None
+    t = re.sub(r"[\.\!\?\,\;\:]+$", "", t)
+    for opener in ("computer,", "computer", "компьютер,", "компьютер", "kompyuter", "okay aria", "hey aria", "aria"):
+        if t.startswith(opener + " ") or t == opener:
+            t = t[len(opener):].strip(" ,.")
+            break
+
+    # Stop / pause / resume — match these BEFORE play, since "stop the music"
+    # contains the word "music" but is not a play command.
+    stop_phrases = (
+        "stop music", "stop the music", "stop song", "stop the song", "stop playing",
+        "выключи музыку", "выключи песню", "останови музыку", "останови песню",
+        "хватит музыки", "выключи трек",
+        "музыканы тоқтат", "тоқтат", "өшір музыка",
+    )
+    if any(p in t for p in stop_phrases) or t in ("stop", "стоп", "тоқта"):
+        return ("stop", None)
+
+    pause_phrases = (
+        "pause music", "pause the music", "pause song", "pause",
+        "пауза", "поставь на паузу", "ставь на паузу",
+        "музыкаға пауза",
+    )
+    if any(p in t for p in pause_phrases):
+        return ("pause", None)
+
+    resume_phrases = (
+        "resume music", "resume the music", "continue music", "continue song", "resume",
+        "продолжи музыку", "продолжай музыку", "продолжи", "продолжай", "возобнови",
+        "жалғастыр", "жалғастыра бер",
+    )
+    if any(p in t for p in resume_phrases):
+        return ("resume", None)
+
+    # Generic "play music" with no title -> default genre on the client side.
+    generic_play = (
+        "turn on some music", "turn on music", "play some music", "play music",
+        "start music", "start some music",
+        "включи музыку", "поставь музыку", "включи песню", "поставь песню",
+        "музыку поставь", "музыку включи",
+        "музыка қос", "ән қос", "музыканы қос",
+    )
+    if t in generic_play:
+        return ("play", None)
+
+    play_prefixes = (
+        # Russian
+        "включи музыку", "включи песню", "включи",
+        "поставь песню", "поставь музыку", "поставь",
+        "играй песню", "играй музыку", "играй",
+        "запусти песню", "запусти музыку", "запусти",
+        "воспроизведи песню", "воспроизведи музыку", "воспроизведи",
+        # English
+        "play music", "play song", "play the song", "play",
+        "start music", "start song", "start",
+        "turn on music", "turn on the music", "turn on",
+        # Kazakh
+        "ойнат", "қос", "музыка қос", "ән қос",
+    )
+    play_prefixes = sorted(set(play_prefixes), key=len, reverse=True)
+    for p in play_prefixes:
+        if t == p:
+            return ("play", None)
+        if t.startswith(p + " "):
+            # Slice the cleaned/lowercased ``t`` (NOT the raw ``text``)
+            # because openers like "Computer," may have already been
+            # stripped from ``t`` and the original-string indices no
+            # longer line up. YouTube search is case-insensitive so we
+            # don't lose anything by passing a lowercase query.
+            q = t[len(p):].strip(" ,.").lstrip()
+            return ("play", q if q else None)
+    return None
+
+
+def _localized_music_reply(kind: str, title: str = "") -> str:
+    """Pick a short confirmation reply in the user's selected language.
+
+    The personality prompts may add flavour at TTS time, but for music we
+    bypass the LLM entirely (latency + reliability), so we hand-write a
+    short natural reply per (lang, kind) pair.
+    """
+    lang = (settings.get("language") or "EN").upper()
+    if lang == "RU":
+        if kind == "play":
+            if title:
+                return f"Включаю: {title}."
+            return "Включаю музыку."
+        if kind == "play_default":
+            return "Включаю чилл-музыку."
+        if kind == "stop":
+            return "Останавливаю музыку."
+        if kind == "pause":
+            return "Ставлю на паузу."
+        if kind == "resume":
+            return "Продолжаю воспроизведение."
+        if kind == "not_found":
+            return "Не нашла подходящего трека на YouTube."
+        if kind == "no_api_key":
+            return "Ключ YouTube не настроен на сервере."
+        return ""
+    if lang == "KZ":
+        if kind == "play":
+            if title:
+                return f"Қосып жатырмын: {title}."
+            return "Музыка қосамын."
+        if kind == "play_default":
+            return "Жайлы музыка қосамын."
+        if kind == "stop":
+            return "Музыканы тоқтатамын."
+        if kind == "pause":
+            return "Кідіртемін."
+        if kind == "resume":
+            return "Жалғастырамын."
+        if kind == "not_found":
+            return "YouTube-те сәйкес трек таппадым."
+        if kind == "no_api_key":
+            return "Серверде YouTube кілті орнатылмаған."
+        return ""
+    if kind == "play":
+        if title:
+            return f"Playing: {title}."
+        return "Playing music."
+    if kind == "play_default":
+        return "Putting on some chill music."
+    if kind == "stop":
+        return "Stopping the music."
+    if kind == "pause":
+        return "Music paused."
+    if kind == "resume":
+        return "Resuming the music."
+    if kind == "not_found":
+        return "I couldn't find a playable track on YouTube."
+    if kind == "no_api_key":
+        return "YouTube API key isn't configured on the server."
+    return ""
+
+
+def _handle_music_command(message: str):
+    """Detect music intent and execute it on the device.
+
+    Returns a tuple ``(reply_text, info_dict)`` when the message was a
+    music command (so the caller can skip the LLM and hand the reply
+    straight to TTS), or ``None`` when the message is not music-related.
+
+    ``info_dict`` is suitable for /api/chat responses and websocket
+    broadcasts; it always carries ``action`` and, for play commands,
+    ``videoId``/``title``/``thumbnail`` so clients can update their UI
+    without doing a second YouTube search.
+    """
+    cmd = _extract_music_query(message)
+    if not cmd:
+        return None
+    action, query = cmd
+
+    if action == "stop":
+        _music_streamer.stop()
+        info = {"action": "stop"}
+        try:
+            socketio.emit("music_started", info, namespace="/audio")
+        except Exception:
+            pass
+        return (_localized_music_reply("stop"), info)
+    if action == "pause":
+        _music_streamer.pause()
+        info = {"action": "pause"}
+        try:
+            socketio.emit("music_started", info, namespace="/audio")
+        except Exception:
+            pass
+        return (_localized_music_reply("pause"), info)
+    if action == "resume":
+        _music_streamer.resume()
+        info = {"action": "resume"}
+        try:
+            socketio.emit("music_started", info, namespace="/audio")
+        except Exception:
+            pass
+        return (_localized_music_reply("resume"), info)
+
+    # action == "play"
+    if not YOUTUBE_API_KEY:
+        return (_localized_music_reply("no_api_key"), {"action": "play", "error": "no_api_key"})
+
+    if not query:
+        query = "lofi hip hop"
+        kind_after = "play_default"
+    else:
+        kind_after = "play"
+
+    result = _yt_search_best_match(query)
+    if not result:
+        return (_localized_music_reply("not_found"), {"action": "play", "error": "not_found"})
+
+    vid, title, thumb, source = result
+    try:
+        _music_streamer.play(vid, title=title, thumbnail=thumb)
+    except Exception as e:
+        print(f"[MUSIC] play failed: {e}", flush=True)
+        return (_localized_music_reply("not_found"), {"action": "play", "error": "play_failed"})
+
+    info = {
+        "action": "play",
+        "videoId": vid,
+        "title": title,
+        "thumbnail": thumb,
+        "source": source,
+    }
+    # Broadcast so the dashboard music card updates immediately on every
+    # connected client (typed chat OR voice via wake word/btnRobot).
+    try:
+        socketio.emit("music_started", info, namespace="/audio")
+    except Exception:
+        pass
+
+    reply = (_localized_music_reply("play_default")
+             if kind_after == "play_default"
+             else _localized_music_reply("play", title=title))
+    return (reply, info)
 
 
 def _handle_lamp_command(message: str):
@@ -818,8 +1092,20 @@ def _gemini_call(model, system_text, contents):
             error = resp_data.get("error", {})
             status = error.get("status", "")
             msg = error.get("message", str(resp_data))
-            if status in ("RESOURCE_EXHAUSTED", "RATE_LIMIT_EXCEEDED") or resp.status_code == 429:
-                last_error = msg
+            # Rotate on ALL per-key failures — 429 (quota), 400 (disabled
+            # / invalid-key), 403 (forbidden), 401 (auth) — so a single
+            # dead key in the list doesn't abort the whole request. Real
+            # protocol errors (timeouts, 5xx) are caught in the except
+            # branch below and also trigger rotation.
+            rotate_codes = {400, 401, 403, 429}
+            rotate_statuses = {
+                "RESOURCE_EXHAUSTED", "RATE_LIMIT_EXCEEDED",
+                "PERMISSION_DENIED", "UNAUTHENTICATED", "INVALID_ARGUMENT",
+            }
+            if resp.status_code in rotate_codes or status in rotate_statuses:
+                short_key = key[-6:]
+                print(f"[GEMINI] key …{short_key} failed ({resp.status_code} {status}); rotating", flush=True)
+                last_error = f"{resp.status_code} {status}: {msg[:120]}"
                 _gemini_key_index = (_gemini_key_index + 1) % len(GEMINI_API_KEYS)
                 continue
             return None, f"API error ({resp.status_code}): {msg}"
@@ -827,7 +1113,7 @@ def _gemini_call(model, system_text, contents):
             last_error = str(e)
             _gemini_key_index = (_gemini_key_index + 1) % len(GEMINI_API_KEYS)
             continue
-    return None, f"All API keys exhausted. Last error: {last_error}"
+    return None, f"All {len(GEMINI_API_KEYS)} API keys exhausted. Last error: {last_error}"
 
 
 def get_recent_emails(limit=5):
@@ -953,7 +1239,16 @@ def _is_email_query(message: str) -> bool:
         "почта", "письмо", "письма", "емайл", "сообщение",
         "хат", "пошта", "письм",
     ]
-    return any(w in msg for w in email_words)
+    if any(w in msg for w in email_words):
+        return True
+    # Implicit email query: "what's important today" / "что важного
+    # сегодня" / "бүгінгі маңызды". The combo of "important" + "today"
+    # is overwhelmingly about email triage in this app's context — the
+    # alternative interpretation (general life advice) is unlikely
+    # given the assistant's role.
+    if _is_important_emails_query(msg) and _is_today_scope(msg):
+        return True
+    return False
 
 
 def _extract_sender_hint(message: str) -> str:
@@ -1095,22 +1390,279 @@ def _format_email_pretty(sender: str, subject: str, received_at: datetime, body:
 
 
 def _get_cached_emails_for_chat(limit: int = 50):
+    """Return the most recent cached emails for the chat layer.
+
+    Strategy:
+      1. Prefer the *active* account (session / most-recent GmailAccount).
+      2. If that account has zero cached messages (common when a second
+         account is OAuth'd but never fully synced) fall back to whichever
+         account actually has cached mail. This matches what the user
+         already sees in the inbox UI and avoids the confusing
+         "sync first" reply when data is sitting right there.
+    """
     gmail_email = _resolve_gmail_email()
-    if not gmail_email:
-        return []
-    acct = GmailAccount.query.filter_by(email=gmail_email).first()
-    if not acct:
-        return []
-    return (EmailMessage.query
-            .filter_by(account_id=acct.id)
-            .order_by(EmailMessage.received_at.desc())
-            .limit(limit)
-            .all())
+    acct = None
+    if gmail_email:
+        acct = GmailAccount.query.filter_by(email=gmail_email).first()
+
+    def _fetch(account_id: int):
+        return (EmailMessage.query
+                .filter_by(account_id=account_id)
+                .order_by(EmailMessage.received_at.desc())
+                .limit(limit)
+                .all())
+
+    if acct is not None:
+        rows = _fetch(acct.id)
+        if rows:
+            return rows
+
+    try:
+        from sqlalchemy import func as _sa_func
+        richest = (db.session.query(EmailMessage.account_id,
+                                    _sa_func.count(EmailMessage.id).label("c"))
+                   .group_by(EmailMessage.account_id)
+                   .order_by(_sa_func.count(EmailMessage.id).desc())
+                   .first())
+        if richest and richest[0]:
+            return _fetch(richest[0])
+    except Exception:
+        pass
+
+    return []
+
+
+def _is_important_emails_query(msg_lower: str) -> bool:
+    """Detect 'what are the important emails' style intents in EN/RU/KZ.
+
+    Triggers on the words for "important / urgent / priority / digest"
+    in any of the three languages. We deliberately accept just the word
+    by itself (e.g. 'важные', 'important?') since users phrase this
+    request very tersely by voice.
+    """
+    needles = (
+        # English
+        "important", "urgent", "priority", "anything important",
+        "what matters", "matters today", "what's new", "whats new",
+        "summary of email", "digest",
+        # Russian
+        "важн", "срочн", "приоритет", "что важного", "что нового",
+        # Kazakh
+        "маңызды", "шұғыл", "не маңызды", "бүгінгі маңызды",
+    )
+    return any(n in msg_lower for n in needles)
+
+
+def _is_today_scope(msg_lower: str) -> bool:
+    return any(w in msg_lower for w in (
+        "today", "today's", "todays",
+        "сегодня", "за сегодня", "сегодняшн",
+        "бүгін", "бүгінгі",
+    ))
+
+
+def _emails_today(emails, max_count: int = 30):
+    """Return the subset of cached emails received in the user's current
+    local calendar day. Falls back to "since 24h ago" when nothing is
+    found today (covers timezone edge cases at midnight rollover).
+
+    Stored ``received_at`` values are UTC-naive (see
+    ``_parse_email_date``), so we convert per-email UTC -> local using
+    the server's process timezone."""
+    import datetime as _dt
+    local_now = _dt.datetime.now()
+    utc_now = _dt.datetime.utcnow()
+    tz_offset = local_now - utc_now
+    today_local = local_now.date()
+    since_utc_24h = utc_now - _dt.timedelta(hours=24)
+
+    today_list = []
+    last24 = []
+    for e in emails:
+        if not e.received_at:
+            continue
+        if e.received_at >= since_utc_24h:
+            last24.append(e)
+        local_dt = e.received_at + tz_offset
+        if local_dt.date() == today_local:
+            today_list.append(e)
+        if len(today_list) >= max_count:
+            break
+
+    if today_list:
+        return today_list
+    return last24[:max_count]
+
+
+def _gemini_important_emails(emails, lang: str):
+    """Ask Gemini to triage today's inbox. Returns the reply text or
+    ``None`` if the LLM call fails (e.g. quota exhausted), in which
+    case the caller should run ``_heuristic_important_emails``."""
+    model = settings.get("model", "gemini-2.0-flash")
+
+    rows = []
+    for i, e in enumerate(emails, 1):
+        sender = (e.sender or "Unknown")[:140]
+        subject = (e.subject or "(no subject)")[:200]
+        preview = _clean_email_preview(e.body or "", limit=180)
+        time_str = e.received_at.strftime("%H:%M") if e.received_at else "?"
+        rows.append(f"[{i}] {time_str} | from: {sender} | subject: {subject} | preview: {preview}")
+    context_block = "\n".join(rows)
+
+    if lang == "ru":
+        lang_instr = "Отвечай на русском языке."
+        no_important = "Сегодня важных писем нет."
+    elif lang == "kz":
+        lang_instr = "Қазақ тілінде жауап бер."
+        no_important = "Бүгін маңызды хат жоқ."
+    else:
+        lang_instr = "Reply in English."
+        no_important = "No important emails today."
+
+    system_prompt = (
+        "You are a personal email triage assistant. Read the user's emails received TODAY "
+        "and identify the ones that are GENUINELY important — meaning the user should personally "
+        "read or act on them.\n"
+        "Important examples: payment/invoice due, security/login alerts, booking confirmations, "
+        "personal messages from real humans, replies in ongoing threads, deadlines, account "
+        "changes that require action, calendar invites, exam/work notifications.\n"
+        "NOT important: marketing/promotions, newsletters, social-media notifications, automated "
+        "digests, generic 'we have new features' announcements, app update emails, advertising.\n"
+        "Output rules — STRICT:\n"
+        "- 1 to 4 short sentences total. NO markdown, NO bullets, NO numbered lists, NO headers.\n"
+        "- If 1-3 emails are important, briefly mention each (sender + 1-line gist) in plain prose.\n"
+        "- If MORE than 3 are important, summarize: 'X important emails today, mainly from <senders>'.\n"
+        f"- If NONE look important, reply EXACTLY: \"{no_important}\"\n"
+        "- Be concise and conversational, like a friend telling you what actually mattered.\n"
+        f"- {lang_instr}\n"
+    )
+    user_prompt = (
+        f"Today's emails ({len(emails)} total):\n{context_block}\n\n"
+        f"Which are genuinely important? Brief reply only."
+    )
+    contents = [{"role": "user", "parts": [{"text": user_prompt}]}]
+    ai_text, err = _gemini_call(model, system_prompt, contents)
+    if err or not ai_text:
+        print(f"[EMAIL/IMPORTANT] Gemini failed ({err or 'empty'}); falling back to heuristic", flush=True)
+        return None
+    return ai_text.strip()
+
+
+# Heuristic ranking signals for the Gemini-quota-exhausted fallback.
+_PROMO_SUBJECT_WORDS = (
+    "% off", "sale", "deal", "newsletter", "unsubscribe", "promo", "discount",
+    "акци", "распрод", "скид", "рассылк",
+    "жеңілдік",
+)
+_IMPORTANT_SUBJECT_WORDS = (
+    "urgent", "security", "alert", "verify", "password", "2fa", "invoice",
+    "payment", "due", "deadline", "expiring", "expires", "action required",
+    "action needed", "confirm", "receipt", "exam", "interview", "meeting",
+    "срочн", "важн", "счёт", "платёж", "оплат", "подтверд", "пароль",
+    "экзамен", "собеседован",
+    "шұғыл", "маңызды", "төлем", "емтихан",
+)
+_PROMO_SENDER_WORDS = (
+    "noreply", "no-reply", "newsletter", "marketing", "notifications",
+    "updates@", "promo", "info@", "team@", "support@", "hello@",
+)
+_PERSONAL_DOMAINS = (
+    "@gmail.com", "@outlook.com", "@yahoo.com", "@mail.ru", "@yandex.ru",
+    "@icloud.com", "@hotmail.com", "@proton.me",
+)
+
+
+def _heuristic_important_emails(emails, lang: str) -> str:
+    """Rank emails by hand-crafted signals when Gemini isn't available."""
+    scored = []
+    for e in emails:
+        sender = (e.sender or "").lower()
+        subject = (e.subject or "").lower()
+        body = (e.body or "").lower()
+        score = 0
+        if any(w in sender for w in _PROMO_SENDER_WORDS):
+            score -= 3
+        if any(w in subject for w in _PROMO_SUBJECT_WORDS):
+            score -= 2
+        if any(w in subject for w in _IMPORTANT_SUBJECT_WORDS):
+            score += 3
+        if any(w in body for w in _IMPORTANT_SUBJECT_WORDS):
+            score += 1
+        if subject.rstrip("?!. ").endswith("?"):
+            score += 1
+        if any(d in sender for d in _PERSONAL_DOMAINS):
+            score += 2
+        scored.append((score, e))
+    scored.sort(key=lambda x: -x[0])
+    important = [e for s, e in scored if s >= 1][:5]
+
+    if not important:
+        if lang == "ru":
+            return (f"Сегодня важных писем нет (за сегодня пришло {len(emails)}, "
+                    f"в основном уведомления и рассылки).")
+        if lang == "kz":
+            return f"Бүгін маңызды хат жоқ (бүгін {len(emails)} хат келді, негізінен жарнама)."
+        return (f"No important emails today ({len(emails)} arrived, "
+                f"mostly newsletters and notifications).")
+
+    if lang == "ru":
+        if len(important) == 1:
+            e = important[0]
+            return f"Одно важное письмо за сегодня — от {_pretty_sender_name(e.sender)}: «{e.subject}»."
+        names = ", ".join(_pretty_sender_name(e.sender) for e in important[:3])
+        return f"Сегодня {len(important)} важных писем, в первую очередь от: {names}."
+    if lang == "kz":
+        if len(important) == 1:
+            e = important[0]
+            return f"Бүгін бір маңызды хат — {_pretty_sender_name(e.sender)}-тан: «{e.subject}»."
+        names = ", ".join(_pretty_sender_name(e.sender) for e in important[:3])
+        return f"Бүгін {len(important)} маңызды хат, негізгілері: {names}."
+    if len(important) == 1:
+        e = important[0]
+        return f"One important email today — from {_pretty_sender_name(e.sender)}: \"{e.subject}\"."
+    names = ", ".join(_pretty_sender_name(e.sender) for e in important[:3])
+    return f"{len(important)} important emails today, mainly from: {names}."
+
+
+def _format_important_emails_reply(message: str, lang: str) -> str:
+    """Top-level handler for 'important emails today' style queries."""
+    emails = _get_cached_emails_for_chat(limit=200)
+    if not emails:
+        _auto_sync_cached_emails_for_chat(max_results=50)
+        emails = _get_cached_emails_for_chat(limit=200)
+    if not emails:
+        if lang == "ru":
+            return "Я не вижу писем в локальном кэше. Сначала синхронизируйте Gmail (Sync All)."
+        if lang == "kz":
+            return "Жергілікті кэште хаттар жоқ. Алдымен Gmail синхрондаңыз (Sync All)."
+        return "I cannot see cached emails yet. Please sync Gmail first (Sync All)."
+
+    todays = _emails_today(emails, max_count=30)
+    if not todays:
+        if lang == "ru":
+            return "Сегодня писем нет."
+        if lang == "kz":
+            return "Бүгін хат жоқ."
+        return "No emails today."
+
+    ai_reply = _gemini_important_emails(todays, lang)
+    if ai_reply:
+        return ai_reply
+    return _heuristic_important_emails(todays, lang)
 
 
 def _format_email_direct_reply(message: str, email_data=None):
     msg = (message or "").lower()
     lang = _detect_message_lang(message)
+
+    # ── 'Important emails today' branch ───────────────────────────────
+    # Triggered by phrases like "what are the important emails today",
+    # "что важного сегодня", "бүгінгі маңызды хаттар". Runs only when no
+    # specific email is attached (email_data is None) — when the user is
+    # viewing one email we want to answer about THAT email, not run a
+    # cross-inbox triage.
+    if email_data is None and _is_important_emails_query(msg):
+        return _format_important_emails_reply(message, lang)
 
     ask_sender = any(x in msg for x in ["from who", "who sent", "от кого", "кто отправ", "кімнен"])
     ask_time = any(x in msg for x in ["when", "time", "когда", "во сколько", "время", "қашан"])
@@ -1220,7 +1772,11 @@ def _build_weather_context(current: dict, forecast: dict) -> str:
 
 def _format_weather_ai_reply(message: str, current: dict, forecast: dict, model: str, system_text: str) -> str:
     """Ask Gemini to answer the user's weather question using live data."""
-    lang = _detect_message_lang(message)
+    ui_lang = (settings.get("language") or "").upper()
+    if ui_lang in ("RU", "KZ", "EN"):
+        lang = ui_lang.lower()
+    else:
+        lang = _detect_message_lang(message)
     if not current:
         if not OWM_KEY:
             if lang == "ru":
@@ -1262,7 +1818,12 @@ def _format_weather_ai_reply(message: str, current: dict, forecast: dict, model:
     contents = [{"role": "user", "parts": [{"text": message}]}]
     ai_text, err = _gemini_call(model, prompt_system, contents)
     if err or not ai_text:
-        # Graceful fallback to structured reply if Gemini fails
+        # Log so the operator can see WHY Gemini bailed (key exhausted,
+        # network blip, etc.) — without a log line the user just sees an
+        # English fallback and can't tell whether it's a real answer or
+        # a degraded one.
+        print(f"[WEATHER] Gemini call failed ({err or 'empty reply'}); "
+              f"falling back to structured template for lang={lang}", flush=True)
         city = current.get("city", "?")
         country = current.get("country", "")
         temp = current.get("temp")
@@ -1275,6 +1836,10 @@ def _format_weather_ai_reply(message: str, current: dict, forecast: dict, model:
             return (f"Погода в {city}, {country}:\n"
                     f"🌡 {temp}°C (ощущается {feels}°C) — {cond}\n"
                     f"💧 Влажность: {hum}%   💨 Ветер: {wind} км/ч {wind_dir}")
+        if lang == "kz":
+            return (f"{city}, {country} ауа райы:\n"
+                    f"🌡 {temp}°C (сезінуі {feels}°C) — {cond}\n"
+                    f"💧 Ылғалдылық: {hum}%   💨 Жел: {wind} км/сағ {wind_dir}")
         return (f"Weather in {city}, {country}:\n"
                 f"🌡 {temp}°C (feels {feels}°C) — {cond}\n"
                 f"💧 Humidity: {hum}%   💨 Wind: {wind} km/h {wind_dir}")
@@ -1316,7 +1881,14 @@ def chat():
             if recent_emails:
                 system_text += recent_emails
 
+        # Apply language directive LAST so it carries the most weight
+        # (Gemini gives final-position instructions higher priority).
+        system_text = _apply_language_directive(system_text)
+
         # ── Lamp command interception ─────────────────────────────────────
+        # Lamp must run BEFORE music: phrases like "включи свет" / "turn on
+        # the light" share the play-music verb with "включи happy", and we
+        # want the lamp to win when a lamp keyword is present.
         lamp_reply, lamp_st = _handle_lamp_command(user_message)
         if lamp_reply:
             _save_chat_msg(sid, "assistant", lamp_reply)
@@ -1324,6 +1896,13 @@ def chat():
             if lamp_st:
                 resp_data["lamp"] = lamp_st
             return jsonify(resp_data)
+
+        # ── Music command interception ────────────────────────────────────
+        music_pair = _handle_music_command(user_message)
+        if music_pair:
+            music_reply, music_info = music_pair
+            _save_chat_msg(sid, "assistant", music_reply)
+            return jsonify({"reply": music_reply, "music": music_info})
 
         # ── Email query interception ──────────────────────────────────────
         if _is_email_query(user_message):
@@ -1558,6 +2137,108 @@ def server_status():
     return jsonify({"status": "online"})
 
 
+def _yt_first_embeddable(search_query):
+    """Run one YouTube search and return (videoId, title, thumbnail) for the
+    first embeddable video, or None. Module-level so both the HTTP route and
+    the voice-command interceptor can share it."""
+    if not YOUTUBE_API_KEY:
+        return None
+    try:
+        resp = requests.get(
+            "https://www.googleapis.com/youtube/v3/search",
+            params={
+                "part": "snippet",
+                "q": search_query,
+                "type": "video",
+                "key": YOUTUBE_API_KEY,
+                "maxResults": 25,
+                "order": "relevance",
+                "videoEmbeddable": "true",
+            },
+            timeout=10,
+        )
+        if resp.status_code != 200:
+            return None
+        items = resp.json().get("items", [])
+        if not items:
+            return None
+        ids = [it["id"]["videoId"] for it in items if it.get("id", {}).get("videoId")]
+        if not ids:
+            return None
+        v = requests.get(
+            "https://www.googleapis.com/youtube/v3/videos",
+            params={
+                "part": "status,contentDetails",
+                "id": ",".join(ids),
+                "key": YOUTUBE_API_KEY,
+            },
+            timeout=10,
+        )
+        if v.status_code != 200:
+            return None
+        status_by_id = {it["id"]: it for it in v.json().get("items", [])}
+        for it in items:
+            vid = it.get("id", {}).get("videoId")
+            if not vid:
+                continue
+            vinfo = status_by_id.get(vid)
+            if not vinfo:
+                continue
+            st = vinfo.get("status", {})
+            if not st.get("embeddable", False):
+                continue
+            if st.get("privacyStatus") != "public":
+                continue
+            if st.get("uploadStatus") not in (None, "processed"):
+                continue
+            title = it["snippet"]["title"]
+            thumbnail = it["snippet"]["thumbnails"].get("high", {}).get("url", "")
+            return (vid, title, thumbnail)
+        return None
+    except Exception:
+        return None
+
+
+def _yt_search_best_match(query: str):
+    """Find the best embeddable YouTube video for ``query``.
+
+    Tries the literal query (originals first) and falls back to
+    cover/remix/instrumental searches if nothing original is embeddable.
+    Returns (videoId, title, thumbnail, source) or None.
+    """
+    base_query = (query or "").replace(" official audio", "").replace(" - Topic", "").strip()
+    if not base_query:
+        return None
+    primary_queries = [
+        base_query,
+        base_query + " official audio",
+        base_query + " audio",
+        base_query + " lyrics",
+    ]
+    for sq in primary_queries:
+        hit = _yt_first_embeddable(sq)
+        if hit:
+            vid, title, thumb = hit
+            return (vid, title, thumb, "original")
+    fallback_queries = [
+        base_query + " cover",
+        base_query + " remix",
+        base_query + " instrumental",
+        base_query + " acoustic",
+        base_query + " tribute",
+        base_query + " karaoke",
+        base_query + " slowed",
+        "NoCopyrightSounds " + base_query,
+        "Audio Library " + base_query,
+    ]
+    for sq in fallback_queries:
+        hit = _yt_first_embeddable(sq)
+        if hit:
+            vid, title, thumb = hit
+            return (vid, title, thumb, "alternative")
+    return None
+
+
 @app.route("/api/play-music", methods=["POST"])
 def play_music():
     data = request.get_json()
@@ -1566,85 +2247,75 @@ def play_music():
         return jsonify({"error": "No query provided"}), 400
     if not YOUTUBE_API_KEY:
         return jsonify({"error": "YouTube API key not set"}), 500
-    
-    def is_embeddable(video_id):
-        """Проверить, разрешено ли видео для встраивания"""
-        try:
-            resp = requests.get(
-                "https://www.googleapis.com/youtube/v3/videos",
-                params={
-                    "part": "status",
-                    "id": video_id,
-                    "key": YOUTUBE_API_KEY
-                },
-                timeout=5
-            )
-            if resp.status_code == 200:
-                items = resp.json().get("items", [])
-                if items:
-                    status = items[0].get("status", {})
-                    return status.get("embeddable", False)
-        except:
-            pass
-        return False
-    
+
     try:
-        base_query = query.replace(" official audio", "").replace(" - Topic", "").strip()
-        
-        # Search for alternative versions: covers, remixes, instrumentals, etc
-        search_strategies = [
-            base_query + " cover",                     # Cover versions from small channels
-            base_query + " remix",                     # Remixes with different artists
-            base_query + " instrumental",              # Instrumental - never blocked
-            base_query + " acoustic",                  # Acoustic versions
-            base_query + " tribute",                   # Tribute versions (fan-made)
-            base_query + " karaoke",                   # Karaoke versions
-            base_query + " slowed",                    # Slowed versions by fans
-            "NoCopyrightSounds " + base_query,         # Official royalty-free channel
-            "Audio Library " + base_query,             # YouTube Audio Library
-        ]
-        
-        for search_query in search_strategies:
-            try:
-                resp = requests.get(
-                    "https://www.googleapis.com/youtube/v3/search",
-                    params={
-                        "part": "snippet",
-                        "q": search_query,
-                        "type": "video",
-                        "key": YOUTUBE_API_KEY,
-                        "maxResults": 50,
-                        "order": "relevance"
-                    },
-                    timeout=10
-                )
-                
-                if resp.status_code != 200:
-                    continue
-                
-                items = resp.json().get("items", [])
-                
-                # Check each video for embedding permission
-                for item in items:
-                    video_id = item["id"]["videoId"]
-                    title = item["snippet"]["title"]
-                    thumbnail = item["snippet"]["thumbnails"].get("high", {}).get("url", "")
-                    
-                    if is_embeddable(video_id):
-                        return jsonify({
-                            "videoId": video_id, 
-                            "title": title,
-                            "thumbnail": thumbnail
-                        })
-            except:
-                continue
-        
+        result = _yt_search_best_match(query)
+        if result:
+            vid, title, thumb, source = result
+            return jsonify({
+                "videoId": vid,
+                "title": title,
+                "thumbnail": thumb,
+                "source": source,
+            })
         return jsonify({
-            "error": "YouTube blocks most popular songs due to copyright. No embeddable version found.",
-            "suggestion": "Try: 'включи NoCopyrightSounds', 'включи instrumental music', или любой непопулярный артист"
+            "error": "No embeddable video found for this query.",
+            "suggestion": "Try a different artist or genre keyword."
         }), 404
     except Exception as e:
         return jsonify({"error": f"Search error: {str(e)}"}), 500
+
+
+# ── DEVICE MUSIC ROUTES (play YouTube on the ESP32 speaker) ──────────────
+
+
+@app.route("/api/music/play", methods=["POST"])
+def api_music_play():
+    data = request.get_json(silent=True) or {}
+    video_id = (data.get("videoId") or data.get("video_id") or "").strip()
+    title = data.get("title", "")
+    thumbnail = data.get("thumbnail", "")
+    if not video_id:
+        return jsonify({"error": "videoId is required"}), 400
+    try:
+        _music_streamer.play(video_id, title=title, thumbnail=thumbnail)
+        return jsonify({"status": "ok", **_music_streamer.state()})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/music/pause", methods=["POST"])
+def api_music_pause():
+    _music_streamer.pause()
+    return jsonify({"status": "ok", **_music_streamer.state()})
+
+
+@app.route("/api/music/resume", methods=["POST"])
+def api_music_resume():
+    _music_streamer.resume()
+    return jsonify({"status": "ok", **_music_streamer.state()})
+
+
+@app.route("/api/music/stop", methods=["POST"])
+def api_music_stop():
+    _music_streamer.stop()
+    return jsonify({"status": "ok", **_music_streamer.state()})
+
+
+@app.route("/api/music/state", methods=["GET"])
+def api_music_state():
+    return jsonify(_music_streamer.state())
+
+
+@app.route("/api/music/volume", methods=["POST"])
+def api_music_volume():
+    data = request.get_json(silent=True) or {}
+    try:
+        vol = float(data.get("volume"))
+    except Exception:
+        return jsonify({"error": "volume (0..1) required"}), 400
+    _music_streamer.set_volume(vol)
+    return jsonify({"status": "ok", **_music_streamer.state()})
 
 
 # ═══════════════════════ EMAIL SERVICE ENDPOINTS ═══════════════════════
@@ -3756,6 +4427,315 @@ print(
 )
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# MUSIC STREAMER — yt-dlp -> ffmpeg -> SpeakerShaper -> UDP to ESP32
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# Plays YouTube audio directly on the ESP32 device speaker (not the PC
+# browser). Audio is decoded server-side to 16 kHz mono s16le PCM and
+# streamed over the same UDP socket that TTS uses, paced by the same
+# deadline scheme so the ESP32's tiny i2s_write queue never overflows.
+#
+# Coordination with TTS:
+#   - When the bot needs to speak, _tts_stream_to_esp32 calls
+#     _music_streamer.suspend_for_tts(). Music thread blocks on a flag.
+#   - When TTS finishes, .resume_after_tts() is called. Music thread
+#     wakes and continues from where it left off (the song clock keeps
+#     running on the ffmpeg side, so a few hundred ms get skipped — better
+#     than mixing two PCM streams into the same UDP port and getting
+#     garbled audio).
+#
+# Supports: play(video_id), pause(), resume(), stop(), state(), volume()
+
+
+class MusicStreamer:
+    """Single-stream YouTube-audio pump for the ESP32 speaker."""
+
+    SAMPLE_RATE = 16000
+    BYTES_PER_SEC = SAMPLE_RATE * 2          # 16-bit mono
+    CHUNK_SIZE = 512                         # 16 ms at 16 kHz
+    CHUNK_DUR = CHUNK_SIZE / BYTES_PER_SEC
+    LEAD = 0.98                              # send slightly ahead of playback
+
+    def __init__(self):
+        self._lock = _threading.Lock()
+        self._state = "idle"                 # idle | playing | paused | suspended | stopping
+        self._video_id = None
+        self._title = None
+        self._thumbnail = None
+        self._volume = 1.0                   # 0..1, applied on top of SpeakerShaper
+        self._ffmpeg = None
+        self._thread = None
+        # Events used to gate the sender thread.
+        self._stop_evt = _threading.Event()
+        self._user_pause_evt = _threading.Event()   # set => user-paused
+        self._tts_pause_evt = _threading.Event()    # set => TTS-suspended
+        self._user_pause_evt.clear()
+        self._tts_pause_evt.clear()
+
+    # ──────────────── public API ────────────────
+
+    def play(self, video_id: str, title: str = "", thumbnail: str = ""):
+        """Start (or replace) playback of a YouTube videoId."""
+        with self._lock:
+            self._stop_locked()
+            self._video_id = video_id
+            self._title = title or video_id
+            self._thumbnail = thumbnail or ""
+            self._state = "playing"
+            self._user_pause_evt.clear()
+            self._tts_pause_evt.clear()
+            self._stop_evt.clear()
+            self._thread = _threading.Thread(
+                target=self._worker, args=(video_id,), daemon=True
+            )
+            self._thread.start()
+        print(f"[MUSIC] play -> {video_id} ({title!r})", flush=True)
+
+    def pause(self):
+        with self._lock:
+            if self._state == "playing":
+                self._user_pause_evt.set()
+                self._state = "paused"
+                print("[MUSIC] paused (user)", flush=True)
+
+    def resume(self):
+        with self._lock:
+            if self._state == "paused":
+                self._user_pause_evt.clear()
+                self._state = "playing"
+                print("[MUSIC] resumed (user)", flush=True)
+
+    def stop(self):
+        with self._lock:
+            self._stop_locked()
+
+    def suspend_for_tts(self):
+        """Called by TTS code right before it starts streaming."""
+        with self._lock:
+            if self._state in ("playing", "paused"):
+                self._tts_pause_evt.set()
+                if self._state == "playing":
+                    self._state = "suspended"
+                print("[MUSIC] suspended (TTS)", flush=True)
+
+    def resume_after_tts(self):
+        """Called by TTS code right after it finishes streaming."""
+        with self._lock:
+            self._tts_pause_evt.clear()
+            if self._state == "suspended":
+                self._state = "playing"
+                print("[MUSIC] resumed (TTS done)", flush=True)
+
+    def set_volume(self, vol: float):
+        with self._lock:
+            self._volume = max(0.0, min(1.0, float(vol)))
+
+    def state(self) -> dict:
+        with self._lock:
+            return {
+                "state": self._state,
+                "video_id": self._video_id,
+                "title": self._title,
+                "thumbnail": self._thumbnail,
+                "volume": self._volume,
+            }
+
+    # ──────────────── internals ────────────────
+
+    def _stop_locked(self):
+        """Caller must hold self._lock."""
+        if self._state == "idle":
+            return
+        self._state = "stopping"
+        self._stop_evt.set()
+        self._user_pause_evt.clear()
+        self._tts_pause_evt.clear()
+        try:
+            if self._ffmpeg is not None:
+                self._ffmpeg.kill()
+        except Exception:
+            pass
+        # Detach worker — it'll exit on its own since the events are set.
+        self._thread = None
+        self._ffmpeg = None
+        self._video_id = None
+        self._title = None
+        self._thumbnail = None
+        self._state = "idle"
+
+    def _resolve_audio_url(self, video_id: str):
+        """Use yt-dlp to extract a direct audio stream URL for ffmpeg.
+
+        We ask yt-dlp to skip downloading and just give us the URL of the
+        best audio-only format that's <=128 kbps to keep bandwidth low (we
+        downsample to 16 kHz mono anyway, so higher bitrates are wasted)."""
+        try:
+            import yt_dlp  # type: ignore
+        except Exception as e:
+            print(f"[MUSIC] yt-dlp import failed: {e}", flush=True)
+            return None
+
+        opts = {
+            "quiet": True,
+            "no_warnings": True,
+            "noplaylist": True,
+            "skip_download": True,
+            # m4a (AAC) has the broadest codec coverage and is what most
+            # YouTube videos serve at low bitrate.
+            "format": "bestaudio[abr<=128]/bestaudio/best",
+            "extractor_args": {
+                "youtube": {
+                    # Use Android client to avoid signed URL issues that
+                    # sometimes block the desktop player on free-tier IPs.
+                    "player_client": ["android", "web"],
+                }
+            },
+        }
+        url = f"https://www.youtube.com/watch?v={video_id}"
+        try:
+            with yt_dlp.YoutubeDL(opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+            if not info:
+                return None
+            # Some formats (HLS) come back as a manifest URL, others as a
+            # direct progressive URL. ffmpeg handles both, just pass through.
+            return info.get("url") or (info.get("formats", [{}])[-1].get("url"))
+        except Exception as e:
+            print(f"[MUSIC] yt-dlp extract failed for {video_id}: {e}", flush=True)
+            return None
+
+    def _worker(self, video_id: str):
+        import subprocess
+        import time
+
+        send_ip = _esp32_send_ip()
+        if not send_ip or not _udp_send:
+            print("[MUSIC] no ESP32 IP / UDP socket — aborting", flush=True)
+            with self._lock:
+                self._state = "idle"
+            return
+
+        audio_url = self._resolve_audio_url(video_id)
+        if not audio_url:
+            print(f"[MUSIC] could not resolve audio URL for {video_id}", flush=True)
+            with self._lock:
+                self._state = "idle"
+            return
+
+        # Reconnect-on-error and HTTP user-agent help with HLS/CDN hiccups.
+        try:
+            ffmpeg_proc = subprocess.Popen(
+                ["ffmpeg", "-hide_banner", "-loglevel", "error",
+                 "-reconnect", "1", "-reconnect_streamed", "1",
+                 "-reconnect_delay_max", "5",
+                 "-i", audio_url,
+                 "-vn",
+                 "-f", "s16le", "-ar", str(self.SAMPLE_RATE), "-ac", "1",
+                 "pipe:1"],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                bufsize=8192,
+            )
+        except Exception as e:
+            print(f"[MUSIC] ffmpeg start failed: {e}", flush=True)
+            with self._lock:
+                self._state = "idle"
+            return
+
+        with self._lock:
+            self._ffmpeg = ffmpeg_proc
+
+        _speaker_shaper.reset_state()
+
+        start = None
+        i = 0
+        chunks_sent = 0
+        bytes_sent = 0
+        t0 = time.time()
+        try:
+            while not self._stop_evt.is_set():
+                # Block while paused/suspended. Re-check the stop flag often.
+                while (self._user_pause_evt.is_set() or self._tts_pause_evt.is_set()):
+                    if self._stop_evt.is_set():
+                        break
+                    time.sleep(0.05)
+                    # When unpausing, reset the playback clock so we don't
+                    # try to "catch up" by spamming chunks back-to-back.
+                    start = None
+                    i = 0
+                if self._stop_evt.is_set():
+                    break
+
+                pcm = ffmpeg_proc.stdout.read(self.CHUNK_SIZE)
+                if not pcm:
+                    break  # end of stream
+
+                # Apply user volume BEFORE the shaper so the limiter sees the
+                # actual amplitude that will hit the amp.
+                with self._lock:
+                    vol = self._volume
+                if vol < 0.999:
+                    try:
+                        np = _speaker_shaper._np
+                        x = np.frombuffer(pcm, dtype=np.int16).astype(np.float32) * vol
+                        pcm = np.clip(x, -32768, 32767).astype(np.int16).tobytes()
+                    except Exception:
+                        pass
+
+                pcm = _speaker_shaper.process(pcm)
+
+                if start is None:
+                    start = time.time()
+
+                try:
+                    _udp_send.sendto(pcm, (send_ip, AUDIO_SPK_PORT))
+                except Exception:
+                    pass
+                bytes_sent += len(pcm)
+                chunks_sent += 1
+                i += 1
+
+                deadline = start + i * self.CHUNK_DUR * self.LEAD
+                delay = deadline - time.time()
+                if delay > 0:
+                    # Use the stop event for sleep so .stop() interrupts us
+                    # instantly instead of waiting up to 16 ms per chunk.
+                    if self._stop_evt.wait(timeout=delay):
+                        break
+        finally:
+            try:
+                ffmpeg_proc.kill()
+            except Exception:
+                pass
+            try:
+                ffmpeg_proc.wait(timeout=2)
+            except Exception:
+                pass
+
+        elapsed = time.time() - t0
+        audio_secs = bytes_sent / self.BYTES_PER_SEC if bytes_sent else 0
+        print(
+            f"[MUSIC] worker done: {chunks_sent} chunks, {audio_secs:.1f}s audio, "
+            f"wallclock={elapsed:.1f}s",
+            flush=True,
+        )
+
+        # If we exited cleanly (end of song or stopped), update state.
+        with self._lock:
+            if self._state != "idle":
+                self._state = "idle"
+                self._video_id = None
+                self._title = None
+                self._thumbnail = None
+            self._ffmpeg = None
+
+
+_music_streamer = MusicStreamer()
+print("[MUSIC] MusicStreamer ready", flush=True)
+
+
 def _tts_stream_to_esp32(text, lang="en"):
     """Stream Edge TTS -> ffmpeg (mp3->pcm) -> UDP to ESP32, true streaming."""
     import edge_tts
@@ -3769,6 +4749,11 @@ def _tts_stream_to_esp32(text, lang="en"):
     if not send_ip or not _udp_send:
         print("[ROBOT] TTS: no ESP32 IP or UDP socket, skipping", flush=True)
         return
+
+    # If music is playing on the device, pause its UDP stream while the bot
+    # talks — otherwise both streams would mix at the same UDP port and the
+    # ESP32 would play interleaved garbage.
+    _music_streamer.suspend_for_tts()
 
     t0 = time.time()
     sample_rate = 16000
@@ -3865,6 +4850,10 @@ def _tts_stream_to_esp32(text, lang="en"):
           f"gen={tts_latency:.2f}s | play={playback_time:.2f}s ({audio_secs:.1f}s audio) | "
           f"{total_mp3}B mp3 -> {total_pcm}B pcm | {chunks_sent} chunks | drops={drops}",
           flush=True)
+
+    # Resume any music that was paused at the start of this utterance.
+    _music_streamer.resume_after_tts()
+
     return tts_latency
 
 
@@ -4000,6 +4989,7 @@ def _robot_pipeline():
             pass
 
         system_text += "\n\nYou are responding to a voice command. Keep your answer short and conversational (1-3 sentences). Do not use markdown, bullet points, or special formatting."
+        system_text = _apply_language_directive(system_text)
 
         contents = []
         for msg in chat_history[-20:]:
@@ -4015,13 +5005,18 @@ def _robot_pipeline():
             ai_text = _ROBOT_DEBUG_TEXT
             t_llm = 0.0
         else:
-            # ── Lamp command interception ──
+            # ── Lamp command interception (must precede music: phrases like
+            # "включи свет" share the play-verb with "включи happy") ──
             lamp_reply, lamp_st = _handle_lamp_command(user_text)
             if lamp_reply:
                 ai_text = lamp_reply
                 t_llm = 0.0
                 if lamp_st:
                     socketio.emit("lamp_update", lamp_st, namespace="/audio")
+            # ── Music command interception ──
+            elif (music_pair := _handle_music_command(user_text)) is not None:
+                ai_text = music_pair[0]
+                t_llm = 0.0
             else:
                 # ── Weather query interception ──
                 weather_city = detect_weather_query(user_text)
@@ -4033,7 +5028,12 @@ def _robot_pipeline():
                 else:
                     # ── Email query interception (voice) ──
                     if _is_email_query(user_text):
-                        ai_text = _format_email_direct_reply(user_text, email_data=None)
+                        # The robot pipeline runs in a background thread,
+                        # so SQLAlchemy queries inside the email handler
+                        # need an explicit app context (HTTP requests get
+                        # one for free; threads don't).
+                        with app.app_context():
+                            ai_text = _format_email_direct_reply(user_text, email_data=None)
                         t_llm = time.time() - t0
                     else:
                         # ── Normal LLM call ──

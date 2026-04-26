@@ -13,3 +13,4 @@ edge-tts
 pydub
 yeelight
 numpy
+yt-dlp

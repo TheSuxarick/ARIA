@@ -7,7 +7,7 @@
 credentials.json
 token.json
 *.json.secret
-
+certs.json
 # Python
 __pycache__/
 *.py[cod]
